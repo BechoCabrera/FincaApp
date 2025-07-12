@@ -4,9 +4,10 @@
     {
       "type": "chrome",
       "request": "launch",
-      "name": "Launch Chrome on localhost",
+      "name": "Launch Chrome",
       "url": "http://localhost:4200",
-      "webRoot": "${workspaceFolder}/src"
+      "webRoot": "${workspaceFolder}/src",
+      "preLaunchTask": "ng serve"
     }
   ]
 }

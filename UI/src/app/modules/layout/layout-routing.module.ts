@@ -13,8 +13,20 @@ const routes: Routes = [
     component: LayoutComponent,
     loadChildren: () => import('../uikit/uikit.module').then((m) => m.UikitModule),
   },
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-  { path: '**', redirectTo: 'error/404' },
+  {
+    path: 'ganaderia',
+    component: LayoutComponent,
+    loadChildren: () => import('../ganaderia/ganaderia.module').then((m) => m.GanaderiaModule),
+  },
+  {
+    path: '',
+    redirectTo: 'dashboard',
+    pathMatch: 'full',
+  },
+  {
+    path: '**',
+    redirectTo: 'error/404',
+  },
 ];
 
 @NgModule({

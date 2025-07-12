@@ -6,86 +6,66 @@ export class Menu {
       group: 'Base',
       separator: false,
       items: [
+        // {
+        //   icon: 'assets/icons/heroicons/outline/chart-pie.svg',
+        //   label: 'Tablero',
+        //   route: '/dashboard',
+        //   children: [{ label: 'NFTs', route: '/dashboard/nfts' }],
+        // },
+        // {
+        //   icon: 'assets/icons/heroicons/outline/lock-closed.svg',
+        //   label: 'Autenticación',
+        //   route: '/auth',
+        //   children: [
+        //     { label: 'Registrarse', route: '/auth/sign-up' },
+        //     { label: 'Iniciar sesión', route: '/auth/sign-in' },
+        //     { label: 'Recuperar contraseña', route: '/auth/forgot-password' },
+        //     { label: 'Nueva contraseña', route: '/auth/new-password' },
+        //     { label: 'Doble verificación', route: '/auth/two-steps' },
+        //   ],
+        // },
+        // {
+        //   icon: 'assets/icons/heroicons/outline/exclamation-triangle.svg',
+        //   label: 'Errores',
+        //   route: '/errors',
+        //   children: [
+        //     { label: 'Error 404', route: '/errors/404' },
+        //     { label: 'Error 500', route: '/errors/500' },
+        //   ],
+        // },
+        // {
+        //   icon: 'assets/icons/heroicons/outline/cube.svg',
+        //   label: 'Componentes',
+        //   route: '/components',
+        //   children: [{ label: 'Tabla', route: '/components/table' }],
+        // },
         {
-          icon: 'assets/icons/heroicons/outline/chart-pie.svg',
-          label: 'Dashboard',
-          route: '/dashboard',
-          children: [{ label: 'Nfts', route: '/dashboard/nfts' }],
-        },
-        {
-          icon: 'assets/icons/heroicons/outline/lock-closed.svg',
-          label: 'Auth',
-          route: '/auth',
+          icon: 'assets/icons/heroicons/outline/document-text.svg',
+          label: 'Registro Ganadería',
+          route: '/ganaderia',
           children: [
-            { label: 'Sign up', route: '/auth/sign-up' },
-            { label: 'Sign in', route: '/auth/sign-in' },
-            { label: 'Forgot Password', route: '/auth/forgot-password' },
-            { label: 'New Password', route: '/auth/new-password' },
-            { label: 'Two Steps', route: '/auth/two-steps' },
+            {
+              label: 'Registro Hembras',
+              route: '/ganaderia/hembras',
+              icon: 'assets/icons/heroicons/outline/user-group.svg',
+              children: [
+                { label: 'Vacas Paridas', route: '/ganaderia/hembras/paridas', icon: 'assets/icons/heroicons/outline/sparkles.svg' },
+                { label: 'Vacas Escotera', route: '/ganaderia/hembras/escotera', icon: 'assets/icons/heroicons/outline/folder.svg' },
+                { label: 'Crías', route: '/ganaderia/hembras/crias', icon: 'assets/icons/heroicons/outline/document-duplicate.svg' },
+              ],
+            },
+            {
+              label: 'Registro Machos',
+              route: '/ganaderia/machos',
+              icon: 'assets/icons/heroicons/outline/user.svg',
+              children: [
+                { label: 'Toros', route: '/ganaderia/machos/toros', icon: 'assets/icons/heroicons/outline/fire.svg' },
+                { label: 'Crías', route: '/ganaderia/machos/crias', icon: 'assets/icons/heroicons/outline/document-duplicate.svg' },
+              ],
+            },
           ],
-        },
-        {
-          icon: 'assets/icons/heroicons/outline/exclamation-triangle.svg',
-          label: 'Errors',
-          route: '/errors',
-          children: [
-            { label: '404', route: '/errors/404' },
-            { label: '500', route: '/errors/500' },
-          ],
-        },
-        {
-          icon: 'assets/icons/heroicons/outline/cube.svg',
-          label: 'Components',
-          route: '/components',
-          children: [{ label: 'Table', route: '/components/table' }],
-        },
-      ],
-    },
-    {
-      group: 'Collaboration',
-      separator: true,
-      items: [
-        {
-          icon: 'assets/icons/heroicons/outline/download.svg',
-          label: 'Download',
-          route: '/download',
-        },
-        {
-          icon: 'assets/icons/heroicons/outline/gift.svg',
-          label: 'Gift Card',
-          route: '/gift',
-        },
-        {
-          icon: 'assets/icons/heroicons/outline/users.svg',
-          label: 'Users',
-          route: '/users',
-        },
-      ],
-    },
-    {
-      group: 'Config',
-      separator: false,
-      items: [
-        {
-          icon: 'assets/icons/heroicons/outline/cog.svg',
-          label: 'Settings',
-          route: '/settings',
-        },
-        {
-          icon: 'assets/icons/heroicons/outline/bell.svg',
-          label: 'Notifications',
-          route: '/gift',
-        },
-        {
-          icon: 'assets/icons/heroicons/outline/folder.svg',
-          label: 'Folders',
-          route: '/folders',
-          children: [
-            { label: 'Current Files', route: '/folders/current-files' },
-            { label: 'Downloads', route: '/folders/download' },
-            { label: 'Trash', route: '/folders/trash' },
-          ],
-        },
+        }
+
       ],
     },
   ];
