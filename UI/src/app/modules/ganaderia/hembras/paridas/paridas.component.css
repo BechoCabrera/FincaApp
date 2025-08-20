@@ -1,0 +1,11 @@
+.formulario {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.tabla {
+  width: 100%;
+}

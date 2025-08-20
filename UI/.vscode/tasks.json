@@ -4,14 +4,17 @@
     {
       "label": "ng serve",
       "type": "shell",
-      "command": "ng serve",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "command": "ng",
+      "args": ["serve", "--configuration", "development"],
       "isBackground": true,
-      "problemMatcher": [
-        "$tsc"
-      ],
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "Compiled successfully"
+        }
+      },
       "group": {
         "kind": "build",
         "isDefault": true
