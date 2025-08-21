@@ -1,0 +1,38 @@
+<h2>Registro de Proximas</h2>
+
+<form [formGroup]="form" (ngSubmit)="agregar()" class="formulario">
+  <mat-form-field appearance="outline">
+    <mat-label>Nombre</mat-label>
+    <input matInput formControlName="nombre">
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Edad (meses)</mat-label>
+    <input matInput type="number" formControlName="edad">
+  </mat-form-field>
+
+  <button mat-raised-button color="primary" type="submit">Agregar</button>
+</form>
+
+<table mat-table [dataSource]="data" class="mat-elevation-z8 tabla">
+
+  <ng-container matColumnDef="nombre">
+    <th mat-header-cell *matHeaderCellDef> Nombre </th>
+    <td mat-cell *matCellDef="let element"> {{ element.nombre }} </td>
+  </ng-container>
+
+  <ng-container matColumnDef="edad">
+    <th mat-header-cell *matHeaderCellDef> Edad </th>
+    <td mat-cell *matCellDef="let element"> {{ element.edad }} meses </td>
+  </ng-container>
+
+  <ng-container matColumnDef="acciones">
+    <th mat-header-cell *matHeaderCellDef> Acciones </th>
+    <td mat-cell *matCellDef="let element; let i = index">
+      <button mat-button color="warn" (click)="eliminar(i)">Eliminar</button>
+    </td>
+  </ng-container>
+
+  <!-- <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr> -->
+</table>

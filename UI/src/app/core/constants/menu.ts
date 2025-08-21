@@ -49,9 +49,36 @@ export class Menu {
               route: '/ganaderia/hembras',
               icon: 'assets/icons/heroicons/outline/user-group.svg',
               children: [
-                { label: 'Vacas Paridas', route: '/ganaderia/hembras/paridas', icon: 'assets/icons/heroicons/outline/sparkles.svg' },
-                { label: 'Vacas Escotera', route: '/ganaderia/hembras/escotera', icon: 'assets/icons/heroicons/outline/folder.svg' },
-                { label: 'Crías', route: '/ganaderia/hembras/crias', icon: 'assets/icons/heroicons/outline/document-duplicate.svg' },
+                {
+                  label: 'Vacas Paridas',
+                  route: '/ganaderia/hembras/paridas',
+                  icon: 'assets/icons/heroicons/outline/sparkles.svg',
+                },
+                {
+                  label: 'Escotera',
+                  route: '/ganaderia/hembras/escotera',
+                  icon: 'assets/icons/heroicons/outline/folder.svg',
+                },
+                {
+                  label: 'Proximas',
+                  route: '/ganaderia/hembras/proximas',
+                  icon: 'assets/icons/heroicons/outline/calendar.svg',
+                },
+                {
+                  label: 'Crías Hembra',
+                  route: '/ganaderia/hembras/crias-hembra',
+                  icon: 'assets/icons/heroicons/outline/document-duplicate.svg',
+                },
+                {
+                  label: 'Recrias Hembra',
+                  route: '/ganaderia/hembras/recrias-hembras',
+                  icon: 'assets/icons/heroicons/outline/document-duplicate.svg',
+                },
+                {
+                  label: 'Novillas de Vientre',
+                  route: '/ganaderia/hembras/novillas-vientre',
+                  icon: 'assets/icons/heroicons/outline/document-duplicate.svg',
+                },
               ],
             },
             {
@@ -59,13 +86,26 @@ export class Menu {
               route: '/ganaderia/machos',
               icon: 'assets/icons/heroicons/outline/user.svg',
               children: [
+                {
+                  label: 'Crías Machos',
+                  route: '/ganaderia/machos/crias-macho',
+                  icon: 'assets/icons/heroicons/outline/document-duplicate.svg',
+                },
                 { label: 'Toros', route: '/ganaderia/machos/toros', icon: 'assets/icons/heroicons/outline/fire.svg' },
-                { label: 'Crías', route: '/ganaderia/machos/crias', icon: 'assets/icons/heroicons/outline/document-duplicate.svg' },
+                {
+                  label: 'Torete',
+                  route: '/ganaderia/machos/toretes',
+                  icon: 'assets/icons/heroicons/outline/document-duplicate.svg',
+                },
+                {
+                  label: 'Recrias Machos',
+                  route: '/ganaderia/machos/recrias-macho',
+                  icon: 'assets/icons/heroicons/outline/document-duplicate.svg',
+                },
               ],
             },
           ],
-        }
-
+        },
       ],
     },
   ];

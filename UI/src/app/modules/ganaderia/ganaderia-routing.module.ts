@@ -6,13 +6,23 @@ import { EscoteraComponent } from './hembras/escotera/escotera.component';
 import { CriasHembrasComponent } from './hembras/crias-hembras/crias-hembras.component';
 import { TorosComponent } from './machos/toros/toros.component';
 import { CriasMachosComponent } from './machos/crias-machos/crias-machos.component';
+import { ProximasComponent } from './hembras/proximas/proximas.component';
+import { RecriasHembrasComponent } from './hembras/recrias-hembras/recrias-hembras.component';
+import { ToretesComponent } from './machos/toretes/toretes.component';
+import { RecriasMachosComponent } from './machos/recrias-machos/recrias-machos.component';
+import { NovillasVientreComponent } from './hembras/novillas-vientre/novillas-vientre.component';
 
 const routes: Routes = [
   { path: 'hembras/paridas', component: ParidasComponent },
   { path: 'hembras/escotera', component: EscoteraComponent },
-  { path: 'hembras/crias', component: CriasHembrasComponent },
+  { path: 'hembras/proximas', component: ProximasComponent },
+  { path: 'hembras/crias-hembra', component: CriasHembrasComponent },
+  { path: 'hembras/recrias-hembras', component: RecriasHembrasComponent },
+  { path: 'hembras/novillas-vientre', component: NovillasVientreComponent },
   { path: 'machos/toros', component: TorosComponent },
-  { path: 'machos/crias', component: CriasMachosComponent },
+  { path: 'machos/crias-macho', component: CriasMachosComponent },
+  { path: 'machos/toretes', component: ToretesComponent },
+  { path: 'machos/recrias-macho', component: RecriasMachosComponent },
 ];
 
 @NgModule({

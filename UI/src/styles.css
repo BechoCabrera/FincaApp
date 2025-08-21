@@ -262,11 +262,11 @@
 }
 
 /** Scroll bar **/
-@supports selector(::-webkit-scrollbar) {
+/* @supports selector(::-webkit-scrollbar) {
   .supports-scrollbars\: pr-2 {
     padding-right: 0.5rem;
   }
-}
+} */
 
 /** Custom Forms **/
 [type='text'],
@@ -293,3 +293,136 @@ select {
 }
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+body {
+  margin: 0;
+  font-family: var(--font-poppins), system-ui, sans-serif;
+}
+
+
+
+
+/* ====== UI TOKENS ====== */
+@layer base {
+  :root {
+    --radius: 12px; /* si no estaba */
+  }
+}
+
+/* ====== LAYOUT ====== */
+@utility ui-container {
+  max-width: 1100px;
+  margin-inline: auto;
+  padding: 1rem;
+  @media (width >= 768px) { padding: 1.25rem; }
+  @media (width >= 1280px) { padding: 1.5rem; }
+}
+
+@utility ui-grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 14px;
+}
+
+@utility ui-col-12 { grid-column: span 12; }
+@utility ui-col-6  { grid-column: span 12; }
+@media (width >= 900px) {
+  .ui-col-6 { grid-column: span 6; }
+}
+
+/* ====== CARD / CONTENEDORES ====== */
+@layer components {
+  .ui-card {
+    background: var(--card);
+    color: var(--card-foreground);
+    border-radius: var(--radius);
+    box-shadow: 0 3px 10px rgba(0,0,0,.08);
+    padding: 1rem;
+  }
+
+  .ui-toolbar-sticky {
+    position: sticky; top: 0; z-index: 30;
+    backdrop-filter: saturate(180%) blur(6px);
+  }
+}
+
+/* ====== FORM ====== */
+@layer components {
+  .ui-form { /* grid base para formularios */
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 14px;
+  }
+
+  .ui-field { grid-column: span 12; }
+  @media (width >= 900px) {
+    .ui-field { grid-column: span 6; }
+  }
+
+  .ui-field-full { grid-column: 1 / -1; }
+
+  /* Ajustes suaves a Angular Material */
+  .mat-mdc-button, .mdc-button { border-radius: var(--radius); }
+  .mdc-text-field--outlined { border-radius: var(--radius); }
+  .mat-mdc-form-field { width: 100%; }
+}
+
+/* ====== BOTONES ====== */
+@layer components {
+  .ui-btn {
+    border-radius: var(--radius);
+    font-weight: 500;
+    text-transform: none;
+    padding: .5rem 1.1rem;
+  }
+  .ui-btn-primary {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+  .ui-btn-outline {
+    border: 1px solid var(--border);
+    color: var(--foreground);
+    background: transparent;
+  }
+  .ui-actions {
+    display: flex; gap: .75rem; align-items: center;
+  }
+  .ui-spacer { flex: 1; }
+}
+
+/* ====== SCROLLBAR (usa el plugin tailwind-scrollbar en HTML) ====== */
+/* ejemplo de wrapper con utilidades del plugin */
+@layer components {
+  .ui-scrollable {
+    overflow: auto;
+  }
+  /* En el template: class="ui-scrollable scrollbar-thin scrollbar-thumb-muted-foreground/50" */
+}
+/* === Bridge: Tailwind theme --> Angular Material M3 === */
+@layer base {
+  :root {
+    /* Colores clave */
+    --mat-sys-primary: var(--primary);
+    --mat-sys-on-primary: var(--primary-foreground);
+
+    /* Opcionales pero útiles para consistencia */
+    --mat-sys-primary-container: color-mix(in oklab, var(--primary) 18%, white);
+    --mat-sys-on-primary-container: var(--foreground);
+    --mat-sys-outline: var(--border);
+  }
+  .dark {
+    --mat-sys-primary: var(--primary);
+    --mat-sys-on-primary: var(--primary-foreground);
+    --mat-sys-outline: var(--border);
+  }
+}
+@layer components {
+  .mat-mdc-raised-button,
+  .mat-mdc-unelevated-button,
+  .mat-mdc-stroked-button {
+    border-radius: var(--radius);
+    text-transform: none;
+    font-weight: 500;
+    padding: .5rem 1.1rem;
+  }
+}
