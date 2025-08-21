@@ -1,18 +1,13 @@
-<div class="relative ml-3">
+<div class="relative ml-3" clickOutside (clickOutside)="isOpen = false">
   <!-- Profile Button -->
   <button (click)="toggleMenu()" class="bg-card relative flex rounded-full text-sm" type="button">
     <span class="sr-only">Open user menu</span>
-    <img
-      clickOutside
-      (clickOutside)="isOpen = false"
-      class="size-9 shrink-0 rounded-md"
-      src="https://avatars.githubusercontent.com/u/12519008?v=4"
-      alt="" />
+    <img class="size-9 shrink-0 rounded-md" src="https://avatars.githubusercontent.com/u/12519008?v=4" alt="" />
   </button>
   <!-- Dropdown -->
   <div
     [@openClose]="isOpen ? 'open' : 'closed'"
-    class="bg-background shadow-custom border-muted absolute z-20 mt-2 w-60 origin-top-right transform rounded-md border border-dashed py-4 ring-1 ring-transparent ring-opacity-5 transition focus:outline-hidden ltr:right-0 rtl:left-0">
+    class="bg-background shadow-custom border-muted pe-2 scrollbar-thin scrollbar-thumb-muted-foreground/40 scrollbar-track-transparent absolute z-20 mt-2 max-h-[70vh] w-60 origin-top-right transform overflow-y-auto overscroll-contain rounded-md border border-dashed py-4 ring-1 ring-transparent ring-opacity-5 transition focus:outline-hidden ltr:right-0 rtl:left-0">
     <div class="flext-row flex items-center px-4 pb-4">
       <div class="w-10 shrink-0">
         <img class="rounded-md" src="https://avatars.githubusercontent.com/u/12519008?v=4" alt="" />
@@ -94,6 +89,43 @@
           <p class="uppercase">{{ item }}</p>
         </div>
         }
+      </div>
+    </div>
+    <div class="mx-4 my-2">
+      <span class="text-foreground text-xs font-semibold">Text size</span>
+
+      <div class="mt-2 grid grid-cols-3 gap-2">
+        <!-- A− -->
+        <button
+          type="button"
+          (click)="decFont()"
+          class="focus-visible:ring-ring border-border bg-background text-muted-foreground hover:bg-card hover:text-foreground shadow-xs inline-flex h-8 cursor-pointer items-center justify-center whitespace-nowrap rounded-md border border-dashed px-3 text-xs font-semibold transition-colors focus-visible:outline-hidden focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50">
+          A−
+        </button>
+
+        <!-- % actual -->
+        <div
+          class="border-border bg-card text-foreground inline-flex h-8 items-center justify-center rounded-md border border-dashed px-3 text-xs font-semibold">
+          {{ (zoom$ | async)! * 100 | number: '1.0-0' }}%
+        </div>
+
+        <!-- A+ -->
+        <button
+          type="button"
+          (click)="incFont()"
+          class="focus-visible:ring-ring border-border bg-background text-muted-foreground hover:bg-card hover:text-foreground shadow-xs inline-flex h-8 cursor-pointer items-center justify-center whitespace-nowrap rounded-md border border-dashed px-3 text-xs font-semibold transition-colors focus-visible:outline-hidden focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50">
+          A+
+        </button>
+      </div>
+
+      <!-- Reset (línea aparte) -->
+      <div class="mt-2">
+        <button
+          type="button"
+          (click)="resetFont()"
+          class="focus-visible:ring-ring border-border bg-background text-muted-foreground hover:bg-card hover:text-foreground shadow-xs inline-flex h-8 w-full cursor-pointer items-center justify-center whitespace-nowrap rounded-md border border-dashed px-3 text-xs font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50">
+          Reset
+        </button>
       </div>
     </div>
   </div>

@@ -426,3 +426,175 @@ body {
     padding: .5rem 1.1rem;
   }
 }
+/* RESET */
+.ui-form .mdc-text-field--filled {
+  background-color: var(--field-bg) !important;
+}
+/* === Focus limpio (sin borde azul del navegador) === */
+.ui-form .mat-mdc-input-element:focus,
+.ui-form .mdc-text-field__input:focus {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* === Line ripple en tu color primario === */
+.ui-form .mdc-line-ripple--active {
+  background-color: var(--primary) !important;
+}
+
+/* === Fondo de error SOLO cuando corresponde === */
+/* 1) El control fue tocado */
+.ui-form .mat-mdc-form-field.mat-mdc-form-field-invalid.ng-touched .mdc-text-field--filled,
+/* 2) O el formulario fue enviado */
+.ui-form.was-submitted .mat-mdc-form-field.mat-mdc-form-field-invalid .mdc-text-field--filled {
+  background-color: var(--error-50);
+}
+
+/* (Opcional) si usas outlined en algún lugar: pinta el borde en error */
+.ui-form .mat-mdc-form-field.mat-mdc-form-field-invalid.ng-touched .mdc-text-field--outlined,
+.ui-form.was-submitted .mat-mdc-form-field.mat-mdc-form-field-invalid .mdc-text-field--outlined {
+  /* solo borde; el fill no aplica en outlined */
+  --mdc-outlined-text-field-outline-color: var(--destructive);
+  --mdc-outlined-text-field-focus-outline-color: var(--destructive);
+}
+
+/* Asegura que exista un tono suave para error */
+:root { --error-50: color-mix(in oklab, var(--destructive) 12%, white); }
+/* Si tu entorno no soporta color-mix, usa un fallback sólido:
+:root { --error-50: #ffe5e9; }
+*/
+/* === Zoom tipográfico global (por defecto 1 = 100%) === */
+:root { --font-zoom: 1; }
+
+/* Todo el sitio escala con esta variable */
+html { font-size: calc(16px * var(--font-zoom)); }
+
+/* Transición suave (opcional) */
+html { transition: font-size .15s ease-out; }
+
+/* ===== Material TextFields (filled/outlined) bridge a tu theme ===== */
+
+/* Colores base para fondos de campos */
+:root {
+  /* en claro */
+  --field-bg: var(--card);                    /* fondo del input */
+  --field-border: var(--border);
+  --field-text: var(--foreground);
+  --field-label: var(--muted-foreground);
+  --field-placeholder: var(--muted-foreground);
+}
+
+.dark {
+  /* en oscuro: un pelín + claro que el background para que se note */
+  --field-bg: color-mix(in oklab, var(--background) 85%, white 15%);
+  --field-border: color-mix(in oklab, var(--border) 60%, white 40%);
+  --field-text: var(--foreground);
+  --field-label: color-mix(in oklab, var(--foreground) 65%, transparent);
+  --field-placeholder: color-mix(in oklab, var(--foreground) 50%, transparent);
+}
+
+/* === mat-form-field (filled) === */
+.ui-form .mdc-text-field--filled {
+  /* Fondo y radio */
+  --mdc-filled-text-field-container-color: var(--field-bg);
+  --mdc-filled-text-field-container-shape: var(--radius);
+
+  /* Texto, label, placeholder, caret */
+  --mdc-filled-text-field-input-text-color: var(--field-text);
+  --mdc-filled-text-field-label-text-color: var(--field-label);
+  --mdc-filled-text-field-input-text-placeholder-color: var(--field-placeholder);
+  --mdc-filled-text-field-caret-color: var(--primary);
+
+  /* Line ripple / borde inferior */
+  --mdc-filled-text-field-active-indicator-color: var(--field-border);
+  --mdc-filled-text-field-focus-active-indicator-color: var(--primary);
+  --mdc-filled-text-field-hover-active-indicator-color: color-mix(in oklab, var(--primary) 55%, transparent);
+}
+
+/* === mat-form-field (outlined) por si usas ese appearance en algún lado === */
+.ui-form .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-shape: var(--radius);
+  --mdc-outlined-text-field-outline-color: var(--field-border);
+  --mdc-outlined-text-field-focus-outline-color: var(--primary);
+  --mdc-outlined-text-field-hover-outline-color: color-mix(in oklab, var(--primary) 40%, var(--field-border));
+  --mdc-outlined-text-field-input-text-color: var(--field-text);
+  --mdc-outlined-text-field-label-text-color: var(--field-label);
+  --mdc-outlined-text-field-caret-color: var(--primary);
+}
+
+/* Iconos de suffix/prefix (calendario, flecha select, etc.) */
+.ui-form .mat-mdc-form-field-icon-suffix,
+.ui-form .mat-mdc-form-field-icon-prefix {
+  color: var(--field-label);
+}
+
+/* Mat-hint / Mat-error */
+.ui-form .mat-mdc-form-field-hint { color: var(--field-label); }
+.ui-form .mat-mdc-form-field-error { color: var(--destructive); opacity: .95; }
+
+/* === Select panel en oscuro/claro === */
+.mat-mdc-select-panel {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  border: 1px dashed var(--border);
+}
+.mat-mdc-option { color: var(--foreground) !important; }
+.mat-mdc-option.mdc-list-item--selected .mdc-list-item__primary-text {
+  color: var(--primary) !important;
+}
+
+/* === Datepicker overlay === */
+.mat-datepicker-content,
+.mat-datepicker-content .mat-calendar {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+}
+.mat-calendar-body-cell-content {
+  color: var(--foreground);
+}
+.mat-calendar-body-selected,
+.mat-calendar-body-active {
+  background: color-mix(in oklab, var(--primary) 85%, transparent) !important;
+  color: var(--primary-foreground) !important;
+}
+
+/* Ajuste del tono de error para oscuro (más sutil que en claro) */
+.dark { --error-50: color-mix(in oklab, var(--destructive) 25%, black); }
+/* === Colores de texto del campo === */
+:root {
+  --field-text: var(--foreground);
+  --field-label: var(--muted-foreground);
+  --field-placeholder: var(--muted-foreground);
+}
+
+.dark {
+  /* Texto blanco y etiquetas/placeholder más claros */
+  --field-text: #ffffff;        /* ⬅️ blanco */
+  --field-label: #cbd5e1;       /* slate-300 aprox */
+  --field-placeholder: #94a3b8; /* slate-400 aprox */
+}
+
+/* Vincular a Angular Material (filled) */
+.ui-form .mdc-text-field--filled {
+  --mdc-filled-text-field-input-text-color: var(--field-text);
+  --mdc-filled-text-field-label-text-color: var(--field-label);
+  --mdc-filled-text-field-input-text-placeholder-color: var(--field-placeholder);
+  --mdc-filled-text-field-caret-color: var(--primary);
+}
+
+/* (si usas outlined en algún lado) */
+.ui-form .mdc-text-field--outlined {
+  --mdc-outlined-text-field-input-text-color: var(--field-text);
+  --mdc-outlined-text-field-label-text-color: var(--field-label);
+  --mdc-outlined-text-field-caret-color: var(--primary);
+}
+
+/* Selects y overlays */
+.ui-form .mat-mdc-select-value,
+.ui-form .mat-mdc-select-placeholder { color: var(--field-text) !important; }
+.mat-mdc-option .mdc-list-item__primary-text { color: var(--field-text) !important; }
+.mat-datepicker-content, .mat-datepicker-content .mat-calendar { color: var(--field-text) !important; }
+
+/* Fallback duro por si algún input se resiste */
+.ui-form .mat-mdc-input-element,
+.ui-form .mdc-text-field__input { color: var(--field-text) !important; }

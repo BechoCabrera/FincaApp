@@ -1,152 +1,91 @@
 <div class="ui-container ui-scrollable">
-  <section class="ui-card form-card">
+  <section class="ui-card">
     <h3 class="section-title">Registro de Vacas Paridas</h3>
 
-    <form [formGroup]="paridasForm" class="ui-form grid ui-grid-12 gap-4" (ngSubmit)="submit()">
-      <!-- Identificación -->
-      <h4 class="col-span-12 font-semibold">Identificación</h4>
+    <form [formGroup]="form"  #formDir="ngForm"  class="ui-form" (ngSubmit)="submit()" [class.was-submitted]="formDir.submitted">
 
-      <mat-form-field appearance="outline" class="ui-field col-span-12 md:col-span-3">
-        <mat-label>ID Vaca</mat-label>
-        <input matInput formControlName="cowId" placeholder="F-00123">
-        <mat-error *ngIf="hasError('cowId','required')">Requerido</mat-error>
+
+
+      <!-- ===== Identificación ===== -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Número</mat-label>
+        <input matInput formControlName="numero" placeholder="Arete / ID">
+        <mat-error *ngIf="has('numero','required')">Requerido</mat-error>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="ui-field col-span-12 md:col-span-3">
-        <mat-label>Arete/Chapeta</mat-label>
-        <input matInput formControlName="earTag" placeholder="12345">
-        <mat-error *ngIf="hasError('earTag','required')">Requerido</mat-error>
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Nombre</mat-label>
+        <input matInput formControlName="nombre" placeholder="Nombre de la vaca">
+        <mat-error *ngIf="has('nombre','required')">Requerido</mat-error>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="ui-field col-span-12 md:col-span-3">
-        <mat-label>Raza</mat-label>
-        <input matInput formControlName="breed" placeholder="Gyrolando, Holstein...">
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Fecha Nacimiento</mat-label>
+        <input matInput [matDatepicker]="nacPicker" formControlName="fechaNac">
+        <mat-datepicker-toggle matSuffix [for]="nacPicker"></mat-datepicker-toggle>
+        <mat-datepicker #nacPicker></mat-datepicker>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="ui-field col-span-6 md:col-span-1">
-        <mat-label>Lactancia Nº</mat-label>
-        <input matInput type="number" formControlName="lactationNo" min="1">
-        <mat-error *ngIf="hasError('lactationNo','min')">Mínimo 1</mat-error>
-        <mat-error *ngIf="hasError('lactationNo','required')">Requerido</mat-error>
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Color</mat-label>
+        <input matInput formControlName="color" placeholder="Roja, Pintada, Negra...">
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="ui-field col-span-12 md:col-span-2">
-        <mat-label>Potrero/Ubicación</mat-label>
-        <input matInput formControlName="paddock" placeholder="Lote 3">
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Procedencia</mat-label>
+        <input matInput formControlName="procedencia" placeholder="Compra, Nacida en finca...">
       </mat-form-field>
 
-      <mat-divider class="col-span-12"></mat-divider>
-
-      <!-- Evento de parto -->
-      <h4 class="col-span-12 font-semibold">Evento de Parto</h4>
-
-      <mat-form-field appearance="outline" class="ui-field col-span-12 md:col-span-3">
-        <mat-label>Fecha de parto</mat-label>
-        <input matInput [matDatepicker]="calvPicker" formControlName="calvingDate">
-        <mat-datepicker-toggle matSuffix [for]="calvPicker"></mat-datepicker-toggle>
-        <mat-datepicker #calvPicker></mat-datepicker>
-        <mat-error *ngIf="hasError('calvingDate','required')">Requerido</mat-error>
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Propietario</mat-label>
+        <input matInput formControlName="propietario" placeholder="Nombre del propietario">
       </mat-form-field>
 
-      <div class="ui-field col-span-12 md:col-span-4">
-        <label class="block mb-2">Tipo de parto</label>
-        <mat-radio-group formControlName="typeOfCalving" class="flex gap-6">
-          <mat-radio-button value="Normal">Normal</mat-radio-button>
-          <mat-radio-button value="Asistido">Asistido</mat-radio-button>
-          <mat-radio-button value="Cesárea">Cesárea</mat-radio-button>
-        </mat-radio-group>
-      </div>
-
-      <div class="ui-field col-span-6 md:col-span-2 flex items-center">
-        <mat-checkbox formControlName="twins">Gemelar</mat-checkbox>
-      </div>
-
-      <div class="ui-field col-span-6 md:col-span-2 flex items-center">
-        <mat-checkbox formControlName="retainedPlacenta">Retención de placenta</mat-checkbox>
-      </div>
-
-      <mat-form-field appearance="outline" class="ui-field col-span-12">
-        <mat-label>Complicaciones (opcional)</mat-label>
-        <textarea matInput formControlName="complications" rows="2" placeholder="Distocia, metritis, mastitis periparto..."></textarea>
+      <!-- ===== Evento / Ubicación ===== -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Fecha de Parto</mat-label>
+        <input matInput [matDatepicker]="partoPicker" formControlName="fechaParto">
+        <mat-datepicker-toggle matSuffix [for]="partoPicker"></mat-datepicker-toggle>
+        <mat-datepicker #partoPicker></mat-datepicker>
+        <mat-error *ngIf="has('fechaParto','required')">Requerido</mat-error>
       </mat-form-field>
 
-      <mat-divider class="col-span-12"></mat-divider>
-
-      <!-- Cría -->
-      <h4 class="col-span-12 font-semibold">Cría</h4>
-
-      <div class="ui-field col-span-12 md:col-span-4">
-        <label class="block mb-2">Sexo de la cría</label>
-        <mat-radio-group formControlName="calfSex" class="flex gap-6">
-          <mat-radio-button value="Hembra">Hembra</mat-radio-button>
-          <mat-radio-button value="Macho">Macho</mat-radio-button>
-        </mat-radio-group>
-      </div>
-
-      <div class="ui-field col-span-12 md:col-span-3 flex items-center">
-        <mat-checkbox formControlName="calfAlive">Cría viva</mat-checkbox>
-      </div>
-
-      <mat-form-field appearance="outline" class="ui-field col-span-12 md:col-span-3">
-        <mat-label>Peso al nacer (kg)</mat-label>
-        <input matInput type="number" formControlName="calfWeightKg" placeholder="35" min="10" max="60">
-        <mat-error *ngIf="hasError('calfWeightKg','min')">≥ 10kg</mat-error>
-        <mat-error *ngIf="hasError('calfWeightKg','max')">≤ 60kg</mat-error>
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Seleccione la finca</mat-label>
+        <mat-select formControlName="fincaId">
+          <mat-option *ngFor="let f of fincas" [value]="f.id">{{ f.nombre }}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="has('fincaId','required')">Requerido</mat-error>
       </mat-form-field>
 
-      <mat-divider class="col-span-12"></mat-divider>
-
-      <!-- Salud y Producción -->
-      <h4 class="col-span-12 font-semibold">Salud y Producción</h4>
-
-      <div class="ui-field col-span-12 md:col-span-3">
-        <label class="block mb-2">Condición corporal (1–5)</label>
-        <mat-radio-group formControlName="bcs" class="flex flex-wrap gap-3">
-          <mat-radio-button *ngFor="let n of [1,2,3,4,5]" [value]="n">{{n}}</mat-radio-button>
-        </mat-radio-group>
-      </div>
-
-      <div class="ui-field col-span-12 md:col-span-3 flex items-center">
-        <mat-checkbox formControlName="vetAttention">Atención veterinaria</mat-checkbox>
-      </div>
-
-      <mat-form-field appearance="outline" class="ui-field col-span-12 md:col-span-3">
-        <mat-label>Inicio producción (L/día)</mat-label>
-        <input matInput type="number" formControlName="startMilkLiters" min="0" placeholder="Ej: 18">
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Género</mat-label>
+        <mat-select formControlName="genero">
+          <mat-option value="Hembra">Hembra</mat-option>
+          <mat-option value="Macho">Macho</mat-option>
+        </mat-select>
+        <mat-error *ngIf="has('genero','required')">Requerido</mat-error>
       </mat-form-field>
 
-      <mat-divider class="col-span-12"></mat-divider>
-
-      <!-- Reproducción -->
-      <h4 class="col-span-12 font-semibold">Reproducción</h4>
-
-      <mat-form-field appearance="outline" class="ui-field col-span-12 md:col-span-3">
-        <mat-label>Tipo de servicio</mat-label>
-        <mat-select formControlName="serviceType">
-          <mat-option value="Inseminación">Inseminación</mat-option>
-          <mat-option value="Monta Natural">Monta Natural</mat-option>
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Tipo leche</mat-label>
+        <mat-select formControlName="tipoLeche">
+          <mat-option *ngFor="let t of tiposLeche" [value]="t">{{ t }}</mat-option>
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="ui-field col-span-12 md:col-span-3">
-        <mat-label>ID Toro / Pajilla</mat-label>
-        <input matInput formControlName="bullOrSireId" placeholder="Toro-09 / B1234">
+      <!-- ===== Detalles ===== -->
+      <mat-form-field appearance="fill" class="ui-field-full">
+        <mat-label>Detalles</mat-label>
+        <textarea matInput formControlName="detalles" rows="3"></textarea>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="ui-field col-span-12 md:col-span-3">
-        <mat-label>Fecha de servicio posparto</mat-label>
-        <input matInput [matDatepicker]="ppPicker" formControlName="postpartumServiceDate">
-        <mat-datepicker-toggle matSuffix [for]="ppPicker"></mat-datepicker-toggle>
-        <mat-datepicker #ppPicker></mat-datepicker>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="ui-field col-span-12">
-        <mat-label>Observaciones</mat-label>
-        <textarea matInput rows="2" formControlName="notes"></textarea>
-      </mat-form-field>
-
-      <div class="ui-actions col-span-12">
-        <button class="ui-btn ui-btn-primary" mat-raised-button [disabled]="!canSubmit()">Guardar</button>
+      <!-- ===== Acciones ===== -->
+      <div class="ui-actions ui-field-full">
+        <button class="ui-btn" style="background:var(--primary)" mat-flat-button type="button">Cancelar</button>
+        <button class="ui-btn" style="background:var(--primary)" mat-flat-button type="submit">
+          Guardar
+        </button>
       </div>
     </form>
   </section>
