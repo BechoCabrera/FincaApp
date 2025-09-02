@@ -9,3 +9,11 @@
 .tabla {
   width: 100%;
 }
+
+
+
+/* utilitario si usas Tailwind v4 no es necesario, pero ayuda a truncar detalles */
+.line-clamp-1 {
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
+  overflow: hidden;
+}

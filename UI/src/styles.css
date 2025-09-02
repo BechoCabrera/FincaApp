@@ -437,11 +437,6 @@ body {
   box-shadow: none !important;
 }
 
-/* === Line ripple en tu color primario === */
-.ui-form .mdc-line-ripple--active {
-  background-color: var(--primary) !important;
-}
-
 /* === Fondo de error SOLO cuando corresponde === */
 /* 1) El control fue tocado */
 .ui-form .mat-mdc-form-field.mat-mdc-form-field-invalid.ng-touched .mdc-text-field--filled,
@@ -493,35 +488,6 @@ html { transition: font-size .15s ease-out; }
   --field-placeholder: color-mix(in oklab, var(--foreground) 50%, transparent);
 }
 
-/* === mat-form-field (filled) === */
-.ui-form .mdc-text-field--filled {
-  /* Fondo y radio */
-  --mdc-filled-text-field-container-color: var(--field-bg);
-  --mdc-filled-text-field-container-shape: var(--radius);
-
-  /* Texto, label, placeholder, caret */
-  --mdc-filled-text-field-input-text-color: var(--field-text);
-  --mdc-filled-text-field-label-text-color: var(--field-label);
-  --mdc-filled-text-field-input-text-placeholder-color: var(--field-placeholder);
-  --mdc-filled-text-field-caret-color: var(--primary);
-
-  /* Line ripple / borde inferior */
-  --mdc-filled-text-field-active-indicator-color: var(--field-border);
-  --mdc-filled-text-field-focus-active-indicator-color: var(--primary);
-  --mdc-filled-text-field-hover-active-indicator-color: color-mix(in oklab, var(--primary) 55%, transparent);
-}
-
-/* === mat-form-field (outlined) por si usas ese appearance en algún lado === */
-.ui-form .mdc-text-field--outlined {
-  --mdc-outlined-text-field-container-shape: var(--radius);
-  --mdc-outlined-text-field-outline-color: var(--field-border);
-  --mdc-outlined-text-field-focus-outline-color: var(--primary);
-  --mdc-outlined-text-field-hover-outline-color: color-mix(in oklab, var(--primary) 40%, var(--field-border));
-  --mdc-outlined-text-field-input-text-color: var(--field-text);
-  --mdc-outlined-text-field-label-text-color: var(--field-label);
-  --mdc-outlined-text-field-caret-color: var(--primary);
-}
-
 /* Iconos de suffix/prefix (calendario, flecha select, etc.) */
 .ui-form .mat-mdc-form-field-icon-suffix,
 .ui-form .mat-mdc-form-field-icon-prefix {
@@ -539,9 +505,7 @@ html { transition: font-size .15s ease-out; }
   border: 1px dashed var(--border);
 }
 .mat-mdc-option { color: var(--foreground) !important; }
-.mat-mdc-option.mdc-list-item--selected .mdc-list-item__primary-text {
-  color: var(--primary) !important;
-}
+
 
 /* === Datepicker overlay === */
 .mat-datepicker-content,
@@ -598,3 +562,123 @@ html { transition: font-size .15s ease-out; }
 /* Fallback duro por si algún input se resiste */
 .ui-form .mat-mdc-input-element,
 .ui-form .mdc-text-field__input { color: var(--field-text) !important; }
+
+
+/* elimina la línea interna y el overlay del form-field */
+.no-ripple .mdc-line-ripple{ display:none !important; }
+.no-ripple .mat-mdc-form-field-focus-overlay{ background:transparent !important; }
+
+/* mejora visual del input del buscador */
+.ui-search .mat-mdc-text-field-wrapper{
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px var(--primary, #3b82f6) inset;
+}
+.ui-search.mat-mdc-form-field .mdc-notched-outline__leading,
+.ui-search.mat-mdc-form-field .mdc-notched-outline__notch,
+.ui-search.mat-mdc-form-field .mdc-notched-outline__trailing{
+  border-color: var(--primary, #3b82f6);
+}
+
+.section-title { font-weight: 600; margin: 0 0 .5rem 0; }
+.ui-table-wrapper { overflow: auto; }
+.ui-table th, .ui-table td { white-space: nowrap; }
+.text-right { text-align: right; }
+/* ---------- Tokens base de formularios ---------- */
+:root{
+  --form-accent: var(--primary);          /* color de marca de los inputs */
+}
+
+/* Siempre usa tu color como "primary" interno de MDC */
+.mat-mdc-form-field{
+  --mdc-theme-primary: var(--form-accent);
+}
+
+/* ===== Filled (subrayado) ===== */
+.mat-mdc-form-field .mdc-text-field--filled{
+  /* Fondo y radio (opcional si quieres heredar lo que ya tenías) */
+  --mdc-filled-text-field-container-color: var(--field-bg);
+  --mdc-filled-text-field-container-shape: var(--radius);
+
+  /* Texto y caret: neutro + caret en marca */
+  --mdc-filled-text-field-input-text-color: var(--field-text);
+  --mdc-filled-text-field-caret-color: var(--form-accent);
+
+  /* Label SIEMPRE neutro (nada de primario) */
+  --mdc-filled-text-field-label-text-color: var(--field-label) !important;
+  --mdc-filled-text-field-focus-label-text-color: var(--field-label) !important;
+
+  /* Línea inferior */
+  --mdc-filled-text-field-active-indicator-color: var(--field-border) !important; /* reposo */
+  --mdc-filled-text-field-hover-active-indicator-color: color-mix(in oklab, var(--form-accent) 40%, var(--field-border)) !important;
+  --mdc-filled-text-field-focus-active-indicator-color: var(--form-accent) !important; /* foco */
+}
+
+/* ===== Outlined (contorno) ===== */
+.mat-mdc-form-field .mdc-text-field--outlined{
+  --mdc-outlined-text-field-container-shape: var(--radius);
+  --mdc-outlined-text-field-input-text-color: var(--field-text);
+  --mdc-outlined-text-field-caret-color: var(--form-accent);
+
+  /* Label SIEMPRE neutro */
+  --mdc-outlined-text-field-label-text-color: var(--field-label) !important;
+  --mdc-outlined-text-field-focus-label-text-color: var(--field-label) !important;
+
+  /* Bordes */
+  --mdc-outlined-text-field-outline-color: var(--field-border) !important;         /* reposo */
+  --mdc-outlined-text-field-hover-outline-color: color-mix(in oklab, var(--form-accent) 40%, var(--field-border)) !important;
+  --mdc-outlined-text-field-focus-outline-color: var(--form-accent) !important;    /* foco */
+}
+
+/* Ripple inferior (asegura color en todas las variantes) */
+.mat-mdc-form-field .mdc-line-ripple,
+.mat-mdc-form-field .mdc-line-ripple::before,
+.mat-mdc-form-field .mdc-line-ripple::after,
+.mat-mdc-form-field .mdc-line-ripple--active,
+.mat-mdc-form-field .mdc-line-ripple--active::before,
+.mat-mdc-form-field .mdc-line-ripple--active::after{
+  background-color: var(--form-accent) !important;
+  border-bottom-color: var(--form-accent) !important;
+}
+
+/* Label realmente neutro (por si algún estilo previo lo fuerza) */
+.mat-mdc-form-field .mdc-floating-label,
+.mat-mdc-form-field.mat-focused .mdc-floating-label{
+  color: var(--field-label) !important;
+  opacity: 1;
+}
+
+/* Asterisco de requerido: elige marca o neutro */
+.mat-mdc-form-field .mat-mdc-form-field-required-marker{
+  color: var(--field-label);  /* o var(--form-accent) si lo quieres con marca */
+}
+
+/* Evita borde interno que mete Tailwind Forms en inputs dentro de Material */
+.mat-mdc-form-field input.mat-mdc-input-element,
+.mat-mdc-form-field textarea.mat-mdc-input-element,
+.mat-mdc-form-field .mdc-text-field__input{
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+
+/* Color primario global para Material */
+.mat-mdc-form-field{ --mdc-theme-primary: var(--primary); }
+
+/* Outlined global */
+.mat-mdc-form-field .mdc-text-field--outlined{
+  --mdc-outlined-text-field-focus-outline-color: var(--primary) !important;
+  --mdc-outlined-text-field-hover-outline-color: color-mix(in oklab, var(--primary) 40%, var(--border)) !important;
+  --mdc-outlined-text-field-label-text-color: var(--field-label) !important;
+  --mdc-outlined-text-field-focus-label-text-color: var(--field-label) !important;
+}
+.mat-mdc-form-field .mdc-notched-outline__leading,
+.mat-mdc-form-field .mdc-notched-outline__notch,
+.mat-mdc-form-field .mdc-notched-outline__trailing{
+  border-color: var(--border);
+}
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing{
+  border-color: var(--primary) !important;
+}
