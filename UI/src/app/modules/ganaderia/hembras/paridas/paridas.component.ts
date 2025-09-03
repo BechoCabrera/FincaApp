@@ -1,7 +1,8 @@
 import { Component, ViewChild, inject, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule, FormControl } from '@angular/forms';
-
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 // Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -71,6 +72,7 @@ export interface VacaParida {
   providers: [DatePipe],
 })
 export class ParidasComponent {
+  private date = inject(DatePipe);
   private fb = inject(FormBuilder);
 
   // Opciones (mock; cámbialas por tu API)
@@ -107,22 +109,42 @@ export class ParidasComponent {
     return !!(c && c.touched && c.hasError(err));
   }
 
-  // ------ Tabla ------
-  displayedColumns: string[] = [
-    'numero',
-    'nombre',
-    'fechaNac',
-    'color',
-    'tipoLeche',
-    'procedencia',
-    'propietario',
-    'dp',
-    'fPalpacion',
-    'fechaParto',
-    'gc',
-    'detalles',
-    'acciones',
+  // === Columnas por defecto e iniciales ===
+  defaultColumns: string[] = [
+    'numero', 'nombre', 'fechaNac', 'color', 'tipoLeche',
+    'procedencia', 'propietario', 'dp', 'fPalpacion',
+    'fechaParto', 'gc', 'detalles', 'acciones'
   ];
+  displayedColumns: string[] = [...this.defaultColumns];
+
+  // === Helpers para el checkbox maestro ===
+  get allSelected(): boolean {
+    return this.displayedColumns.length === this.allColumns.length;
+  }
+  get someSelected(): boolean {
+    const n = this.displayedColumns.length;
+    return n > 0 && n < this.allColumns.length;
+  }
+  isColumnVisible = (key: string) => this.displayedColumns.includes(key);
+
+  // === Seleccionar / limpiar todas ===
+  toggleAll(checked: boolean) {
+    if (checked) {
+      this.displayedColumns = this.allColumns.map(c => c.key); // todas, en el orden de allColumns
+    } else {
+      this.displayedColumns = [];        // vuelve a las “por defecto”
+    }
+  }
+
+  // === Mantener orden y unicidad cuando agregas/quitás una ===
+  toggleColumn(key: string, show: boolean) {
+    if (show) {
+      const set = new Set(this.displayedColumns.concat(key));
+      this.displayedColumns = this.allColumns.map(c => c.key).filter(k => set.has(k));
+    } else {
+      this.displayedColumns = this.displayedColumns.filter(c => c !== key);
+    }
+  }
 
   dataSource = new MatTableDataSource<VacaParida>([]);
 
@@ -141,7 +163,7 @@ export class ParidasComponent {
     { key: 'fechaParto', label: 'Fec. Parto' },
     { key: 'gc', label: 'G.C' },
     { key: 'detalles', label: 'Detalles' },
-    { key: 'acciones', label: 'Editar' },
+    { key: 'acciones', label: 'Acciones' },
   ];
 
   // Filtros
@@ -159,18 +181,37 @@ export class ParidasComponent {
     this.dataSource.sort = this.sort;
 
     // Orden por defecto
-    this.sort.active = 'fechaParto';
-    this.sort.direction = 'desc';
-    this.sort.sortChange.emit();
+    // this.sort.active = 'fechaParto';
+    // this.sort.direction = 'desc';
+    // this.sort.sortChange.emit();
 
     // 👇 asegura que fechas nulas vayan al final y números se comparen como números
-    this.dataSource.sortingDataAccessor = (item: VacaParida, property: string) => {
-      const v = (item as any)[property];
-      if (property === 'fechaParto' || property === 'fechaNac') {
-        return v ? new Date(v).getTime() : Number.NEGATIVE_INFINITY;
+    this.dataSource.sortingDataAccessor = (item: VacaParida, prop: string) => {
+      const v = (item as any)[prop];
+      if (prop === 'fechaParto' || prop === 'fechaNac') {
+        return v ? new Date(v).getTime() : null;            // null -> al final (lo manejamos abajo)
       }
-      if (property === 'dp') return typeof v === 'number' ? v : Number.NEGATIVE_INFINITY;
+      if (prop === 'dp') return typeof v === 'number' ? v : null;
       return typeof v === 'string' ? v.toLowerCase() : v;
+    };
+
+    // === fechas/valores nulos SIEMPRE al final (asc y desc) ===
+
+    this.dataSource.sortData = (data, sort) => {
+      if (!sort.active || sort.direction === '') return data.slice();
+      const isAsc = sort.direction === 'asc';
+      return data.slice().sort((a, b) => {
+        const av = this.dataSource.sortingDataAccessor(a, sort.active);
+        const bv = this.dataSource.sortingDataAccessor(b, sort.active);
+
+        const aNull = av === null || av === undefined;
+        const bNull = bv === null || bv === undefined;
+        if (aNull && bNull) return 0;
+        if (aNull) return 1;   // null al final
+        if (bNull) return -1;  // null al final
+
+        return (av < bv ? -1 : av > bv ? 1 : 0) * (isAsc ? 1 : -1);
+      });
     };
 
     // Predicado de filtro compuesto (texto + finca + genero)
@@ -202,50 +243,50 @@ export class ParidasComponent {
     this.generoCtrl.valueChanges.pipe(startWith(this.generoCtrl.value)).subscribe(() => pushFilter());
   }
 
-ngOnInit() {
-  this.setData(this.mockRows(5));
-}
-
-mockRows(n = 5): VacaParida[] {
-  const fincas = this.fincas.map(f => f.id);
-  const colores = ['Blanca','Roja','Pintada','Negra','Baya'];
-  const nombres = ['Blanquita Gigantona','Abril','Estrella','Canela','Luna'];
-
-  const pick = <T>(arr: T[]) => arr[Math.floor(Math.random()*arr.length)];
-  const randDate = (from: Date, to: Date) =>
-    new Date(from.getTime() + Math.random()*(to.getTime()-from.getTime()));
-
-  const today = new Date();
-  const start = new Date(today.getFullYear()-8, 0, 1);
-
-  const rows: VacaParida[] = [];
-  for (let i=0;i<n;i++){
-    const fechaNac = randDate(start, today);
-    const fechaParto = randDate(new Date(today.getFullYear()-1,0,1), today);
-    const genero: Genero = Math.random() < 0.85 ? 'Hembra' : 'Macho'; // mayoría hembras
-
-    const numero = String(7 + i * 3); // just for variety
-
-    rows.push({
-      id: crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
-      numero,
-      nombre: pick(nombres),
-      fechaNac,
-      color: pick(colores),
-      procedencia: ['Cría','H-casa blanca','Compra'][Math.floor(Math.random()*3)],
-      propietario: 'MC',
-      tipoLeche: ['Buena','Regular','Mala'][Math.floor(Math.random()*3)] as TipoLeche,
-      fechaParto,
-      fPalpacion: randDate(new Date(today.getFullYear()-1,0,1), today),
-      genero,
-      dp: this.calcDP(fechaParto),
-      gc: genero === 'Macho' ? 'M' : 'H',
-      detalles: Math.random() < 0.3 ? 'Sin observaciones' : '',
-      fincaId: pick(fincas),
-    });
+  ngOnInit() {
+    this.setData(this.mockRows(125));
   }
-  return rows;
-}
+
+  mockRows(n = 5): VacaParida[] {
+    const fincas = this.fincas.map(f => f.id);
+    const colores = ['Blanca', 'Roja', 'Pintada', 'Negra', 'Baya'];
+    const nombres = ['Blanquita Gigantona', 'Abril', 'Estrella', 'Canela', 'Luna'];
+
+    const pick = <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+    const randDate = (from: Date, to: Date) =>
+      new Date(from.getTime() + Math.random() * (to.getTime() - from.getTime()));
+
+    const today = new Date();
+    const start = new Date(today.getFullYear() - 8, 0, 1);
+
+    const rows: VacaParida[] = [];
+    for (let i = 0; i < n; i++) {
+      const fechaNac = randDate(start, today);
+      const fechaParto = randDate(new Date(today.getFullYear() - 1, 0, 1), today);
+      const genero: Genero = Math.random() < 0.85 ? 'Hembra' : 'Macho'; // mayoría hembras
+
+      const numero = String(7 + i * 3); // just for variety
+
+      rows.push({
+        id: crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
+        numero,
+        nombre: pick(nombres),
+        fechaNac,
+        color: pick(colores),
+        procedencia: ['Cría', 'H-casa blanca', 'Compra'][Math.floor(Math.random() * 3)],
+        propietario: 'MC',
+        tipoLeche: ['Buena', 'Regular', 'Mala'][Math.floor(Math.random() * 3)] as TipoLeche,
+        fechaParto,
+        fPalpacion: randDate(new Date(today.getFullYear() - 1, 0, 1), today),
+        genero,
+        dp: this.calcDP(fechaParto),
+        gc: genero === 'Macho' ? 'M' : 'H',
+        detalles: Math.random() < 0.3 ? 'Sin observaciones' : '',
+        fincaId: pick(fincas),
+      });
+    }
+    return rows;
+  }
 
 
   get totalVacas(): number {
@@ -260,14 +301,6 @@ mockRows(n = 5): VacaParida[] {
     this.qCtrl.setValue('');
     this.fincaCtrl.setValue('');
     this.generoCtrl.setValue('');
-  }
-
-  toggleColumn(key: string, show: boolean) {
-    if (show) {
-      if (!this.displayedColumns.includes(key)) this.displayedColumns.push(key);
-    } else {
-      this.displayedColumns = this.displayedColumns.filter((c) => c !== key);
-    }
   }
 
   submit() {
@@ -343,4 +376,74 @@ mockRows(n = 5): VacaParida[] {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   trackById = (_: number, item: VacaParida) => item.id ?? `${item.numero}-${item.nombre}`;
+
+  private colLabel(key: string) {
+    return this.allColumns.find(c => c.key === key)?.label ?? key;
+  }
+
+  exportPdf() {
+    // Solo columnas visibles y “reales” (excluye acciones/idx si no quieres exportarlas)
+    const visibleKeys = this.displayedColumns
+      .filter(k => k !== 'acciones'); // quita lo que no tenga datos
+
+    // Cabecera (labels)
+    const head = [visibleKeys.map(k => this.colLabel(k).toUpperCase())];
+
+    // Filas (usa los datos filtrados que el usuario está viendo)
+    const rows = this.dataSource.filteredData.map(row =>
+      visibleKeys.map(key => {
+        let v: any = (row as any)[key];
+
+        // Formatea fechas
+        if (key === 'fechaNac' || key === 'fechaParto' || key === 'fPalpacion') {
+          return v ? this.date.transform(v, 'yyyy-MM-dd') : '';
+        }
+        return v ?? '';
+      })
+    );
+
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'pt',
+      format: 'A4',
+    });
+
+    const marginX = 36;
+    const startY = 64;
+
+    // Título
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('Vacas Paridas', marginX, 32);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(`Generado: ${this.date.transform(new Date(), 'yyyy-MM-dd HH:mm')}`, marginX, 46);
+
+    // Tabla
+    autoTable(doc, {
+      head,
+      body: rows,
+      startY,
+      theme: 'grid',
+      styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak' },
+      headStyles: { fillColor: [250, 204, 21], textColor: 20 }, // amarillo (FACC15 aprox)
+      margin: { left: marginX, right: marginX },
+      didDrawPage: (data) => {
+        // Pie con número de página
+        const pageSize = doc.internal.pageSize;
+        const pageNum = doc.getNumberOfPages();
+        doc.setFontSize(8);
+        doc.text(
+          `Página ${pageNum}`,
+          pageSize.getWidth() - marginX,
+          pageSize.getHeight() - 12,
+          { align: 'right' }
+        );
+      },
+    });
+
+    const file = `vacas-paridas_${this.date.transform(new Date(), 'yyyy-MM-dd')}.pdf`;
+    doc.save(file);
+  }
 }

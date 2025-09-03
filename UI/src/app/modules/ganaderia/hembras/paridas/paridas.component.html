@@ -2,11 +2,7 @@
   <section class="ui-card">
     <h3 class="section-title">Registro de Vacas Paridas</h3>
 
-    <form
-      [formGroup]="form"
-      #formDir="ngForm"
-      class="ui-form"
-      (ngSubmit)="submit()"
+    <form [formGroup]="form" #formDir="ngForm" class="ui-form" (ngSubmit)="submit()"
       [class.was-submitted]="formDir.submitted">
       <!-- ===== Identificación ===== -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
@@ -97,11 +93,10 @@
     </form>
   </section>
   <!-- ======= Tabla de Vacas (debajo del registro) ======= -->
-  <section class="ui-card brand-surface mt-3"  [class.is-compact]="dense">
+  <section class="ui-card brand-surface mt-3" [class.is-compact]="dense">
     <div class="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       <div class="flex items-center gap-3">
-        <span
-          class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+        <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
           style="background: var(--table-head-bg); color: var(--table-ink); border: 1px solid var(--table-border)">
           TOTAL: {{ dataSource.filteredData.length }} / {{ totalVacas }}
         </span>
@@ -112,19 +107,30 @@
         <!-- Búsqueda -->
         <mat-form-field appearance="outline" class="ui-search no-ripple w-full md:w-80">
           <mat-label>Buscar Nº / Nombre / Propietario</mat-label>
-          <input matInput [formControl]="qCtrl" placeholder="Ej: 10, Pajarito, Juan..." />
+          <input matInput [formControl]="qCtrl" placeholder="Ej: 10, Pajarito..." />
           <button mat-icon-button matSuffix aria-label="clear" (click)="qCtrl.setValue('')">
             <mat-icon>search</mat-icon>
           </button>
         </mat-form-field>
 
         <!-- Columnas -->
-        <button mat-button [matMenuTriggerFor]="colsMenu" class="ui-btn ui-btn-outline">
+        <button mat-flat-button [matMenuTriggerFor]="colsMenu" class="ui-btn mb-4" style="background: var(--primary)">
           <mat-icon class="mr-1">view_column</mat-icon> Columnas
         </button>
-        <mat-menu #colsMenu="matMenu">
+        <button mat-flat-button class="ui-btn ui-btn-outline mb-4" (click)="exportPdf()" style="background: var(--primary)">
+          <mat-icon class="mr-1">picture_as_pdf</mat-icon> PDF
+        </button>
+        <mat-menu #colsMenu="matMenu" xPosition="before">
+          <button mat-menu-item>
+            <mat-checkbox [checked]="allSelected" [indeterminate]="someSelected" (change)="toggleAll($event.checked)">
+              Seleccionar todo
+            </mat-checkbox>
+          </button>
+
+          <mat-divider></mat-divider>
+
           <button mat-menu-item *ngFor="let c of allColumns">
-            <mat-checkbox [checked]="displayedColumns.includes(c.key)" (change)="toggleColumn(c.key, $event.checked)">
+            <mat-checkbox [checked]="isColumnVisible(c.key)" (change)="toggleColumn(c.key, $event.checked)">
               {{ c.label }}
             </mat-checkbox>
           </button>
@@ -133,7 +139,7 @@
     </div>
 
     <div class="ui-table-wrapper">
-      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1 ui-table">
+      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1 ui-table" [trackBy]="trackById">
         <!-- Índice (sticky izquierda) -->
         <ng-container matColumnDef="idx">
           <th mat-header-cell *matHeaderCellDef class="col-sticky" mat-sort-header>#</th>
@@ -220,7 +226,7 @@
 
         <!-- Acciones -->
         <ng-container matColumnDef="acciones">
-          <th mat-header-cell *matHeaderCellDef class="text-right">EDITAR</th>
+          <th mat-header-cell *matHeaderCellDef class="text-right">ACCIONES</th>
           <td mat-cell *matCellDef="let r" class="text-right">
             <button mat-icon-button color="primary" (click)="verDetalle(r)" matTooltip="Detalles">
               <mat-icon>visibility</mat-icon>
@@ -233,7 +239,7 @@
 
         <!-- Filas / Header -->
         <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns; trackBy: trackById"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 
       </table>
 
