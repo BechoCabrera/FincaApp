@@ -51,8 +51,8 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^20.0.2",
-    "@angular/build": "^20.2.0",
-    "@angular/cli": "^20.0.2",
+    "@angular/build": "^20.2.1",
+    "@angular/cli": "^20.2.1",
     "@angular/compiler-cli": "^20.0.2",
     "@playwright/test": "^1.50.1",
     "@tailwindcss/aspect-ratio": "^0.4.2",

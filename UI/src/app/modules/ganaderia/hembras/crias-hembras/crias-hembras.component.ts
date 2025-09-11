@@ -21,6 +21,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { debounceTime, startWith } from 'rxjs';
+import { MatCardAvatar } from "@angular/material/card";
 
 export interface CriaHembra {
   id?: string;
@@ -48,8 +49,8 @@ export interface CriaHembra {
     MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
     MatDatepickerModule, MatNativeDateModule, MatDividerModule, MatSelectModule,
     MatTableModule, MatPaginatorModule, MatSortModule, MatTooltipModule,
-    MatMenuModule, MatCheckboxModule,
-  ],
+    MatMenuModule, MatCheckboxModule
+],
   providers: [DatePipe],
   templateUrl: './crias-hembras.component.html',
   styleUrls: ['./crias-hembras.component.css'],

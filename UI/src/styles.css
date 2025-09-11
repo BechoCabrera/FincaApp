@@ -138,7 +138,7 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+    border-color: var(--primary);
   }
 }
 
@@ -407,13 +407,15 @@ body {
 
     /* Opcionales pero útiles para consistencia */
     --mat-sys-primary-container: color-mix(in oklab, var(--primary) 18%, white);
-    --mat-sys-on-primary-container: var(--foreground);
+    --mat-sys-on-primary-container: var(--primary);
     --mat-sys-outline: var(--border);
+    --mat-fab-small-foreground-color: color-mix(in oklab, var(--primary) 18%, white);
   }
   .dark {
     --mat-sys-primary: var(--primary);
     --mat-sys-on-primary: var(--primary-foreground);
     --mat-sys-outline: var(--border);
+    --mat-sys-surface:color-mix(in oklab, var(--primary) 18%, white);
   }
 }
 @layer components {
@@ -477,6 +479,7 @@ html { transition: font-size .15s ease-out; }
   --field-text: var(--foreground);
   --field-label: var(--muted-foreground);
   --field-placeholder: var(--muted-foreground);
+  --mat-sys-surface:color-mix(in oklab, var(--primary) 18%, white);
 }
 
 .dark {
@@ -486,6 +489,7 @@ html { transition: font-size .15s ease-out; }
   --field-text: var(--foreground);
   --field-label: color-mix(in oklab, var(--foreground) 65%, transparent);
   --field-placeholder: color-mix(in oklab, var(--foreground) 50%, transparent);
+  --mat-sys-surface:color-mix(in oklab, var(--primary) 18%, white);
 }
 
 /* Iconos de suffix/prefix (calendario, flecha select, etc.) */
@@ -570,13 +574,12 @@ html { transition: font-size .15s ease-out; }
 
 /* mejora visual del input del buscador */
 .ui-search .mat-mdc-text-field-wrapper{
-  border-radius: 10px;
-  box-shadow: 0 0 0 1px var(--primary, #3b82f6) inset;
+    box-shadow: none !important;
 }
 .ui-search.mat-mdc-form-field .mdc-notched-outline__leading,
 .ui-search.mat-mdc-form-field .mdc-notched-outline__notch,
 .ui-search.mat-mdc-form-field .mdc-notched-outline__trailing{
-  border-color: var(--primary, #3b82f6);
+  border-color: var(--primary) !important;
 }
 
 .section-title { font-weight: 600; margin: 0 0 .5rem 0; }
@@ -671,6 +674,7 @@ html { transition: font-size .15s ease-out; }
   --mdc-outlined-text-field-hover-outline-color: color-mix(in oklab, var(--primary) 40%, var(--border)) !important;
   --mdc-outlined-text-field-label-text-color: var(--field-label) !important;
   --mdc-outlined-text-field-focus-label-text-color: var(--field-label) !important;
+  --mat-sys-on-primary-container: var(--primary);
 }
 .mat-mdc-form-field .mdc-notched-outline__leading,
 .mat-mdc-form-field .mdc-notched-outline__notch,
@@ -681,4 +685,24 @@ html { transition: font-size .15s ease-out; }
 .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
 .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing{
   border-color: var(--primary) !important;
+}
+
+
+.mat-mdc-mini-fab {
+    width: 40px;
+    height: 40px;
+    background-color: var(--mat-fab-small-container-color, var(--mat-sys-primary-container));
+    border-radius: var(--mat-fab-small-container-shape, var(--mat-sys-corner-medium));
+    color: var(--mat-fab-small-foreground-color, var(--mat-sys-on-primary-container, inherit));
+    box-shadow: var(--mat-fab-small-container-elevation-shadow, var(--mat-sys-level3));
+}
+
+.ui-btn-primary {
+  background: var(--primary) !important;
+  color: var(--on-primary, #fff) !important;
+}
+.ui-btn-primary-cancel {
+  background:  white!important;
+  color: color-mix(in oklab, var(--primary) 78%, white)!important;
+ box-shadow: var(--mat-fab-small-container-elevation-shadow, var(--mat-sys-level1));
 }

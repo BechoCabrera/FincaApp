@@ -87,8 +87,8 @@
 
       <!-- ===== Acciones ===== -->
       <div class="ui-actions ui-field-full">
-        <button class="ui-btn" style="background: var(--primary)" mat-flat-button type="button">Cancelar</button>
-        <button class="ui-btn" style="background: var(--primary)" mat-flat-button type="submit">Guardar</button>
+        <button class="ui-btn ui-btn-primary-cancel" mat-flat-button type="button">Cancelar</button>
+        <button class="ui-btn ui-btn-primary" mat-flat-button type="submit">Guardar</button>
       </div>
     </form>
   </section>
@@ -105,7 +105,7 @@
       <div class="flex flex-col gap-2 md:flex-row md:items-center">
 
         <!-- Búsqueda -->
-        <mat-form-field appearance="outline" class="ui-search no-ripple w-full md:w-80">
+        <mat-form-field appearance="outline" class="ui-search no-ripple w-full md:w-50">
           <mat-label>Buscar Nº / Nombre / Propietario</mat-label>
           <input matInput [formControl]="qCtrl" placeholder="Ej: 10, Pajarito..." />
           <button mat-icon-button matSuffix aria-label="clear" (click)="qCtrl.setValue('')">
@@ -117,8 +117,14 @@
         <button mat-flat-button [matMenuTriggerFor]="colsMenu" class="ui-btn mb-4" style="background: var(--primary)">
           <mat-icon class="mr-1">view_column</mat-icon> Columnas
         </button>
-        <button mat-flat-button class="ui-btn ui-btn-outline mb-4" (click)="exportPdf()" style="background: var(--primary)">
-          <mat-icon class="mr-1">picture_as_pdf</mat-icon> PDF
+         <button
+         style="background: var(--primary)"
+          mat-mini-fab
+          class="ui-fab-pdf mb-4"
+          (click)="exportPdf()"
+          matTooltip="Exportar a PDF"
+          aria-label="Exportar a PDF">
+          <mat-icon>picture_as_pdf</mat-icon>
         </button>
         <mat-menu #colsMenu="matMenu" xPosition="before">
           <button mat-menu-item>

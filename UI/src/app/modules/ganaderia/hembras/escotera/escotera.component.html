@@ -1,1 +1,284 @@
-<p>escotera works!</p>
+<div class="ui-container ui-scrollable">
+  <section class="ui-card">
+    <h3 class="section-title">Registro Escotera</h3>
+
+    <!-- Toolbar selección -->
+    <div class="ui-actions ui-field-full" style="gap: 12px; align-items: center; margin-bottom: 0.5rem">
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Seleccione la vaca</mat-label>
+        <mat-select [(ngModel)]="selectedId" [ngModelOptions]="{ standalone: true }">
+          <mat-option [value]="null">Seleccione</mat-option>
+          <mat-option *ngFor="let v of vacas" [value]="v.id"> {{ v.numero }} — {{ v.nombre }} </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-flat-button class="ui-btn ui-btn-primary" type="button" (click)="onConsultar()">Consultar</button>
+      <button mat-flat-button class="ui-btn ui-btn-primary" type="button" (click)="onNuevo()">Nuevo</button>
+
+      <span
+        class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+        style="margin-left: auto; background: var(--table-head-bg); color: var(--table-ink)">
+        TOTAL: {{ totalCrias }}
+      </span>
+    </div>
+
+    <!-- Formulario -->
+    <form
+      [formGroup]="form"
+      #formDir="ngForm"
+      class="ui-form"
+      (ngSubmit)="submit()"
+      [class.was-submitted]="formDir.submitted">
+      <!-- fila 1 -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Nº Escotera</mat-label>
+        <input matInput formControlName="numeroEscotera" />
+        <mat-error *ngIf="has('numeroEscotera', 'required')">Requerido</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Nombre</mat-label>
+        <input matInput formControlName="nombre" />
+        <mat-error *ngIf="has('nombre', 'required')">Requerido</mat-error>
+      </mat-form-field>
+
+      <!-- fila 2 -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Color</mat-label>
+        <input matInput formControlName="color" />
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Procedencia</mat-label>
+        <input matInput formControlName="procedencia" />
+      </mat-form-field>
+
+      <!-- fila 3 -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Propietario</mat-label>
+        <input matInput formControlName="propietario" />
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>N° Mama</mat-label>
+        <input matInput formControlName="nroMama" />
+      </mat-form-field>
+
+      <!-- fila 4 -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Fecha Nacida</mat-label>
+        <input matInput [matDatepicker]="nacPicker" formControlName="fechaNacida" />
+        <mat-datepicker-toggle matSuffix [for]="nacPicker"></mat-datepicker-toggle>
+        <mat-datepicker #nacPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Tipo leche</mat-label>
+        <input matInput formControlName="tipoLeche" />
+      </mat-form-field>
+
+      <!-- fila 5 -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>F. Palpación</mat-label>
+        <input matInput [matDatepicker]="palpPicker" formControlName="fPalpacion" />
+        <mat-datepicker-toggle matSuffix [for]="palpPicker"></mat-datepicker-toggle>
+        <mat-datepicker #palpPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>D. Preñez</mat-label>
+        <input matInput type="number" formControlName="dPrenez" />
+      </mat-form-field>
+
+      <!-- detalles -->
+      <mat-form-field appearance="fill" class="ui-field-full">
+        <mat-label>Detalles</mat-label>
+        <textarea matInput formControlName="detalles" rows="3"></textarea>
+      </mat-form-field>
+
+      <!-- fecha destete (editable en consulta) -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Ingrese fecha destete</mat-label>
+        <input matInput [matDatepicker]="desPicker" formControlName="fechaDestete" />
+        <mat-datepicker-toggle matSuffix [for]="desPicker"></mat-datepicker-toggle>
+        <mat-datepicker #desPicker></mat-datepicker>
+      </mat-form-field>
+
+      <!-- acciones -->
+      <div class="ui-actions ui-field-full">
+        <button mat-flat-button class="ui-btn ui-btn-primary-cancel">Cancelar</button>
+
+        <button
+          mat-flat-button
+          class="ui-btn ui-btn-primary"
+          type="button"
+          *ngIf="consultMode"
+          (click)="guardarDestete()"
+          [disabled]="isSaving()">
+          Guardar
+        </button>
+
+        <button
+          mat-flat-button
+          class="ui-btn ui-btn-primary"
+          type="submit"
+          *ngIf="!consultMode"
+          [disabled]="!formOk() || isSaving()">
+          Guardar
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ===== tabla ===== -->
+  <section class="ui-card brand-surface mt-3" [class.is-compact]="dense">
+    <div class="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div class="flex items-center gap-3">
+        <span
+          class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+          style="background: var(--table-head-bg); color: var(--table-ink)">
+          TOTAL: {{ dataSource?.filteredData?.length || 0 }} / {{ totalCrias }}
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-2 md:flex-row md:items-center">
+        <!-- búsqueda -->
+        <mat-form-field appearance="outline" class="ui-search no-ripple w-full md:w-40">
+          <mat-label>Buscar por Nº o Nombre</mat-label>
+          <input matInput [formControl]="qCtrl" placeholder="Ej: 10, Abril..." />
+          <button mat-icon-button matSuffix aria-label="clear" (click)="qCtrl.setValue('')">
+            <mat-icon>search</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <!-- filtro finca (opcional) -->
+        <mat-form-field appearance="outline" class="w-full md:w-40">
+          <mat-label>Finca</mat-label>
+          <mat-select [formControl]="fincaCtrl">
+            <mat-option value="">Todas</mat-option>
+            <mat-option *ngFor="let f of fincas" [value]="f.id">{{ f.nombre }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- columnas -->
+        <button mat-flat-button [matMenuTriggerFor]="colsMenu" class="ui-btn ui-btn-primary mb-4">
+          <mat-icon class="mr-1">view_column</mat-icon> Columnas
+        </button>
+        <button
+          mat-mini-fab
+          class="ui-fab-pdf ui-btn-primary mb-4"
+          (click)="exportPdf()"
+          matTooltip="Exportar a PDF"
+          aria-label="Exportar a PDF">
+          <mat-icon>picture_as_pdf</mat-icon>
+        </button>
+
+        <mat-menu #colsMenu="matMenu" xPosition="before">
+          <button mat-menu-item>
+            <mat-checkbox [checked]="allSelected" [indeterminate]="someSelected" (change)="toggleAll($event.checked)">
+              Seleccionar todo
+            </mat-checkbox>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item *ngFor="let c of allColumns">
+            <mat-checkbox [checked]="isColumnVisible(c.key)" (change)="toggleColumn(c.key, $event.checked)">
+              {{ c.label }}
+            </mat-checkbox>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+
+    <div class="ui-table-wrapper">
+      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1 ui-table" [trackBy]="trackById">
+        <!-- índice -->
+        <ng-container matColumnDef="idx">
+          <th mat-header-cell *matHeaderCellDef class="col-sticky" mat-sort-header>#</th>
+          <td mat-cell *matCellDef="let r; let i = index" class="col-sticky">
+            {{ paginator.pageIndex * paginator.pageSize + i + 1 }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="numeroEscotera">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Nº ESCOTERA</th>
+          <td mat-cell *matCellDef="let r">
+            <strong>{{ r.numeroEscotera }}</strong>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>NOMBRE</th>
+          <td mat-cell *matCellDef="let r">{{ r.nombre }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="color">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>COLOR</th>
+          <td mat-cell *matCellDef="let r">{{ r.color }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="procedencia">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>PROCEDENCIA</th>
+          <td mat-cell *matCellDef="let r">{{ r.procedencia }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="propietario">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>PROPIETARIO</th>
+          <td mat-cell *matCellDef="let r">{{ r.propietario }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="nroMama">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>N° MAMA</th>
+          <td mat-cell *matCellDef="let r">{{ r.nroMama }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="fechaNacida">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>F. NACIDA</th>
+          <td mat-cell *matCellDef="let r">{{ r.fechaNacida | date : 'yyyy-MM-dd' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="tipoLeche">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>TIPO LECHE</th>
+          <td mat-cell *matCellDef="let r">{{ r.tipoLeche }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="fPalpacion">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>F. PALPACIÓN</th>
+          <td mat-cell *matCellDef="let r">{{ r.fPalpacion | date : 'yyyy-MM-dd' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="dPrenez">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>D. PREÑEZ</th>
+          <td mat-cell *matCellDef="let r">{{ r.dPrenez }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="detalles">
+          <th mat-header-cell *matHeaderCellDef>DETALLES</th>
+          <td mat-cell *matCellDef="let r">
+            <span class="line-clamp-1" [matTooltip]="r.detalles || ''">{{ r.detalles }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="text-right">ACCIONES</th>
+          <td mat-cell *matCellDef="let r" class="text-right">
+            <button mat-icon-button color="primary" (click)="editar(r)" matTooltip="Editar">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="eliminar(r)" matTooltip="Eliminar">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      <mat-paginator
+        #paginator
+        [pageSize]="10"
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        showFirstLastButtons></mat-paginator>
+    </div>
+  </section>
+</div>
