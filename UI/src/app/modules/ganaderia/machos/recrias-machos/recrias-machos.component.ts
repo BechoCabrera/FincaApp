@@ -5,7 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { firstValueFrom } from 'rxjs';
 
 // Servicio (ajusta el nombre si el tuyo es distinto)
-import { RecriasMachosService } from './recrias-machos.service'
+import { RecriasMachosService } from './recrias-machos.service';
 
 // Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -28,12 +28,16 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 /** Tipos (ajústalos si ya los exportas desde el servicio) */
-interface RecriaResumen { id: string; numero: number; nombre: string; }
+interface RecriaResumen {
+  id: string;
+  numero: number;
+  nombre: string;
+}
 interface RecriaDetalle {
   id: string;
   numero: number;
   nombre: string;
-  fechaNac?: string | Date | null;
+  fechaNac?: Date | null;
   pesoKg?: number | null;
   color?: string | null;
   propietario?: string | null;
@@ -72,7 +76,7 @@ interface RecriaDetalle {
 })
 export class RecriasMachosComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
-  private svc:any = null;
+  private svc: any = null;
 
   /** UI state */
   dense = false;
@@ -83,7 +87,9 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   recrias: RecriaResumen[] = [];
   selectedId: string | null = null;
   totalRecrias = 0;
-  get totalCrias() { return this.totalRecrias; } // alias usado por el HTML
+  get totalCrias() {
+    return this.totalRecrias;
+  } // alias usado por el HTML
 
   /** Catálogos (dummy; cambia a servicio si aplica) */
   fincas = [
@@ -92,7 +98,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     { id: 'F3', nombre: 'San Antonio' },
   ];
   madres = [
-    { numero: '42',  nombre: 'Reina' },
+    { numero: '42', nombre: 'Reina' },
     { numero: '382', nombre: 'Brisa' },
     { numero: '309', nombre: 'Luna' },
   ];
@@ -101,23 +107,32 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   form!: FormGroup;
 
   /** Tabla */
-  dataSource:any = new MatTableDataSource<RecriaDetalle>([]);
+  dataSource: any = new MatTableDataSource<RecriaDetalle>([]);
   displayedColumns: string[] = [
-    'idx', 'numero', 'nombre', 'fechaNac', 'color', 'pesoKg',
-    'propietario', 'madreNumero', 'madreNombre', 'detalles', 'acciones'
+    'idx',
+    'numero',
+    'nombre',
+    'fechaNac',
+    'color',
+    'pesoKg',
+    'propietario',
+    'madreNumero',
+    'madreNombre',
+    'detalles',
+    'acciones',
   ];
   allColumns = [
-    { key: 'idx',          label: '#' },
-    { key: 'numero',       label: 'Nº' },
-    { key: 'nombre',       label: 'NOMBRE' },
-    { key: 'fechaNac',     label: 'F. NACIMIENTO' },
-    { key: 'color',        label: 'COLOR' },
-    { key: 'pesoKg',       label: 'PESO' },
-    { key: 'propietario',  label: 'PROPIETARIO' },
-    { key: 'madreNumero',  label: 'N° MADRE' },
-    { key: 'madreNombre',  label: 'MADRE' },
-    { key: 'detalles',     label: 'DETALLES' },
-    { key: 'acciones',     label: 'ACCIONES' },
+    { key: 'idx', label: '#' },
+    { key: 'numero', label: 'Nº' },
+    { key: 'nombre', label: 'NOMBRE' },
+    { key: 'fechaNac', label: 'F. NACIMIENTO' },
+    { key: 'color', label: 'COLOR' },
+    { key: 'pesoKg', label: 'PESO' },
+    { key: 'propietario', label: 'PROPIETARIO' },
+    { key: 'madreNumero', label: 'N° MADRE' },
+    { key: 'madreNombre', label: 'MADRE' },
+    { key: 'detalles', label: 'DETALLES' },
+    { key: 'acciones', label: 'ACCIONES' },
   ];
   private visible = new Set(this.displayedColumns);
 
@@ -132,18 +147,18 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   /** ===== Ciclo de vida ===== */
   ngOnInit(): void {
     this.form = this.fb.group({
-      numero:       [null, Validators.required],
-      nombre:       [null, Validators.required],
-      fechaNac:     [null],
-      pesoKg:       [null],
-      color:        [null],
-      propietario:  [null],
-      fincaId:      [null, Validators.required],
-      madreNumero:  [null],
-      detalles:     [null],
-      fechaDestete: [null],
+      numero: [null, Validators.required],
+      nombre: [null, Validators.required],
+      fechaNac: [null as Date | null],
+      pesoKg: [null],
+      color: [null],
+      propietario: [null],
+      fincaId: [null, Validators.required],
+      madreNumero: [null],
+      detalles: [null],
+      fechaDestete: [null as Date | null],
     });
-    this.cargarRecrias();
+     //this.cargarRecrias();
   }
 
   ngAfterViewInit(): void {
@@ -151,14 +166,12 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     this.dataSource.sort = this.sort;
 
     // Filtro compuesto (texto + finca)
-    this.dataSource.filterPredicate = (row: { numero: any; nombre: any; fincaId: string; }, filterJson: string) => {
+    this.dataSource.filterPredicate = (row: { numero: any; nombre: any; fincaId: string }, filterJson: string) => {
       const f = JSON.parse(filterJson) as { q: string; fincaId: string };
       const q = (f.q || '').toLowerCase();
       const finca = f.fincaId || '';
-      const matchTexto =
-        (String(row.numero || '')).includes(q) ||
-        (row.nombre || '').toLowerCase().includes(q);
-      const matchFinca = !finca || (row.fincaId === finca);
+      const matchTexto = String(row.numero || '').includes(q) || (row.nombre || '').toLowerCase().includes(q);
+      const matchFinca = !finca || row.fincaId === finca;
       return matchTexto && matchFinca;
     };
 
@@ -171,14 +184,18 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     const c = this.form.get(ctrl);
     return !!c && (c.touched || c.dirty) && c.hasError(err);
   }
-  formOk() { return this.form.valid; }
-  isSaving() { return this.loading; }
+  formOk() {
+    return this.form.valid;
+  }
+  isSaving() {
+    return this.loading;
+  }
 
   /** ===== Data ===== */
   private applyFilter() {
     this.dataSource.filter = JSON.stringify({
       q: this.qCtrl.value || '',
-      fincaId: this.fincaCtrl.value || ''
+      fincaId: this.fincaCtrl.value || '',
     });
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   }
@@ -186,12 +203,12 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   async cargarRecrias() {
     this.loading = true;
     try {
-      const res:any = await firstValueFrom(this.svc.listarRecrias());
+      const res: any = await firstValueFrom(this.svc.listarRecrias());
       this.recrias = res.items;
       this.totalRecrias = res.total;
 
       // Mapeo básico para la tabla si el listado no trae todos los campos
-      const rows: RecriaDetalle[] = res.items.map((it:any) => ({
+      const rows: RecriaDetalle[] = res.items.map((it: any) => ({
         id: it.id,
         numero: it.numero,
         nombre: it.nombre,
@@ -203,7 +220,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
         madreNumero: null,
         madreNombre: null,
         detalles: null,
-        fechaDestete: null
+        fechaDestete: null,
       }));
       this.dataSource.data = rows;
       this.applyFilter();
@@ -216,27 +233,29 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     if (!this.selectedId) return;
     this.loading = true;
     try {
-      const det:any = await firstValueFrom(this.svc.obtenerRecriaPorId(this.selectedId));
+      const det: any = await firstValueFrom(this.svc.obtenerRecriaPorId(this.selectedId));
       if (!det) return;
 
       this.form.patchValue({
-        numero:       det.numero,
-        nombre:       det.nombre,
-        fechaNac:     det.fechaNac ?? null,
-        pesoKg:       det.pesoKg ?? null,
-        color:        det.color ?? null,
-        propietario:  det.propietario ?? null,
-        fincaId:      det.fincaId ?? null,
-        madreNumero:  det.madreNumero ?? null,
-        detalles:     det.detalles ?? null,
+        numero: det.numero,
+        nombre: det.nombre,
+        fechaNac: det.fechaNac ?? null,
+        pesoKg: det.pesoKg ?? null,
+        color: det.color ?? null,
+        propietario: det.propietario ?? null,
+        fincaId: det.fincaId ?? null,
+        madreNumero: det.madreNumero ?? null,
+        detalles: det.detalles ?? null,
         fechaDestete: det.fechaDestete ?? null,
       });
 
       // Mostrar consultada en la tabla (opcional)
-      this.dataSource.data = [{
-        ...det,
-        madreNombre: det.madreNombre ?? null
-      }];
+      this.dataSource.data = [
+        {
+          ...det,
+          madreNombre: det.madreNombre ?? null,
+        },
+      ];
 
       // Bloquear form salvo fechaDestete
       this.consultMode = true;
@@ -270,18 +289,25 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   }
 
   /** ===== Tabla: columnas y acciones ===== */
-  get allSelected() { return this.visible.size === this.allColumns.length; }
-  get someSelected() { return this.visible.size > 0 && !this.allSelected; }
+  get allSelected() {
+    return this.visible.size === this.allColumns.length;
+  }
+  get someSelected() {
+    return this.visible.size > 0 && !this.allSelected;
+  }
 
-  isColumnVisible(key: string) { return this.visible.has(key); }
+  isColumnVisible(key: string) {
+    return this.visible.has(key);
+  }
   toggleColumn(key: string, on: boolean) {
-    if (on) this.visible.add(key); else this.visible.delete(key);
-    this.displayedColumns = this.allColumns.map(c => c.key).filter(k => this.visible.has(k));
+    if (on) this.visible.add(key);
+    else this.visible.delete(key);
+    this.displayedColumns = this.allColumns.map((c) => c.key).filter((k) => this.visible.has(k));
   }
   toggleAll(on: boolean) {
-    if (on) this.visible = new Set(this.allColumns.map(c => c.key));
+    if (on) this.visible = new Set(this.allColumns.map((c) => c.key));
     else this.visible.clear();
-    this.displayedColumns = this.allColumns.map(c => c.key).filter(k => this.visible.has(k));
+    this.displayedColumns = this.allColumns.map((c) => c.key).filter((k) => this.visible.has(k));
   }
 
   editar(row: RecriaDetalle) {
@@ -296,17 +322,22 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
 
   /** ===== Exportación PDF ===== */
   exportPdf() {
-    const exportKeys = this.displayedColumns.filter(k => this.visible.has(k) && k !== 'acciones');
-    const headers = exportKeys.map(k => this.allColumns.find(c => c.key === k)?.label ?? k.toUpperCase());
-    const data = (this.dataSource.filteredData?.length ? this.dataSource.filteredData : this.dataSource.data);
+    const exportKeys = this.displayedColumns.filter((k) => this.visible.has(k) && k !== 'acciones');
+    const headers = exportKeys.map((k) => this.allColumns.find((c) => c.key === k)?.label ?? k.toUpperCase());
+    const data = this.dataSource.filteredData?.length ? this.dataSource.filteredData : this.dataSource.data;
 
-    const rows = data.map((r:any, idx:any) => exportKeys.map(k => {
-      switch (k) {
-        case 'idx':       return String(idx + 1);
-        case 'fechaNac':  return r.fechaNac ? this.formatDate(r.fechaNac) : '';
-        default:          return (r as any)[k] ?? '';
-      }
-    }));
+    const rows = data.map((r: any, idx: any) =>
+      exportKeys.map((k) => {
+        switch (k) {
+          case 'idx':
+            return String(idx + 1);
+          case 'fechaNac':
+            return r.fechaNac ? this.formatDate(r.fechaNac) : '';
+          default:
+            return (r as any)[k] ?? '';
+        }
+      }),
+    );
 
     const orientation = exportKeys.length > 6 ? 'l' : 'p';
     const doc = new jsPDF({ orientation, unit: 'pt', format: 'a4' });
@@ -330,7 +361,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
         const page = doc.getNumberOfPages();
         doc.setFontSize(9);
         doc.text(`Página ${page}`, doc.internal.pageSize.getWidth() - 80, doc.internal.pageSize.getHeight() - 20);
-      }
+      },
     });
 
     doc.save(`recrias_macho_${this.timestamp()}.pdf`);
@@ -338,7 +369,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
 
   /** Utilidades de formato/filename */
   private formatDate(d: string | Date) {
-    const dt = (typeof d === 'string') ? new Date(d) : d;
+    const dt = typeof d === 'string' ? new Date(d) : d;
     if (isNaN(dt.getTime())) return '';
     const yyyy = dt.getFullYear();
     const mm = String(dt.getMonth() + 1).padStart(2, '0');
@@ -361,7 +392,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   }
 
   /** trackBy para mat-table */
-  trackById = (_: number, r: RecriaDetalle) => (r?.id ?? r?.numero ?? _);
+  trackById = (_: number, r: RecriaDetalle) => r?.id ?? r?.numero ?? _;
 
   /** Submit (modo creación/edición normal) */
   submit() {
@@ -370,8 +401,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     if (this.form.invalid) return;
 
     const v = this.form.getRawValue();
-    const toYMD = (d: any) =>
-      d instanceof Date ? d.toISOString().slice(0, 10) : (d || null);
+    const toYMD = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : d || null);
 
     const payload = {
       numero: v.numero,

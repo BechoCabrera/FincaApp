@@ -4,10 +4,12 @@
     {
       "type": "chrome",
       "request": "launch",
-      "name": "Launch Chrome",
-      "url": "http://localhost:4200",
-      "webRoot": "${workspaceFolder}/src",
-      "preLaunchTask": "ng serve"
+      "name": "Launch Chrome against localhost",
+      "url": "http://localhost:4200",  // Asegúrate de que tu aplicación Angular esté corriendo en este puerto
+      "webRoot": "${workspaceFolder}/src",  // Este es el directorio raíz de tu aplicación Angular
+      "preLaunchTask": "ng serve",  // Ejecutará `ng serve` antes de lanzar la aplicación
+      "sourceMaps": true,  // Habilita los source maps para depuración de código TypeScript
+      "trace": true  // (Opcional) Esto permite ver más detalles sobre la depuración
     }
   ]
 }

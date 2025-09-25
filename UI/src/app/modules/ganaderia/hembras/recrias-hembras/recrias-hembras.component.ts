@@ -157,7 +157,7 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
       detalles: [null],
       fechaDestete: [null],
     });
-    this.cargarRecrias();
+    //this.cargarRecrias();
   }
 
   ngAfterViewInit(): void {
@@ -202,7 +202,7 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
   async cargarRecrias() {
     this.loading = true;
     try {
-      const res: any = await firstValueFrom(this.svc.listarRecrias());
+      const res: any = new Object// await firstValueFrom(this.svc.listarRecrias());
       this.recrias = res.items;
       this.totalRecrias = res.total;
 

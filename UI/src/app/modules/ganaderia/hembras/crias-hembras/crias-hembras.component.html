@@ -137,7 +137,7 @@
     </div>
 
     <div class="ui-table-wrapper">
-      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1 ui-table">
+      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1 ui-table" [trackBy]="trackById">
         <!-- índice -->
         <ng-container matColumnDef="idx">
           <th mat-header-cell *matHeaderCellDef class="col-sticky" mat-sort-header>#</th>
@@ -208,7 +208,7 @@
         </ng-container>
         <!-- filas -->
         <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns; trackBy: trackById"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
       </table>
 
       <mat-paginator

@@ -24,7 +24,11 @@ import autoTable from 'jspdf-autotable';
 import { EscoteraService } from './escotera.service';
 
 // ===== Tipos =====
-interface EscoteraResumen { id: string; numero: number; nombre: string; }
+interface EscoteraResumen {
+  id: string;
+  numero: number;
+  nombre: string;
+}
 interface EscoteraDetalle {
   id: string;
   numeroEscotera: number;
@@ -36,11 +40,11 @@ interface EscoteraDetalle {
   fechaNacida?: string | Date | null;
   tipoLeche?: string | null;
   fPalpacion?: string | Date | null;
-  dPrenez?: number | null;             // días de preñez
+  dPrenez?: number | null; // días de preñez
   detalles?: string | null;
   fechaDestete?: string | Date | null;
-  fincaId?: string | null;             // opcional, por si filtras por finca
-  madreNombre?: string | null;         // opcional (tabla)
+  fincaId?: string | null; // opcional, por si filtras por finca
+  madreNombre?: string | null; // opcional (tabla)
 }
 
 @Component({
@@ -71,7 +75,7 @@ interface EscoteraDetalle {
 export class EscoteraComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
   // private svc = inject(EscoteraService);
-  private svc:any = null;
+  private svc: any = null;
 
   // UI state
   dense = false;
@@ -82,7 +86,9 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
   vacas: EscoteraResumen[] = [];
   selectedId: string | null = null;
   totalRegistros = 0;
-  get totalCrias() { return this.totalRegistros; }
+  get totalCrias() {
+    return this.totalRegistros;
+  }
 
   // catálogos dummy (si usas fincas/lo necesitas)
   fincas = [
@@ -97,23 +103,34 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
   // tabla
   dataSource = new MatTableDataSource<EscoteraDetalle>([]);
   displayedColumns: string[] = [
-    'idx', 'numeroEscotera', 'nombre', 'color', 'procedencia', 'propietario',
-    'nroMama', 'fechaNacida', 'tipoLeche', 'fPalpacion', 'dPrenez', 'detalles', 'acciones'
+    'idx',
+    'numeroEscotera',
+    'nombre',
+    'color',
+    'procedencia',
+    'propietario',
+    'nroMama',
+    'fechaNacida',
+    'tipoLeche',
+    'fPalpacion',
+    'dPrenez',
+    'detalles',
+    'acciones',
   ];
   allColumns = [
-    { key: 'idx',            label: '#' },
+    { key: 'idx', label: '#' },
     { key: 'numeroEscotera', label: 'Nº ESCOTERA' },
-    { key: 'nombre',         label: 'NOMBRE' },
-    { key: 'color',          label: 'COLOR' },
-    { key: 'procedencia',    label: 'PROCEDENCIA' },
-    { key: 'propietario',    label: 'PROPIETARIO' },
-    { key: 'nroMama',        label: 'N° MAMA' },
-    { key: 'fechaNacida',    label: 'F. NACIDA' },
-    { key: 'tipoLeche',      label: 'TIPO LECHE' },
-    { key: 'fPalpacion',     label: 'F. PALPACIÓN' },
-    { key: 'dPrenez',        label: 'D. PREÑEZ' },
-    { key: 'detalles',       label: 'DETALLES' },
-    { key: 'acciones',       label: 'ACCIONES' },
+    { key: 'nombre', label: 'NOMBRE' },
+    { key: 'color', label: 'COLOR' },
+    { key: 'procedencia', label: 'PROCEDENCIA' },
+    { key: 'propietario', label: 'PROPIETARIO' },
+    { key: 'nroMama', label: 'N° MAMA' },
+    { key: 'fechaNacida', label: 'F. NACIDA' },
+    { key: 'tipoLeche', label: 'TIPO LECHE' },
+    { key: 'fPalpacion', label: 'F. PALPACIÓN' },
+    { key: 'dPrenez', label: 'D. PREÑEZ' },
+    { key: 'detalles', label: 'DETALLES' },
+    { key: 'acciones', label: 'ACCIONES' },
   ];
   private visible = new Set(this.displayedColumns);
 
@@ -129,19 +146,19 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.form = this.fb.group({
       numeroEscotera: [null, Validators.required],
-      nombre:         [null, Validators.required],
-      color:          [null],
-      procedencia:    [null],
-      propietario:    [null],
-      nroMama:        [null],
-      fechaNacida:    [null],
-      tipoLeche:      [null],
-      fPalpacion:     [null],
-      dPrenez:        [null],
-      detalles:       [null],
-      fechaDestete:   [null],
+      nombre: [null, Validators.required],
+      color: [null],
+      procedencia: [null],
+      propietario: [null],
+      nroMama: [null],
+      fechaNacida: [null],
+      tipoLeche: [null],
+      fPalpacion: [null],
+      dPrenez: [null],
+      detalles: [null],
+      fechaDestete: [null],
     });
-    this.cargarVacas();
+    //this.cargarVacas();
   }
 
   ngAfterViewInit(): void {
@@ -153,10 +170,8 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
       const q = (f.q || '').toLowerCase();
       const finca = f.fincaId || '';
 
-      const matchTexto =
-        String(row.numeroEscotera || '').includes(q) ||
-        (row.nombre || '').toLowerCase().includes(q);
-      const matchFinca = !finca || (row.fincaId === finca);
+      const matchTexto = String(row.numeroEscotera || '').includes(q) || (row.nombre || '').toLowerCase().includes(q);
+      const matchFinca = !finca || row.fincaId === finca;
       return matchTexto && matchFinca;
     };
 
@@ -169,14 +184,18 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
     const c = this.form.get(ctrl);
     return !!c && (c.touched || c.dirty) && c.hasError(err);
   }
-  formOk() { return this.form.valid; }
-  isSaving() { return this.loading; }
+  formOk() {
+    return this.form.valid;
+  }
+  isSaving() {
+    return this.loading;
+  }
 
   // ========= data =========
   private applyFilter() {
     this.dataSource.filter = JSON.stringify({
       q: this.qCtrl.value || '',
-      fincaId: this.fincaCtrl.value || ''
+      fincaId: this.fincaCtrl.value || '',
     });
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   }
@@ -184,18 +203,26 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
   async cargarVacas() {
     this.loading = true;
     try {
-      const res:any = await firstValueFrom(this.svc.listarEscoteras()); // { total, items }
+      const res: any = new Object; //await firstValueFrom(this.svc.listarEscoteras()); // { total, items }
       this.vacas = res.items;
       this.totalRegistros = res.total;
 
       // filas básicas para arrancar la tabla
-      this.dataSource.data = res.items.map((it:any) => ({
+      this.dataSource.data = res.items.map((it: any) => ({
         id: it.id,
         numeroEscotera: it.numero,
         nombre: it.nombre,
-        color: null, procedencia: null, propietario: null, nroMama: null,
-        fechaNacida: null, tipoLeche: null, fPalpacion: null, dPrenez: null,
-        detalles: null, fechaDestete: null, fincaId: null
+        color: null,
+        procedencia: null,
+        propietario: null,
+        nroMama: null,
+        fechaNacida: null,
+        tipoLeche: null,
+        fPalpacion: null,
+        dPrenez: null,
+        detalles: null,
+        fechaDestete: null,
+        fincaId: null,
       }));
       this.applyFilter();
     } finally {
@@ -207,22 +234,22 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
     if (!this.selectedId) return;
     this.loading = true;
     try {
-      const det = await firstValueFrom(this.svc.obtenerEscoteraPorId(this.selectedId)) as EscoteraDetalle;
+      const det = (await firstValueFrom(this.svc.obtenerEscoteraPorId(this.selectedId))) as EscoteraDetalle;
       if (!det) return;
 
       this.form.patchValue({
         numeroEscotera: det.numeroEscotera,
-        nombre:         det.nombre,
-        color:          det.color ?? null,
-        procedencia:    det.procedencia ?? null,
-        propietario:    det.propietario ?? null,
-        nroMama:        det.nroMama ?? null,
-        fechaNacida:    det.fechaNacida ?? null,
-        tipoLeche:      det.tipoLeche ?? null,
-        fPalpacion:     det.fPalpacion ?? null,
-        dPrenez:        det.dPrenez ?? null,
-        detalles:       det.detalles ?? null,
-        fechaDestete:   det.fechaDestete ?? null,
+        nombre: det.nombre,
+        color: det.color ?? null,
+        procedencia: det.procedencia ?? null,
+        propietario: det.propietario ?? null,
+        nroMama: det.nroMama ?? null,
+        fechaNacida: det.fechaNacida ?? null,
+        tipoLeche: det.tipoLeche ?? null,
+        fPalpacion: det.fPalpacion ?? null,
+        dPrenez: det.dPrenez ?? null,
+        detalles: det.detalles ?? null,
+        fechaDestete: det.fechaDestete ?? null,
       });
 
       this.dataSource.data = [{ ...det }];
@@ -257,24 +284,35 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
   }
 
   // ========= tabla: columnas / acciones =========
-  get allSelected() { return this.visible.size === this.allColumns.length; }
-  get someSelected() { return this.visible.size > 0 && !this.allSelected; }
+  get allSelected() {
+    return this.visible.size === this.allColumns.length;
+  }
+  get someSelected() {
+    return this.visible.size > 0 && !this.allSelected;
+  }
 
-  isColumnVisible(key: string) { return this.visible.has(key); }
+  isColumnVisible(key: string) {
+    return this.visible.has(key);
+  }
   toggleColumn(key: string, on: boolean) {
-    if (on) this.visible.add(key); else this.visible.delete(key);
-    this.displayedColumns = this.allColumns.map(c => c.key).filter(k => this.visible.has(k));
+    if (on) this.visible.add(key);
+    else this.visible.delete(key);
+    this.displayedColumns = this.allColumns.map((c) => c.key).filter((k) => this.visible.has(k));
   }
   toggleAll(on: boolean) {
-    if (on) this.visible = new Set(this.allColumns.map(c => c.key));
+    if (on) this.visible = new Set(this.allColumns.map((c) => c.key));
     else this.visible.clear();
-    this.displayedColumns = this.allColumns.map(c => c.key).filter(k => this.visible.has(k));
+    this.displayedColumns = this.allColumns.map((c) => c.key).filter((k) => this.visible.has(k));
   }
 
-  editar(row: EscoteraDetalle) { console.log('editar()', row); }
-  eliminar(row: EscoteraDetalle) { console.log('eliminar()', row); }
+  editar(row: EscoteraDetalle) {
+    console.log('editar()', row);
+  }
+  eliminar(row: EscoteraDetalle) {
+    console.log('eliminar()', row);
+  }
 
-  trackById = (_: number, r: EscoteraDetalle) => (r?.id ?? r?.numeroEscotera ?? _);
+  trackById = (_: number, r: EscoteraDetalle) => r?.id ?? r?.numeroEscotera ?? _;
 
   // submit normal (si decides permitir crear/editar fuera de consulta)
   submit() {
@@ -283,7 +321,7 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
     if (this.form.invalid) return;
 
     const v = this.form.getRawValue();
-    const toYMD = (d: any) => d instanceof Date ? d.toISOString().slice(0, 10) : (d || null);
+    const toYMD = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : d || null);
 
     const payload = {
       numeroEscotera: v.numeroEscotera,
@@ -305,73 +343,78 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
   }
 
   exportPdf() {
-  // Columnas exportables = visibles menos 'acciones'
-  const exportKeys = this.displayedColumns.filter(k => this.visible.has(k) && k !== 'acciones');
-  const headers = exportKeys.map(k => this.allColumns.find(c => c.key === k)?.label ?? k.toUpperCase());
+    // Columnas exportables = visibles menos 'acciones'
+    const exportKeys = this.displayedColumns.filter((k) => this.visible.has(k) && k !== 'acciones');
+    const headers = exportKeys.map((k) => this.allColumns.find((c) => c.key === k)?.label ?? k.toUpperCase());
 
-  // Datos (usa filtrados si hay filtro activo)
-  const data = this.dataSource.filteredData?.length ? this.dataSource.filteredData : this.dataSource.data;
+    // Datos (usa filtrados si hay filtro activo)
+    const data = this.dataSource.filteredData?.length ? this.dataSource.filteredData : this.dataSource.data;
 
-  // Construir filas
-  const rows = data.map((r: any, idx: number) => exportKeys.map(k => {
-    switch (k) {
-      case 'idx':            return String(idx + 1);
-      case 'fechaNacida':    return r.fechaNacida ? this.formatDate(r.fechaNacida) : '';
-      case 'fPalpacion':     return r.fPalpacion ? this.formatDate(r.fPalpacion) : '';
-      default:               return r[k] ?? '';
-    }
-  }));
+    // Construir filas
+    const rows = data.map((r: any, idx: number) =>
+      exportKeys.map((k) => {
+        switch (k) {
+          case 'idx':
+            return String(idx + 1);
+          case 'fechaNacida':
+            return r.fechaNacida ? this.formatDate(r.fechaNacida) : '';
+          case 'fPalpacion':
+            return r.fPalpacion ? this.formatDate(r.fPalpacion) : '';
+          default:
+            return r[k] ?? '';
+        }
+      }),
+    );
 
-  const orientation = exportKeys.length > 6 ? 'l' : 'p';
-  const doc = new jsPDF({ orientation, unit: 'pt', format: 'a4' });
+    const orientation = exportKeys.length > 6 ? 'l' : 'p';
+    const doc = new jsPDF({ orientation, unit: 'pt', format: 'a4' });
 
-  const title = 'Registro Escotera';
-  const subtitle = `Generado: ${this.formatDateTime(new Date())}   Registros: ${rows.length}`;
+    const title = 'Registro Escotera';
+    const subtitle = `Generado: ${this.formatDateTime(new Date())}   Registros: ${rows.length}`;
 
-  doc.setFontSize(14);
-  doc.text(title, 40, 40);
-  doc.setFontSize(10);
-  doc.text(subtitle, 40, 58);
+    doc.setFontSize(14);
+    doc.text(title, 40, 40);
+    doc.setFontSize(10);
+    doc.text(subtitle, 40, 58);
 
-  autoTable(doc, {
-    head: [headers],
-    body: rows,
-    startY: 72,
-    styles: { fontSize: 9, cellPadding: 4 },
-    headStyles: { fillColor: [31, 59, 87], textColor: 255 },
-    margin: { left: 40, right: 40 },
-    didDrawPage: () => {
-      const page = doc.getNumberOfPages();
-      doc.setFontSize(9);
-      doc.text(`Página ${page}`, doc.internal.pageSize.getWidth() - 80, doc.internal.pageSize.getHeight() - 20);
-    }
-  });
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 72,
+      styles: { fontSize: 9, cellPadding: 4 },
+      headStyles: { fillColor: [31, 59, 87], textColor: 255 },
+      margin: { left: 40, right: 40 },
+      didDrawPage: () => {
+        const page = doc.getNumberOfPages();
+        doc.setFontSize(9);
+        doc.text(`Página ${page}`, doc.internal.pageSize.getWidth() - 80, doc.internal.pageSize.getHeight() - 20);
+      },
+    });
 
-  doc.save(`escotera_${this.timestamp()}.pdf`);
-}
+    doc.save(`escotera_${this.timestamp()}.pdf`);
+  }
 
-/* ===== helpers ===== */
-private formatDate(d: string | Date) {
-  const dt = (typeof d === 'string') ? new Date(d) : d;
-  if (isNaN(dt.getTime())) return '';
-  const yyyy = dt.getFullYear();
-  const mm = String(dt.getMonth() + 1).padStart(2, '0');
-  const dd = String(dt.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-private formatDateTime(d: Date) {
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mi = String(d.getMinutes()).padStart(2, '0');
-  return `${this.formatDate(d)} ${hh}:${mi}`;
-}
-private timestamp() {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mi = String(d.getMinutes()).padStart(2, '0');
-  return `${yyyy}${mm}${dd}_${hh}${mi}`;
-}
-
+  /* ===== helpers ===== */
+  private formatDate(d: string | Date) {
+    const dt = typeof d === 'string' ? new Date(d) : d;
+    if (isNaN(dt.getTime())) return '';
+    const yyyy = dt.getFullYear();
+    const mm = String(dt.getMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  private formatDateTime(d: Date) {
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${this.formatDate(d)} ${hh}:${mi}`;
+  }
+  private timestamp() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${yyyy}${mm}${dd}_${hh}${mi}`;
+  }
 }

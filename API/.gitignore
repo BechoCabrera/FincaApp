@@ -1,0 +1,91 @@
+# =======================
+# Visual Studio / .NET
+# =======================
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / JetBrains
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# =======================
+# Build Folders
+# =======================
+bin/
+obj/
+out/
+
+# =======================
+# NuGet
+# =======================
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+*.nuget.cache
+
+# =======================
+# ASP.NET Core / Web
+# =======================
+appsettings.*.json.user
+launchSettings.json
+
+# Logs
+*.log
+logs/
+
+# =======================
+# OS Files
+# =======================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =======================
+# Entity Framework / Migrations
+# =======================
+Migrations/
+*.dbmdl
+*.dbproj.user
+*.pfx
+*.key
+*.publish.xml
+
+# =======================
+# Test / Coverage
+# =======================
+TestResults/
+*.coverage
+*.coveragexml
+*.trx
+
+# =======================
+# Temporary / Backup files
+# =======================
+*.tmp
+*.bak
+*.swp
+
+# =======================
+# Folders específicos de proyectos
+# =======================
+# API
+FincaAppApi/bin/
+FincaAppApi/obj/
+
+# Application
+FincaAppApplication/bin/
+FincaAppApplication/obj/
+
+# Infrastructure
+FincaAppInfrastructure/bin/
+FincaAppInfrastructure/obj/
+
+# Domain
+FincaAppDomain/bin/
+FincaAppDomain/obj/

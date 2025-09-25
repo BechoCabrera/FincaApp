@@ -25,15 +25,19 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 // Servicio (te lo paso si lo pides)
-import { ProximasService } from './proximas.service';
+// import { ProximasService } from './proximas.service';
 
 type TipoOrigen = 'escotera' | 'novilla';
 
-interface OpcionAnimal { id: string; numero: number | string; nombre: string; }
+interface OpcionAnimal {
+  id: string;
+  numero: number | string;
+  nombre: string;
+}
 
 interface ProximaDetalle {
   id: string;
-  tipo: TipoOrigen;            // de dónde viene (escotera/novilla)
+  tipo: TipoOrigen; // de dónde viene (escotera/novilla)
   numero: number | string;
   nombre: string;
   fechaNac?: string | Date | null;
@@ -75,7 +79,8 @@ interface ProximaDetalle {
 })
 export class ProximasComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
-  private svc = inject(ProximasService);
+  private svc: any = null;
+  // private svc = inject(ProximasService);
 
   // ===== UI State
   loading = false;
@@ -84,11 +89,13 @@ export class ProximasComponent implements OnInit, AfterViewInit {
 
   // ===== Selectores
   tipo: TipoOrigen = 'escotera';
-  opciones: OpcionAnimal[] = [];   // opciones del select según tipo
+  opciones: OpcionAnimal[] = []; // opciones del select según tipo
   selectedId: string | null = null;
 
   total = 0;
-  get totalCrias() { return this.total; }
+  get totalCrias() {
+    return this.total;
+  }
 
   // ===== Form
   form!: FormGroup;
@@ -96,24 +103,36 @@ export class ProximasComponent implements OnInit, AfterViewInit {
   // ===== Tabla
   dataSource = new MatTableDataSource<ProximaDetalle>([]);
   displayedColumns: string[] = [
-    'idx','tipo','numero','nombre','fechaNac','color','nroMama','procedencia',
-    'propietario','fechaDestete','fPalpacion','dPrenes','detalles','acciones'
+    'idx',
+    'tipo',
+    'numero',
+    'nombre',
+    'fechaNac',
+    'color',
+    'nroMama',
+    'procedencia',
+    'propietario',
+    'fechaDestete',
+    'fPalpacion',
+    'dPrenes',
+    'detalles',
+    'acciones',
   ];
   allColumns = [
-    { key: 'idx',           label: '#' },
-    { key: 'tipo',          label: 'ORIGEN' },
-    { key: 'numero',        label: 'Nº' },
-    { key: 'nombre',        label: 'NOMBRE' },
-    { key: 'fechaNac',      label: 'F. NACIO' },
-    { key: 'color',         label: 'COLOR' },
-    { key: 'nroMama',       label: 'N° MAMA' },
-    { key: 'procedencia',   label: 'PROCEDENCIA' },
-    { key: 'propietario',   label: 'PROPIETARIO' },
-    { key: 'fechaDestete',  label: 'F. DESTETE' },
-    { key: 'fPalpacion',    label: 'F. PALPACIÓN' },
-    { key: 'dPrenes',       label: 'D. PREÑES' },
-    { key: 'detalles',      label: 'DETALLES' },
-    { key: 'acciones',      label: 'ACCIONES' },
+    { key: 'idx', label: '#' },
+    { key: 'tipo', label: 'ORIGEN' },
+    { key: 'numero', label: 'Nº' },
+    { key: 'nombre', label: 'NOMBRE' },
+    { key: 'fechaNac', label: 'F. NACIO' },
+    { key: 'color', label: 'COLOR' },
+    { key: 'nroMama', label: 'N° MAMA' },
+    { key: 'procedencia', label: 'PROCEDENCIA' },
+    { key: 'propietario', label: 'PROPIETARIO' },
+    { key: 'fechaDestete', label: 'F. DESTETE' },
+    { key: 'fPalpacion', label: 'F. PALPACIÓN' },
+    { key: 'dPrenes', label: 'D. PREÑES' },
+    { key: 'detalles', label: 'DETALLES' },
+    { key: 'acciones', label: 'ACCIONES' },
   ];
   private visible = new Set(this.displayedColumns);
 
@@ -127,21 +146,21 @@ export class ProximasComponent implements OnInit, AfterViewInit {
   // ====== Lifecycle
   ngOnInit(): void {
     this.form = this.fb.group({
-      numero:        [null, Validators.required],
-      nombre:        [null, Validators.required],
-      fechaNac:      [null],
-      color:         [null],
-      nroMama:       [null],
-      procedencia:   [null],
-      propietario:   [null],
-      fechaDestete:  [null],
-      fPalpacion:    [null],
-      dPrenes:       [null],
-      detalles:      [null],
+      numero: [null, Validators.required],
+      nombre: [null, Validators.required],
+      fechaNac: [null],
+      color: [null],
+      nroMama: [null],
+      procedencia: [null],
+      propietario: [null],
+      fechaDestete: [null],
+      fPalpacion: [null],
+      dPrenes: [null],
+      detalles: [null],
     });
 
-    this.cargarOpciones();      // carga opciones para el tipo inicial
-    this.cargarTabla();         // carga tabla (ambos tipos o el que decidas mostrar)
+    this.cargarOpciones(); // carga opciones para el tipo inicial
+    //this.cargarTabla(); // carga tabla (ambos tipos o el que decidas mostrar)
   }
 
   ngAfterViewInit(): void {
@@ -165,8 +184,12 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     const c = this.form.get(ctrl);
     return !!c && (c.touched || c.dirty) && c.hasError(err);
   }
-  formOk() { return this.form.valid; }
-  isSaving() { return this.loading; }
+  formOk() {
+    return this.form.valid;
+  }
+  isSaving() {
+    return this.loading;
+  }
 
   // ====== Data
   private applyFilter() {
@@ -176,7 +199,7 @@ export class ProximasComponent implements OnInit, AfterViewInit {
 
   async cargarOpciones() {
     // carga opciones para el tipo seleccionado
-    const res = await firstValueFrom(this.svc.listarOpciones(this.tipo));
+    const res: any = new Object// await firstValueFrom(this.svc.listarOpciones(this.tipo));
     this.opciones = res.items; // [{id, numero, nombre}]
     this.selectedId = null;
   }
@@ -185,13 +208,13 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     this.loading = true;
     try {
       // Puedes cargar ambos tipos concatenados para mostrar un padrón general
-      const [esc, nov] = await Promise.all([
+      const [esc, nov]: any = await Promise.all([
         firstValueFrom(this.svc.listar('escotera')),
         firstValueFrom(this.svc.listar('novilla')),
       ]);
       const a: ProximaDetalle[] = [
         ...esc.items.map((x: any) => ({ ...x, tipo: 'escotera' as const })),
-        ...nov.items.map((x: any) => ({ ...x, tipo: 'novilla'  as const })),
+        ...nov.items.map((x: any) => ({ ...x, tipo: 'novilla' as const })),
       ];
       this.dataSource.data = a;
       this.total = esc.total + nov.total;
@@ -205,21 +228,21 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     if (!this.selectedId) return;
     this.loading = true;
     try {
-      const det = await firstValueFrom(this.svc.obtenerPorId(this.tipo, this.selectedId));
+      const det:any = await firstValueFrom(this.svc.obtenerPorId(this.tipo, this.selectedId));
       if (!det) return;
 
       this.form.patchValue({
-        numero:       det.numero,
-        nombre:       det.nombre,
-        fechaNac:     det.fechaNac ?? null,
-        color:        det.color ?? null,
-        nroMama:      det.nroMama ?? null,
-        procedencia:  det.procedencia ?? null,
-        propietario:  det.propietario ?? null,
+        numero: det.numero,
+        nombre: det.nombre,
+        fechaNac: det.fechaNac ?? null,
+        color: det.color ?? null,
+        nroMama: det.nroMama ?? null,
+        procedencia: det.procedencia ?? null,
+        propietario: det.propietario ?? null,
         fechaDestete: det.fechaDestete ?? null,
-        fPalpacion:   det.fPalpacion ?? null,
-        dPrenes:      det.dPrenes ?? null,
-        detalles:     det.detalles ?? null,
+        fPalpacion: det.fPalpacion ?? null,
+        dPrenes: det.dPrenes ?? null,
+        detalles: det.detalles ?? null,
       });
 
       // Mostrar sólo lo consultado (opcional)
@@ -234,6 +257,8 @@ export class ProximasComponent implements OnInit, AfterViewInit {
       this.loading = false;
     }
   }
+
+  submit() {}
 
   onNuevo() {
     this.consultMode = false;
@@ -256,43 +281,63 @@ export class ProximasComponent implements OnInit, AfterViewInit {
   }
 
   // ====== Tabla: columnas
-  get allSelected() { return this.visible.size === this.allColumns.length; }
-  get someSelected() { return this.visible.size > 0 && !this.allSelected; }
-  isColumnVisible(key: string) { return this.visible.has(key); }
+  get allSelected() {
+    return this.visible.size === this.allColumns.length;
+  }
+  get someSelected() {
+    return this.visible.size > 0 && !this.allSelected;
+  }
+  isColumnVisible(key: string) {
+    return this.visible.has(key);
+  }
   toggleColumn(key: string, on: boolean) {
-    if (on) this.visible.add(key); else this.visible.delete(key);
-    this.displayedColumns = this.allColumns.map(c => c.key).filter(k => this.visible.has(k));
+    if (on) this.visible.add(key);
+    else this.visible.delete(key);
+    this.displayedColumns = this.allColumns.map((c) => c.key).filter((k) => this.visible.has(k));
   }
   toggleAll(on: boolean) {
-    if (on) this.visible = new Set(this.allColumns.map(c => c.key));
+    if (on) this.visible = new Set(this.allColumns.map((c) => c.key));
     else this.visible.clear();
-    this.displayedColumns = this.allColumns.map(c => c.key).filter(k => this.visible.has(k));
+    this.displayedColumns = this.allColumns.map((c) => c.key).filter((k) => this.visible.has(k));
   }
 
-  editar(row: ProximaDetalle) { console.log('editar()', row); }
-  eliminar(row: ProximaDetalle) { console.log('eliminar()', row); }
+  editar(row: ProximaDetalle) {
+    console.log('editar()', row);
+  }
+  eliminar(row: ProximaDetalle) {
+    console.log('eliminar()', row);
+  }
 
   // ====== Exportación PDF
   exportPdf() {
-    const exportKeys = this.displayedColumns.filter(k => this.visible.has(k) && k !== 'acciones');
-    const headers = exportKeys.map(k => this.allColumns.find(c => c.key === k)?.label ?? k.toUpperCase());
+    const exportKeys = this.displayedColumns.filter((k) => this.visible.has(k) && k !== 'acciones');
+    const headers = exportKeys.map((k) => this.allColumns.find((c) => c.key === k)?.label ?? k.toUpperCase());
     const data = this.dataSource.filteredData?.length ? this.dataSource.filteredData : this.dataSource.data;
 
-    const rows = data.map((r, idx) => exportKeys.map(k => {
-      switch (k) {
-        case 'idx':           return String(idx + 1);
-        case 'fechaNac':      return r.fechaNac ? this.formatDate(r.fechaNac) : '';
-        case 'fechaDestete':  return r.fechaDestete ? this.formatDate(r.fechaDestete) : '';
-        case 'fPalpacion':    return r.fPalpacion ? this.formatDate(r.fPalpacion) : '';
-        default:              return (r as any)[k] ?? '';
-      }
-    }));
+    const rows = data.map((r, idx) =>
+      exportKeys.map((k) => {
+        switch (k) {
+          case 'idx':
+            return String(idx + 1);
+          case 'fechaNac':
+            return r.fechaNac ? this.formatDate(r.fechaNac) : '';
+          case 'fechaDestete':
+            return r.fechaDestete ? this.formatDate(r.fechaDestete) : '';
+          case 'fPalpacion':
+            return r.fPalpacion ? this.formatDate(r.fPalpacion) : '';
+          default:
+            return (r as any)[k] ?? '';
+        }
+      }),
+    );
 
     const orientation = exportKeys.length > 7 ? 'l' : 'p';
     const doc = new jsPDF({ orientation, unit: 'pt', format: 'a4' });
 
     const title = 'Vacas Próximas';
-    const subtitle = `Tipo: ${this.tipo.toUpperCase()} / Generado: ${this.formatDateTime(new Date())} / Registros: ${rows.length}`;
+    const subtitle = `Tipo: ${this.tipo.toUpperCase()} / Generado: ${this.formatDateTime(new Date())} / Registros: ${
+      rows.length
+    }`;
 
     doc.setFontSize(14);
     doc.text(title, 40, 40);
@@ -310,7 +355,7 @@ export class ProximasComponent implements OnInit, AfterViewInit {
         const page = doc.getNumberOfPages();
         doc.setFontSize(9);
         doc.text(`Página ${page}`, doc.internal.pageSize.getWidth() - 80, doc.internal.pageSize.getHeight() - 20);
-      }
+      },
     });
 
     doc.save(`proximas_${this.timestamp()}.pdf`);
@@ -318,7 +363,7 @@ export class ProximasComponent implements OnInit, AfterViewInit {
 
   // ====== utils
   private formatDate(d: string | Date) {
-    const dt = (typeof d === 'string') ? new Date(d) : d;
+    const dt = typeof d === 'string' ? new Date(d) : d;
     if (isNaN(dt.getTime())) return '';
     const yyyy = dt.getFullYear();
     const mm = String(dt.getMonth() + 1).padStart(2, '0');
