@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using FincaAppApi.Application.Features.Requests.ToroRequest;
-using FincaAppApi.Domain.Entities;
-using FincaAppApi.Domain.Interfaces;
+using FincaAppDomain.Entities;
 using FincaAppApi.DTOs.Toro;
+using FincaAppDomain.Interfaces;
 using MediatR;
 
 namespace FincaAppApi.Application.Features.Handlers.ToroHandler

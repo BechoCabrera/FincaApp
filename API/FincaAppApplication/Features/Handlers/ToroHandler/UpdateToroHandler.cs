@@ -1,7 +1,8 @@
 ﻿using AutoMapper;
 using FincaAppApi.Application.Features.Requests.ToroRequest;
-using FincaAppApi.Domain.Interfaces;
 using FincaAppApi.DTOs.Toro;
+using FincaAppDomain.Entities;
+using FincaAppDomain.Interfaces;
 using MediatR;
 
 namespace FincaAppApi.Application.Features.Handlers.ToroHandler
@@ -19,7 +20,7 @@ namespace FincaAppApi.Application.Features.Handlers.ToroHandler
 
         public async Task<ToroDto> Handle(UpdateToroRequest request, CancellationToken cancellationToken)
         {
-            var toro = await _toroRepository.GetByIdAsync(request.Id);
+            Toro? toro = await _toroRepository.GetByIdAsync(request.Id);
             if (toro == null)
             {
                 throw new KeyNotFoundException("Toro no encontrado.");

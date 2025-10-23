@@ -1,9 +1,9 @@
-﻿using FincaAppApi.Data;
-using FincaAppApi.Domain.Entities;
-using FincaAppApi.Domain.Interfaces;
+﻿using FincaAppDomain.Entities;
+using FincaAppDomain.Interfaces;
+using FincaAppInfrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace FincaAppApi.Infrastructure.Repositories
+namespace FincaAppInfrastructure.Repositories
 {
     public class ToroRepository : IToroRepository
     {
@@ -21,10 +21,8 @@ namespace FincaAppApi.Infrastructure.Repositories
             return toro;
         }
 
-        public async Task<Toro> GetByIdAsync(Guid id)
-        {
-            return await _context.Toros.FirstOrDefaultAsync(t => t.Id == id);
-        }
+        public Task<Toro?> GetByIdAsync(Guid id) => _context.Toros.FindAsync(id).AsTask();
+
 
         public async Task<IEnumerable<Toro>> GetAllAsync()
         {

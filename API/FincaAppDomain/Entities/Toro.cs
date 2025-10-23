@@ -1,6 +1,8 @@
-﻿namespace FincaAppApi.Domain.Entities
+﻿using FincaAppDomain.Common;
+
+namespace FincaAppDomain.Entities
 {
-    public class Toro
+    public class Toro : BaseEntity
     {
         public Guid Id { get; set; }
         public string Numero { get; set; } = string.Empty;
