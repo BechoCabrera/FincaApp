@@ -26,6 +26,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 // PDF
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { ToroService } from 'src/app/core/services/toro.service';
 
 /** Tipos (ajústalos si ya los exportas desde el servicio) */
 interface ToreteResumen {
@@ -75,6 +76,8 @@ interface ToreteDetalle {
   ],
 })
 export class ToretesComponent implements OnInit, AfterViewInit {
+  constructor(private toroService: ToroService) {}
+
   private fb = inject(FormBuilder);
   private svc: any = null;
 

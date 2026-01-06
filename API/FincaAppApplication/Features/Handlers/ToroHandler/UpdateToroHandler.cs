@@ -1,40 +1,42 @@
 ﻿using AutoMapper;
-using FincaAppApi.Application.Features.Requests.ToroRequest;
-using FincaAppApi.DTOs.Toro;
-using FincaAppDomain.Entities;
-using FincaAppDomain.Interfaces;
 using MediatR;
+using FincaAppApplication.Features.Requests.ToroRequest;
+using FincaAppDomain.Interfaces;
+using FincaAppApi.DTOs.Toro;
 
-namespace FincaAppApi.Application.Features.Handlers.ToroHandler
+namespace FincaAppApplication.Features.Handlers.ToroHandler;
+
+public class UpdateToroHandler : IRequestHandler<UpdateToroRequest, ToroDto>
 {
-    public class UpdateToroHandler : IRequestHandler<UpdateToroRequest, ToroDto>
+    private readonly IToroRepository _repo;
+    private readonly IMapper _mapper;
+
+    public UpdateToroHandler(IToroRepository repo, IMapper mapper)
     {
-        private readonly IToroRepository _toroRepository;
-        private readonly IMapper _mapper;
+        _repo = repo;
+        _mapper = mapper;
+    }
 
-        public UpdateToroHandler(IToroRepository toroRepository, IMapper mapper)
-        {
-            _toroRepository = toroRepository;
-            _mapper = mapper;
-        }
+    public async Task<ToroDto> Handle(UpdateToroRequest request, CancellationToken ct)
+    {
+        var toro = await _repo.GetByIdAsync(request.Id, ct);
 
-        public async Task<ToroDto> Handle(UpdateToroRequest request, CancellationToken cancellationToken)
-        {
-            Toro? toro = await _toroRepository.GetByIdAsync(request.Id);
-            if (toro == null)
-            {
-                throw new KeyNotFoundException("Toro no encontrado.");
-            }
+        if (toro is null)
+            throw new KeyNotFoundException("Toro no encontrado.");
 
-            toro.Numero = request.Numero;
-            toro.Nombre = request.Nombre;
-            toro.FechaNacimiento = request.FechaNacimiento;
-            toro.Peso = request.Peso;
-            toro.Finca = request.Finca;
+        toro.Numero = request.Numero;
+        toro.Nombre = request.Nombre;
+        toro.FechaNacimiento = request.FechaNac;
+        toro.PesoKg = request.PesoKg;
+        toro.Color = request.Color;
+        toro.Propietario = request.Propietario;
+        toro.FincaId = request.FincaId;
+        toro.MadreNumero = request.MadreNumero;
+        toro.Detalles = request.Detalles;
+        toro.FechaDestete = request.FechaDestete;
 
-            await _toroRepository.UpdateAsync(toro);
-            var toroDto = _mapper.Map<ToroDto>(toro);
-            return toroDto;
-        }
+        await _repo.UpdateAsync(toro, ct);
+
+        return _mapper.Map<ToroDto>(toro);
     }
 }

@@ -1,28 +1,29 @@
 ﻿using AutoMapper;
-using FincaAppApi.Application.Features.Requests.ToroRequest;
-using FincaAppDomain.Entities;
-using FincaAppApi.DTOs.Toro;
-using FincaAppDomain.Interfaces;
 using MediatR;
+using FincaAppDomain.Interfaces;
+using FincaAppApi.Application.Features.Requests.ToroRequest;
+using FincaAppApi.DTOs.Toro;
 
-namespace FincaAppApi.Application.Features.Handlers.ToroHandler
+namespace FincaAppApplication.Features.Handlers.ToroHandler;
+
+public class SearchToroHandler : IRequestHandler<SearchToroRequest, List<ToroDto>>
 {
-    public class SearchToroHandler : IRequestHandler<SearchToroRequest, List<ToroDto>>
+    private readonly IToroRepository _toroRepository;
+    private readonly IMapper _mapper;
+
+    public SearchToroHandler(IToroRepository toroRepository, IMapper mapper)
     {
-        private readonly IToroRepository _toroRepository;
-        private readonly IMapper _mapper;
+        _toroRepository = toroRepository;
+        _mapper = mapper;
+    }
 
-        public SearchToroHandler(IToroRepository toroRepository, IMapper mapper)
-        {
-            _toroRepository = toroRepository;
-            _mapper = mapper;
-        }
+    public async Task<List<ToroDto>> Handle(SearchToroRequest request, CancellationToken cancellationToken)
+    {
+        var toros = await _toroRepository.SearchAsync(
+            request.Nombre,
+            request.Numero,
+            cancellationToken);
 
-        public async Task<List<ToroDto>> Handle(SearchToroRequest request, CancellationToken cancellationToken)
-        {
-            List<Toro> toros = await _toroRepository.SearchAsync(request.Nombre, request.Numero);
-            var torosDto = _mapper.Map<List<ToroDto>>(toros);
-            return torosDto;
-        }
+        return _mapper.Map<List<ToroDto>>(toros);
     }
 }

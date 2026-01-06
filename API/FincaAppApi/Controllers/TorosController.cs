@@ -44,20 +44,16 @@ namespace FincaAppApi.Controllers
 
         // PUT: api/toros/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateToro(Guid id, [FromBody] UpdateToroRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateToro(
+        Guid id,
+        [FromBody] UpdateToroRequest request,
+        CancellationToken ct)
         {
-            if (request == null || id != request.Id)
-                return BadRequest("Los datos del toro no son válidos.");
+            if (id != request.Id)
+                return BadRequest("El id de la URL no coincide con el cuerpo.");
 
-            try
-            {
-                var updatedToro = await _mediator.Send(request, cancellationToken);
-                return Ok(updatedToro);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
+            var result = await _mediator.Send(request, ct);
+            return Ok(result);
         }
 
         // DELETE: api/toros/{id}

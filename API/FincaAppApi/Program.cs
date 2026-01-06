@@ -1,10 +1,11 @@
 using AutoMapper;
+using FincaAppApi.Middleware;
 using FincaAppApi.Tenancy;
 using FincaAppApplication.Mappers;      // ToroProfile
+using FincaAppDomain.Common;
 using FincaAppDomain.Interfaces;        // IToroRepository
 using FincaAppInfrastructure.Data;      // FincaDbContext
 using FincaAppInfrastructure.Repositories;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -42,11 +43,29 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantProvider, HttpTenantProvider>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevCors", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FincaApp API v1"));
-
+app.UseHttpsRedirection();
+app.UseCors("DevCors");
+app.UseMiddleware<ExceptionMiddleware>();
+app.UseAuthorization();
 app.MapControllers();
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "FincaApp API v1"));
+
 app.Run();
+

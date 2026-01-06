@@ -1,13 +1,12 @@
-﻿
-using FincaAppDomain.Entities;
+﻿using FincaAppDomain.Entities;
 
 namespace FincaAppDomain.Interfaces;
+
 public interface IToroRepository
 {
-    Task<Toro> AddAsync(Toro toro);
-    Task<Toro?> GetByIdAsync(Guid id);
-    Task<IEnumerable<Toro>> GetAllAsync();
-    Task<Toro> UpdateAsync(Toro toro);
-    Task DeleteAsync(Guid id);
-    Task <List<Toro>> SearchAsync(string? nombre, string? numero);
+    Task AddAsync(Toro toro, CancellationToken cancellationToken);
+    Task<Toro?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task<IReadOnlyList<Toro>> SearchAsync(string? nombre, string? numero, CancellationToken cancellationToken);
+    Task UpdateAsync(Toro toro, CancellationToken cancellationToken);
+    Task DeleteAsync(Guid id, CancellationToken cancellationToken);
 }

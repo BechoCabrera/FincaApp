@@ -1,14 +1,14 @@
 using System.Linq.Expressions;
-using FincaAppApi.Tenancy;             // si prefieres no depender de API, mueve la interfaz a Domain.Common
+// si prefieres no depender de API, mueve la interfaz a Domain.Common
 using FincaAppDomain.Common;
 using FincaAppDomain.Entities;
 using Microsoft.EntityFrameworkCore;
-
 namespace FincaAppInfrastructure.Data;
 
 public class FincaDbContext : DbContext
 {
     private readonly ITenantProvider _tenant;
+    public Guid CurrentTenantId => _tenant.TenantId;
 
     public FincaDbContext(DbContextOptions<FincaDbContext> options, ITenantProvider tenant)
         : base(options) => _tenant = tenant;
@@ -22,8 +22,42 @@ public class FincaDbContext : DbContext
         // Índice único por tenant + negocio
         modelBuilder.Entity<Toro>(b =>
         {
-            b.HasIndex(x => new { x.TenantId, x.Numero }).IsUnique();
-            b.Property(x => x.Peso).HasPrecision(18, 2);
+            b.ToTable("Toros");
+
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id)
+                .ValueGeneratedNever();
+
+            b.Property(x => x.Numero)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            b.Property(x => x.Nombre)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            b.Property(x => x.FincaId)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            b.Property(x => x.PesoKg)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            b.Property(x => x.FechaNacimiento)
+                .HasColumnType("datetime2(7)")
+                .IsRequired();
+
+            b.Property(x => x.CreatedAt)
+                .HasColumnType("datetime2(7)")
+                .IsRequired();
+
+            b.Property(x => x.UpdatedAt)
+                .HasColumnType("datetime2(7)");
+
+            b.HasIndex(x => new { x.TenantId, x.Numero })
+                .IsUnique();
         });
 
         // Filtro global por TenantId
@@ -32,9 +66,9 @@ public class FincaDbContext : DbContext
         {
             var param = Expression.Parameter(et.ClrType, "e");
             var body = Expression.Equal(
-                Expression.Property(param, nameof(ITenantEntity.TenantId)),
-                Expression.Constant(_tenant.TenantId)
-            );
+                 Expression.Property(param, nameof(ITenantEntity.TenantId)),
+                 Expression.Property(Expression.Constant(this), nameof(CurrentTenantId))
+             );
             var lambda = Expression.Lambda(body, param);
             modelBuilder.Entity(et.ClrType).HasQueryFilter(lambda);
         }
@@ -43,11 +77,13 @@ public class FincaDbContext : DbContext
     public override int SaveChanges()
     {
         SetTenantOnAdded();
+        SetAuditFields();
         return base.SaveChanges();
     }
     public override Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         SetTenantOnAdded();
+        SetAuditFields();
         return base.SaveChangesAsync(ct);
     }
     private void SetTenantOnAdded()
@@ -57,6 +93,15 @@ public class FincaDbContext : DbContext
                      .Select(e => (ITenantEntity)e.Entity))
         {
             entry.TenantId = _tenant.TenantId;
+        }
+    }
+
+    private void SetAuditFields()
+    {
+        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+        {
+            if (entry.State == EntityState.Added && entry.Entity.CreatedAt == default)
+                entry.Entity.CreatedAt = DateTime.UtcNow;
         }
     }
 }

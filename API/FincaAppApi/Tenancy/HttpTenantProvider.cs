@@ -1,18 +1,18 @@
 ﻿namespace FincaAppApi.Tenancy;
+using FincaAppDomain.Common;
 
-public class HttpTenantProvider : ITenantProvider
+public sealed class HttpTenantProvider : ITenantProvider
 {
-    public const string HeaderName = "X-Tenant-Id";
-    private readonly IHttpContextAccessor _http;
+    public Guid TenantId { get; }
 
-    public HttpTenantProvider(IHttpContextAccessor http) => _http = http;
+    public HttpTenantProvider(IHttpContextAccessor accessor)
+    {
+        var tenant = accessor.HttpContext?
+            .Request.Headers["X-Tenant-Id"]
+            .FirstOrDefault();
 
-    public bool HasTenant => Guid.TryParse(GetRaw(), out _);
-    public Guid TenantId =>
-        Guid.TryParse(GetRaw(), out var id)
+        TenantId = Guid.TryParse(tenant, out var id)
             ? id
-            : throw new InvalidOperationException("Falta o es inválido el encabezado X-Tenant-Id.");
-
-    private string? GetRaw() =>
-        _http.HttpContext?.Request.Headers[HeaderName].FirstOrDefault();
+            : throw new UnauthorizedAccessException("Tenant no enviado");
+    }
 }

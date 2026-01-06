@@ -1,11 +1,11 @@
 ﻿using AutoMapper;
-using FincaAppApi.Application.Features.Requests.ToroRequest;
-using FincaAppDomain.Entities;
-
-using FincaAppApi.DTOs.Toro;
+using MediatR;
 using FincaAppDomain.Entities;
 using FincaAppDomain.Interfaces;
-using MediatR;
+using FincaAppApi.Application.Features.Requests.ToroRequest;
+using FincaAppApi.DTOs.Toro;
+
+namespace FincaAppApplication.Features.Handlers.ToroHandler;
 
 public class CreateToroHandler : IRequestHandler<CreateToroRequest, ToroDto>
 {
@@ -25,15 +25,31 @@ public class CreateToroHandler : IRequestHandler<CreateToroRequest, ToroDto>
             Id = Guid.NewGuid(),
             Numero = request.Numero,
             Nombre = request.Nombre,
-            FechaNacimiento = request.FechaNacimiento,
-            Peso = request.Peso,
-            Finca = request.Finca
+            FechaNacimiento = request.FechaNac,
+            PesoKg = request.PesoKg,
+            Color = request.Color,
+            Propietario = request.Propietario,
+            FincaId = request.FincaId,
+            MadreNumero = request.MadreNumero,
+            Detalles = request.Detalles,
+            FechaDestete = request.FechaDestete
         };
 
-        await _toroRepository.AddAsync(toro);
+        try
+        {
+            await _toroRepository.AddAsync(toro, cancellationToken);
+        }
+        catch (Exception ex) when (IsUniqueConstraintViolation(ex))
+        {
+            throw new InvalidOperationException(
+                $"Ya existe un toro con número '{request.Numero}' en esta finca.");
+        }
 
-        // Mapeo de la entidad Toro a ToroDto
-        var toroDto = _mapper.Map<ToroDto>(toro);
-        return toroDto;
+        return _mapper.Map<ToroDto>(toro);
+    }
+
+    private static bool IsUniqueConstraintViolation(Exception ex)
+    {
+        return ex.InnerException?.Message.Contains("IX_Toros_TenantId_Numero") == true;
     }
 }

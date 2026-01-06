@@ -1,15 +1,24 @@
-﻿using FincaAppApi.DTOs.Toro;
-using MediatR;
+﻿using MediatR;
+using FincaAppApi.DTOs.Toro;
 
-namespace FincaAppApi.Application.Features.Requests.ToroRequest
+namespace FincaAppApplication.Features.Requests.ToroRequest;
+
+public class UpdateToroRequest : IRequest<ToroDto>
 {
-    public class UpdateToroRequest : IRequest<ToroDto>
-    {
-        public Guid Id { get; set; }
-        public string Numero { get; set; } = string.Empty;
-        public string Nombre { get; set; } = string.Empty;
-        public DateTime FechaNacimiento { get; set; }
-        public decimal Peso { get; set; }
-        public string Finca { get; set; } = string.Empty;
-    }
+    public Guid Id { get; set; }
+
+    public string Numero { get; set; } = default!;
+    public string Nombre { get; set; } = default!;
+
+    public DateTime? FechaNac { get; set; }
+    public decimal? PesoKg { get; set; }
+
+    public string? Color { get; set; }
+    public string? Propietario { get; set; }
+
+    public string FincaId { get; set; } = default!;
+
+    public string? MadreNumero { get; set; }
+    public string? Detalles { get; set; }
+    public DateTime? FechaDestete { get; set; }
 }

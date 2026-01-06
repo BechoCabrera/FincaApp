@@ -13,7 +13,7 @@ public class ToroProfile : Profile
             .ForMember(dest => dest.Numero, opt => opt.MapFrom(src => src.Numero))
             .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre))
             .ForMember(dest => dest.FechaNacimiento, opt => opt.MapFrom(src => src.FechaNacimiento))
-            .ForMember(dest => dest.Peso, opt => opt.MapFrom(src => src.Peso))
-            .ForMember(dest => dest.Finca, opt => opt.MapFrom(src => src.Finca));
+            .ForMember(dest => dest.Peso, opt => opt.MapFrom(src => src.PesoKg))
+            .ForMember(dest => dest.Finca, opt => opt.MapFrom(src => src.FincaId));
     }
 }
