@@ -106,6 +106,11 @@ export class Menu {
             },
           ],
         },
+        {
+          icon: 'assets/icons/heroicons/outline/home.svg',
+          label: 'Fincas',
+          route: '/fincas',
+        },
       ],
     },
   ];

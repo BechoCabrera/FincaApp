@@ -19,6 +19,11 @@ const routes: Routes = [
     loadChildren: () => import('../ganaderia/ganaderia.module').then((m) => m.GanaderiaModule),
   },
   {
+    path: 'fincas',
+    component: LayoutComponent,
+    loadChildren: () => import('../fincas/fincas.module').then((m) => m.FincasModule),
+  },
+  {
     path: '',
     redirectTo: 'dashboard',
     pathMatch: 'full',

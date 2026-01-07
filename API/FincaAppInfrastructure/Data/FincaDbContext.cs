@@ -14,6 +14,8 @@ public class FincaDbContext : DbContext
         : base(options) => _tenant = tenant;
 
     public DbSet<Toro> Toros => Set<Toro>();
+    public DbSet<Finca> Fincas => Set<Finca>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +61,41 @@ public class FincaDbContext : DbContext
             b.HasIndex(x => new { x.TenantId, x.Numero })
                 .IsUnique();
         });
+
+        modelBuilder.Entity<Finca>(b =>
+        {
+            b.ToTable("Fincas");
+
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id)
+                .ValueGeneratedNever();
+
+            b.Property(x => x.Codigo)
+                .HasMaxLength(10)
+                .IsRequired();
+
+            b.Property(x => x.Nombre)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            b.Property(x => x.Descripcion)
+                .HasMaxLength(200);
+
+            b.Property(x => x.IsActive)
+                .IsRequired();
+
+            b.Property(x => x.CreatedAt)
+                .HasColumnType("datetime2(7)")
+                .IsRequired();
+
+            b.Property(x => x.UpdatedAt)
+                .HasColumnType("datetime2(7)");
+
+            b.HasIndex(x => new { x.TenantId, x.Codigo })
+                .IsUnique();
+        });
+
 
         // Filtro global por TenantId
         foreach (var et in modelBuilder.Model.GetEntityTypes()
