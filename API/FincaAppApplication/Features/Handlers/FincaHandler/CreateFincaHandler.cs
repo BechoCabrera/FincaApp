@@ -28,7 +28,7 @@ namespace FincaAppApplication.Features.Handlers.FincaHandler
                 Codigo = request.Codigo,
                 Nombre = request.Nombre,
                 Descripcion = request.Descripcion,
-                IsActive = true
+                IsActive = request.IsActive
             };
 
             await _fincaRepository.AddAsync(finca);

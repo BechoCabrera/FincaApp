@@ -14,7 +14,7 @@ namespace FincaAppApi.Application.Features.Requests.ToroRequest
         public string? Color { get; set; }
         public string? Propietario { get; set; }
 
-        public string FincaId { get; set; } = default!;
+        public Guid FincaId { get; set; } = default!;
 
         public string? MadreNumero { get; set; }
         public string? Detalles { get; set; }

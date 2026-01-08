@@ -39,7 +39,7 @@ export class ToroService {
   // 🔴 AJUSTA el puerto si es necesario
   private readonly apiUrl = `${environment.apiUrl}/api/toros`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
    * Crear un toro

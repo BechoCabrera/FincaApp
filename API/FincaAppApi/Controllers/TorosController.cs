@@ -73,7 +73,10 @@ namespace FincaAppApi.Controllers
 
         // GET: api/toros
         [HttpGet]
-        public async Task<IActionResult> SearchToro([FromQuery] string? nombre, [FromQuery] string? numero, CancellationToken cancellationToken)
+        public async Task<IActionResult> SearchToro(
+            [FromQuery] string? nombre,
+            [FromQuery] string? numero,
+            CancellationToken cancellationToken)
         {
             var request = new SearchToroRequest
             {
@@ -84,5 +87,6 @@ namespace FincaAppApi.Controllers
             var toros = await _mediator.Send(request, cancellationToken);
             return Ok(toros);
         }
+
     }
 }

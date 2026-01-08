@@ -7,11 +7,14 @@ export interface CreateFincaDto {
   codigo: string;
   nombre: string;
   descripcion?: string | null;
-  isActive?: boolean;
+  isActive: boolean;
 }
 
 export interface UpdateFincaDto extends CreateFincaDto {
   id: string;
+  codigo: string;
+  nombre: string;
+  descripcion?: string | null;
   isActive: boolean;
 }
 
@@ -20,6 +23,7 @@ export interface FincaDto {
   codigo: string;
   nombre: string;
   descripcion?: string | null;
+  isActive: boolean;
 }
 @Injectable({
   providedIn: 'root',
@@ -45,7 +49,7 @@ export class FincaService {
     return this.http.get<FincaDto[]>(this.apiUrl, this.headers());
   }
 
-  actualizar(id: string, dto: CreateFincaDto): Observable<FincaDto> {
+  actualizar(id: string, dto: UpdateFincaDto): Observable<FincaDto> {
     return this.http.put<FincaDto>(`${this.apiUrl}/${id}`, dto, this.headers());
   }
 

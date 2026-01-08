@@ -23,6 +23,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { debounceTime, startWith } from 'rxjs';
 import { CreateToroDto, ToroService } from 'src/app/core/services/toro.service';
+import { FincaService } from 'src/app/core/services/finca.service';
 
 interface Toro {
   id?: string;
@@ -35,8 +36,6 @@ interface Toro {
   fechaDestete?: Date | null;
   detalles?: string | null;
   madreNumero?: string | null;
-  madreNombre?: string | null;
-  procedencia?: string | null;
   fincaId?: string | null;
 }
 
@@ -68,18 +67,14 @@ interface Toro {
 })
 export class TorosComponent {
 
-  constructor(private toroService: ToroService) {}
+  constructor(private toroService: ToroService, private fincaService: FincaService) { }
 
 
   private fb = inject(FormBuilder);
   private date = inject(DatePipe);
 
   // ===== mock (cámbialo por tu API) =====
-  fincas = [
-    { id: 'F1', nombre: 'Tierra Nueva' },
-    { id: 'F2', nombre: 'La Más Nueva' },
-    { id: 'F3', nombre: 'San Antonio' },
-  ];
+  fincas: any[] = [];
   madres = [
     { numero: '32', nombre: 'Reina' },
     { numero: '42', nombre: 'Brisa' },
@@ -118,7 +113,7 @@ export class TorosComponent {
     'pesoKg',
     'propietario',
     'madreNumero',
-    'madreNombre',
+
     'detalles',
     'acciones',
   ];
@@ -131,9 +126,8 @@ export class TorosComponent {
     { key: 'fechaNac', label: 'F. Nacimiento' },
     { key: 'color', label: 'Color' },
     { key: 'peso', label: 'Peso' },
-    { key: 'procedencia', label: 'Procedencia' },
     { key: 'madreNumero', label: 'N° Madre' },
-    { key: 'madreNombre', label: 'Madre' },
+
     { key: 'fechaDestete', label: 'Fec. Destete' },
     { key: 'detalles', label: 'Detalles' },
     { key: 'acciones', label: 'Acciones' },
@@ -152,7 +146,8 @@ export class TorosComponent {
 
   ngOnInit() {
     this.form.statusChanges.subscribe(() => this.formOk.set(this.form.valid));
-    this.setData(this.mockRows(1));
+    this.setData();
+    this.cargarFincas();
   }
 
   ngAfterViewInit() {
@@ -189,8 +184,7 @@ export class TorosComponent {
         !q ||
         (row.numero || '').toLowerCase().includes(q) ||
         (row.nombre || '').toLowerCase().includes(q) ||
-        (row.madreNumero || '').toLowerCase().includes(q) ||
-        (row.madreNombre || '').toLowerCase().includes(q);
+        (row.madreNumero || '').toLowerCase().includes(q);
       const byFinca = !f.fincaId || f.fincaId === (row.fincaId || '');
       return byText && byFinca;
     };
@@ -226,12 +220,22 @@ export class TorosComponent {
   }
 
   // ===== Datos =====
-  setData(rows: Toro[]) {
-    this.dataSource.data = rows ?? [];
+  setData() {
+    this.toroService.getToros().subscribe({
+      next: (res: any) => {
+        this.dataSource.data = res;
+      },
+      error: (err: any) => {
+        console.error('Error cargando toros', err);
+        this.dataSource.data = [];
+      },
+    });
   }
+
   get totalToros() {
     return this.dataSource.data.length;
   }
+
   mockRows(n = 10): Toro[] {
     const pick = <T>(a: T[]) => a[Math.floor(Math.random() * a.length)];
     const randDate = (from: Date, to: Date) =>
@@ -254,7 +258,6 @@ export class TorosComponent {
         propietario: 'MC',
         peso: Math.round(200 + Math.random() * 500),
         fincaId: pick(this.fincas).id,
-        madreNombre: m.nombre,
         fechaDestete: randDate(today, new Date(today.getFullYear() + 1, 0, 1)),
         detalles: Math.random() < 0.25 ? 'Sin observaciones' : '',
       });
@@ -264,45 +267,51 @@ export class TorosComponent {
 
   // ===== Acciones =====
   guardarToro() {
-  debugger;
+    debugger;
 
-  if (this.form.invalid) {
-    this.form.markAllAsTouched();
-    return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.isSaving.set(true);
+
+    const v = this.form.getRawValue();
+    const m = this.madres.find(x => x.numero === v.madreNumero);
+
+    const payload: CreateToroDto = {
+      numero: String(v.numero),
+      nombre: String(v.nombre),
+      fechaNac: v.fechaNac,
+      pesoKg: v.peso,
+      color: v.color,
+      propietario: v.propietario,
+      fincaId: v.fincaId,
+      madreNumero: m?.numero ?? null,
+      detalles: v.detalles,
+      fechaDestete: v.fechaDestete,
+    };
+
+    this.toroService.createToro(payload).subscribe({
+      next: (res: any) => {
+        // opcional: agregar lo devuelto por la API
+        this.dataSource.data = [res, ...this.dataSource.data];
+        this.form.reset({ fincaId: null, madreNumero: null, peso: null });
+        this.isSaving.set(false);
+        this.setData();
+      },
+      error: (err: any) => {
+        console.error('Error guardando toro', err);
+        this.isSaving.set(false);
+      },
+    });
   }
 
-  this.isSaving.set(true);
-
-  const v = this.form.getRawValue();
-  const m = this.madres.find(x => x.numero === v.madreNumero);
-
-  const payload:CreateToroDto = {
-    numero: String(v.numero),
-    nombre: String(v.nombre),
-    fechaNac: v.fechaNac,
-    pesoKg: v.peso,
-    color: v.color,
-    propietario: v.propietario,
-    fincaId: v.fincaId,
-    madreNumero: m?.numero ?? null,
-    detalles: v.detalles,
-    fechaDestete: v.fechaDestete,
-  };
-
-  this.toroService.createToro(payload).subscribe({
-    next: (res:any) => {
-      // opcional: agregar lo devuelto por la API
-      this.dataSource.data = [res, ...this.dataSource.data];
-      this.form.reset({ fincaId: null, madreNumero: null, peso: null });
-      this.isSaving.set(false);
-    },
-    error: (err:any) => {
-      console.error('Error guardando toro', err);
-      this.isSaving.set(false);
-    },
-  });
-}
-
+  cargarFincas() {
+    this.fincaService.listar().subscribe({
+      next: (res) => (this.fincas = res),
+    });
+  }
 
   editar(r: Toro) {
     this.form.patchValue({

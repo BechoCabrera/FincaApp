@@ -39,8 +39,7 @@ public class FincaDbContext : DbContext
                 .HasMaxLength(50)
                 .IsRequired();
 
-            b.Property(x => x.FincaId)
-                .HasMaxLength(50)
+            b.Property(x => x.FincaId)                
                 .IsRequired();
 
             b.Property(x => x.PesoKg)
@@ -48,8 +47,7 @@ public class FincaDbContext : DbContext
                 .IsRequired();
 
             b.Property(x => x.FechaNacimiento)
-                .HasColumnType("datetime2(7)")
-                .IsRequired();
+                .HasColumnType("datetime2(7)");             
 
             b.Property(x => x.CreatedAt)
                 .HasColumnType("datetime2(7)")

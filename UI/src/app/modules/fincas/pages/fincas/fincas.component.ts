@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MatTableDataSource } from '@angular/material/table';
 import { FincaService, FincaDto, UpdateFincaDto } from 'src/app/core/services/finca.service';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -30,10 +31,11 @@ import { MatIconModule } from '@angular/material/icon';
     MatTableModule,
     MatIconModule,
     MatTooltipModule,
+    MatCheckboxModule
   ],
 })
 export class FincasComponent implements OnInit {
-  constructor(private fb: FormBuilder, private fincaService: FincaService) {}
+  constructor(private fb: FormBuilder, private fincaService: FincaService) { }
 
   isSaving = false;
   formOk() {
@@ -43,20 +45,16 @@ export class FincasComponent implements OnInit {
     codigo: ['', Validators.required],
     nombre: ['', Validators.required],
     descripcion: [''],
+    isActive: [true],
   });
 
   dataSource = new MatTableDataSource<FincaDto>([]);
-  displayedColumns = ['idx', 'codigo', 'nombre', 'descripcion', 'acciones'];
+  displayedColumns = ['idx', 'codigo', 'nombre', 'descripcion', 'estado', 'acciones'];
 
   editingId: string | null = null;
 
   ngOnInit() {
     this.cargarFincas();
-    this.form = this.fb.group({
-      codigo: ['', Validators.required],
-      nombre: ['', Validators.required],
-      descripcion: [''],
-    });
   }
 
   has(ctrl: string, err: string): boolean {
@@ -71,65 +69,56 @@ export class FincasComponent implements OnInit {
   }
 
   guardarFinca() {
-  this.form.markAllAsTouched();
-  if (this.form.invalid) return;
+    this.form.markAllAsTouched();
+    if (this.form.invalid) return;
 
-  const v = this.form.getRawValue();
+    const v = this.form.getRawValue();
+    debugger;
+    const payload = {
+      id: this.editingId || '',
+      codigo: v.codigo!,
+      nombre: v.nombre!,
+      descripcion: v.descripcion || null,
+      isActive: !!v.isActive,
+    };
 
-  const payload = {
-    codigo: v.codigo!,
-    nombre: v.nombre!,
-    descripcion: v.descripcion || null,
-  };
+    this.isSaving = true;
 
-  this.isSaving = true;
+    const request$ = this.editingId
+      ? this.fincaService.actualizar(this.editingId, payload)
+      : this.fincaService.crear(payload);
 
-  const request$ = this.editingId
-    ? this.fincaService.actualizar(this.editingId, payload)
-    : this.fincaService.crear(payload);
+    request$.subscribe({
+      next: (finca) => {
+        this.isSaving = false;
 
-  request$.subscribe({
-    next: (finca) => {
-      this.isSaving = false;
+        // refrescar tabla
+        this.cargarFincas();
 
-      // refrescar tabla
-      this.cargarFincas();
-
-      // reset
-      this.form.reset();
-      this.editingId = null;
-    },
-    error: (err) => {
-      this.isSaving = false;
-      console.error('Error guardando finca', err);
-    },
-  });
-}
+        // reset
+        this.form.reset({
+          codigo: '',
+          nombre: '',
+          descripcion: '',
+          isActive: true, // 👈 valor por defecto
+        });
+        this.editingId = null;
+      },
+      error: (err) => {
+        this.isSaving = false;
+        console.error('Error guardando finca', err);
+      },
+    });
+  }
 
   editar(f: FincaDto) {
     this.editingId = f.id;
-    this.form.patchValue(f);
-  }
-
-  actualizar() {
-    if (!this.editingId || this.form.invalid) return;
-
-    const v = this.form.getRawValue();
-
-    this.fincaService
-      .actualizar(this.editingId, {
-        codigo: v.codigo!,
-        nombre: v.nombre!,
-        descripcion: v.descripcion ?? null,
-        isActive: true,
-      })
-      .subscribe({
-        next: (res) => {
-          this.dataSource.data = this.dataSource.data.map((x) => (x.id === res.id ? res : x));
-          this.editingId = null;
-          this.form.reset();
-        },
-      });
+    this.form.patchValue({
+      codigo: f.codigo,
+      nombre: f.nombre,
+      descripcion: f.descripcion,
+      isActive: f.isActive,
+    });
   }
 
   eliminar(f: FincaDto) {

@@ -16,7 +16,7 @@ public class UpdateToroRequest : IRequest<ToroDto>
     public string? Color { get; set; }
     public string? Propietario { get; set; }
 
-    public string FincaId { get; set; } = default!;
+    public Guid FincaId { get; set; }
 
     public string? MadreNumero { get; set; }
     public string? Detalles { get; set; }

@@ -25,8 +25,7 @@ public class FincaRepository : IFincaRepository
         => _context.Fincas.FirstOrDefaultAsync(x => x.Id == id);
 
     public async Task<List<Finca>> GetAllAsync()
-        => await _context.Fincas
-            .Where(x => x.IsActive)
+        => await _context.Fincas            
             .OrderBy(x => x.Nombre)
             .ToListAsync();
 
@@ -39,10 +38,15 @@ public class FincaRepository : IFincaRepository
 
     public async Task DeleteAsync(Guid id)
     {
-        var finca = await _context.Fincas.FindAsync(id);
-        if (finca == null) return;
+        var finca = await _context.Fincas
+            .IgnoreQueryFilters() // 🔑 por si usas multitenancy / IsActive
+            .FirstOrDefaultAsync(x => x.Id == id);
 
-        finca.IsActive = false;
+        if (finca == null)
+            return;
+
+        _context.Fincas.Remove(finca);
         await _context.SaveChangesAsync();
     }
+
 }
