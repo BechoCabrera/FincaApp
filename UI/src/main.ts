@@ -1,12 +1,15 @@
 import { enableProdMode, importProvidersFrom } from '@angular/core';
 import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
-import { provideHttpClient } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 
 import { environment } from './environments/environment';
 import { AppComponent } from './app/app.component';
 import { AppRoutingModule } from './app/app-routing.module';
 
+import { RouterModule } from '@angular/router';
+import { AuthInterceptor } from './app/core/interceptor/auth.interceptor';
+import { TenantInterceptor } from './app/core/interceptor/tenant.interceptor';
 
 if (environment.production) {
   enableProdMode();
@@ -21,6 +24,18 @@ bootstrapApplication(AppComponent, {
     importProvidersFrom(BrowserModule, AppRoutingModule),
     provideAnimations(),
     provideHttpClient(), // 🔥 ESTA ES LA CLAVE
+
+    provideHttpClient(withInterceptorsFromDi()),
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true,
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: TenantInterceptor,
+      multi: true,
+    },
   ],
 }).catch((err) => console.error(err));
 

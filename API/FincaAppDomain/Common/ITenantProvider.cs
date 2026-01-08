@@ -7,5 +7,5 @@ using System.Threading.Tasks;
 namespace FincaAppDomain.Common;
 public interface ITenantProvider
 {
-    Guid TenantId { get; }
+    string TenantId { get; }
 }

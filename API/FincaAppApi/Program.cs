@@ -8,7 +8,9 @@ using FincaAppInfrastructure.Data;      // FincaDbContext
 using FincaAppInfrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-
+using FincaAppDomain.Interfaces;
+using FincaAppInfrastructure.Repositories;
+using FincaAppInfrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,12 +29,16 @@ builder.Services.AddSingleton<AutoMapper.IConfigurationProvider>(mapperConfig);
 builder.Services.AddSingleton<IMapper>(sp =>
     new Mapper(sp.GetRequiredService<AutoMapper.IConfigurationProvider>(), sp.GetService));
 
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 // ===== MediatR (v12) =====
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ToroProfile).Assembly));
 
 // Repos
 builder.Services.AddScoped<IToroRepository, ToroRepository>();
 builder.Services.AddScoped<IFincaRepository, FincaRepository>();
+
+
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -51,15 +57,15 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins("http://localhost:4200")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
-
 var app = builder.Build();
-
-app.UseHttpsRedirection();
 app.UseCors("DevCors");
+app.UseHttpsRedirection();
+
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthorization();
 app.MapControllers();

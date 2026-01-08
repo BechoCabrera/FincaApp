@@ -3,7 +3,7 @@
 public abstract class BaseEntity : ITenantEntity
 {
     public Guid Id { get; set; }
-    public Guid TenantId { get; set; }
+    public string TenantId { get; set; }
 
     // Auditoría opcional
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -29,10 +29,10 @@ interface Toro {
   id?: string;
   numero: string;
   nombre: string;
-  fechaNac?: Date | null;
+  fechaNacimiento?: Date | null;
   color?: string | null;
   propietario?: string | null;
-  peso?: number | null;
+  pesoKg?: number | null;
   fechaDestete?: Date | null;
   detalles?: string | null;
   madreNumero?: string | null;
@@ -85,10 +85,10 @@ export class TorosComponent {
   form = this.fb.group({
     numero: ['', [Validators.required]],
     nombre: ['', [Validators.required]],
-    fechaNac: [null as Date | null],
+    fechaNacimiento: [null as Date | null],
     color: [''],
     propietario: [''],
-    peso: [null as number | null],
+    pesoKg: [null as number | null],
     fincaId: [null as string | null, [Validators.required]],
     madreNumero: [null as string | null],
     fechaDestete: [null as Date | null],
@@ -108,7 +108,7 @@ export class TorosComponent {
   displayedColumns: string[] = [
     'numero',
     'nombre',
-    'fechaNac',
+    'fechaNacimiento',
     'color',
     'pesoKg',
     'propietario',
@@ -123,11 +123,10 @@ export class TorosComponent {
     { key: 'idx', label: 'N°' },
     { key: 'numero', label: 'Nº' },
     { key: 'nombre', label: 'Nombre' },
-    { key: 'fechaNac', label: 'F. Nacimiento' },
+    { key: 'fechaNacimiento', label: 'F. Nacimiento' },
     { key: 'color', label: 'Color' },
-    { key: 'peso', label: 'Peso' },
+    { key: 'pesoKg', label: 'PesoKg' },
     { key: 'madreNumero', label: 'N° Madre' },
-
     { key: 'fechaDestete', label: 'Fec. Destete' },
     { key: 'detalles', label: 'Detalles' },
     { key: 'acciones', label: 'Acciones' },
@@ -157,10 +156,11 @@ export class TorosComponent {
     // sort: fechas/números correctos y nulos al final
     this.dataSource.sortingDataAccessor = (item: Toro, prop: string) => {
       const v = (item as any)[prop];
-      if (prop === 'fechaNac' || prop === 'fechaDestete') return v ? new Date(v).getTime() : null;
-      if (prop === 'peso') return typeof v === 'number' ? v : null;
+      if (prop === 'fechaNacimiento' || prop === 'fechaDestete') return v ? new Date(v).getTime() : null;
+      if (prop === 'pesoKg') return typeof v === 'number' ? v : null;
       return typeof v === 'string' ? v.toLowerCase() : v;
     };
+
     this.dataSource.sortData = (data, sort) => {
       if (!sort.active || sort.direction === '') return data.slice();
       const asc = sort.direction === 'asc';
@@ -253,10 +253,10 @@ export class TorosComponent {
         id: crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
         numero: String(273 + i),
         nombre: pick(nombres),
-        fechaNac: randDate(start, today), // Corregido aquí
+        fechaNacimiento: randDate(start, today), // Corregido aquí
         color: pick(colores),
         propietario: 'MC',
-        peso: Math.round(200 + Math.random() * 500),
+        pesoKg: Math.round(200 + Math.random() * 500),
         fincaId: pick(this.fincas).id,
         fechaDestete: randDate(today, new Date(today.getFullYear() + 1, 0, 1)),
         detalles: Math.random() < 0.25 ? 'Sin observaciones' : '',
@@ -282,8 +282,8 @@ export class TorosComponent {
     const payload: CreateToroDto = {
       numero: String(v.numero),
       nombre: String(v.nombre),
-      fechaNac: v.fechaNac,
-      pesoKg: v.peso,
+      fechaNacimiento: v.fechaNacimiento,
+      pesoKg: v.pesoKg,
       color: v.color,
       propietario: v.propietario,
       fincaId: v.fincaId,
@@ -296,7 +296,7 @@ export class TorosComponent {
       next: (res: any) => {
         // opcional: agregar lo devuelto por la API
         this.dataSource.data = [res, ...this.dataSource.data];
-        this.form.reset({ fincaId: null, madreNumero: null, peso: null });
+        this.form.reset({ fincaId: null, madreNumero: null, pesoKg: null });
         this.isSaving.set(false);
         this.setData();
       },
@@ -317,10 +317,10 @@ export class TorosComponent {
     this.form.patchValue({
       numero: r.numero,
       nombre: r.nombre,
-      fechaNac: r.fechaNac ?? null,
+      fechaNacimiento: r.fechaNacimiento ?? null,
       color: r.color,
       propietario: r.propietario,
-      peso: r.peso ?? null,
+      pesoKg: r.pesoKg ?? null,
       fincaId: r.fincaId,
       madreNumero: r.madreNumero ?? null,
       fechaDestete: r.fechaDestete,
@@ -344,7 +344,7 @@ export class TorosComponent {
     const body = this.dataSource.filteredData.map((row) =>
       visibleKeys.map((key) => {
         const v: any = (row as any)[key];
-        if (key === 'fechaNac' || key === 'fechaDestete') return v ? this.date.transform(v, 'yyyy-MM-dd') : '';
+        if (key === 'fechaNacimiento' || key === 'fechaDestete') return v ? this.date.transform(v, 'yyyy-MM-dd') : '';
         return v ?? '';
       }),
     );

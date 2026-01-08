@@ -1,27 +1,35 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LayoutComponent } from './layout.component';
+import { AuthGuard } from 'src/app/core/guards/auth.guard';
 
 const routes: Routes = [
   {
-    path: 'dashboard',
+    path: '',
     component: LayoutComponent,
-    loadChildren: () => import('../dashboard/dashboard.module').then((m) => m.DashboardModule),
-  },
-  {
-    path: 'components',
-    component: LayoutComponent,
-    loadChildren: () => import('../uikit/uikit.module').then((m) => m.UikitModule),
-  },
-  {
-    path: 'ganaderia',
-    component: LayoutComponent,
-    loadChildren: () => import('../ganaderia/ganaderia.module').then((m) => m.GanaderiaModule),
-  },
-  {
-    path: 'fincas',
-    component: LayoutComponent,
-    loadChildren: () => import('../fincas/fincas.module').then((m) => m.FincasModule),
+    canActivate: [AuthGuard],
+    children: [
+      {
+        path: 'dashboard',
+        loadChildren: () =>
+          import('../dashboard/dashboard.module').then(m => m.DashboardModule),
+      },
+      {
+        path: 'components',
+        loadChildren: () =>
+          import('../uikit/uikit.module').then(m => m.UikitModule),
+      },
+      {
+        path: 'ganaderia',
+        loadChildren: () =>
+          import('../ganaderia/ganaderia.module').then(m => m.GanaderiaModule),
+      },
+      {
+        path: 'fincas',
+        loadChildren: () =>
+          import('../fincas/fincas.module').then(m => m.FincasModule),
+      },
+    ],
   },
   {
     path: '',
@@ -33,6 +41,7 @@ const routes: Routes = [
     redirectTo: 'error/404',
   },
 ];
+
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
