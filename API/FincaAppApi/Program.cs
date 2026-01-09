@@ -37,8 +37,7 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ToroP
 // Repos
 builder.Services.AddScoped<IToroRepository, ToroRepository>();
 builder.Services.AddScoped<IFincaRepository, FincaRepository>();
-
-
+builder.Services.AddScoped<IParidaRepository, ParidaRepository>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

@@ -12,7 +12,7 @@ public class FincaDbContext : DbContext
 
     public FincaDbContext(DbContextOptions<FincaDbContext> options, ITenantProvider tenant)
         : base(options) => _tenant = tenant;
-
+    public DbSet<Parida> Paridas => Set<Parida>();
     public DbSet<Toro> Toros => Set<Toro>();
     public DbSet<Finca> Fincas => Set<Finca>();
     public DbSet<User> Users { get; set; }
