@@ -4,4 +4,4 @@ using MediatR;
 
 namespace FincaAppApplication.Features.Requests.ParidaRequest;
 
-public record ListParidasRequest() : IRequest<List<ParidaListDto>>;
+public record ListParidasRequest() : IRequest<List<ParidaDto>>;

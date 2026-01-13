@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using FincaAppDomain.Interfaces;
 using FincaAppApplication.Features.Requests.ParidaRequest;
-using ParidaEntity = FincaAppDomain.Entities.Parida;
+using ParidaEntity = FincaAppDomain.Entities.Paridas;
 
 namespace FincaAppApplication.Features.Handlers.ParidaRequest;
 
@@ -23,16 +23,29 @@ public class CreateParidaHandler : IRequestHandler<CreateParidaRequest, Guid>
         if (request.GeneroCria != "Hembra" && request.GeneroCria != "Macho")
             throw new ArgumentException("Género de cría inválido");
 
+        // 🚨 VALIDACIÓN CLAVE: NÚMERO DUPLICADO
+        var exists = await _paridaRepository.ExistsByNumeroAsync(
+            request.Numero,
+            cancellationToken);
+
+        if (exists)
+            throw new InvalidOperationException(
+                $"Ya existe una parida con el número '{request.Numero}'");
+
         var parida = new ParidaEntity(
-               request.Numero,
-               request.FincaId,
-               request.FechaParida,
-               request.GeneroCria,
-               request.FechaPalpacion,
-               request.TipoLeche,
-               request.Observaciones,
-               request.Nombre
-           );
+             request.Nombre,
+             request.Numero,
+             request.FincaId,
+             request.GeneroCria,
+             request.FechaParida,
+             request.FechaPalpacion,
+             request.FechaNacimiento,
+             request.Color,
+             request.TipoLeche,
+             request.Procedencia,
+             request.Observaciones,
+             request.Propietario
+         );
 
         await _paridaRepository.AddAsync(parida, cancellationToken);
 

@@ -16,22 +16,21 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, startWith } from 'rxjs';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 // Si aún no lo tienes, luego te paso el servicio.
 // Cambia el nombre si tu servicio usa otra ruta/archivo.
-import { EscoteraService } from './escotera.service';
+import { ParidaDto, ParidaService } from 'src/app/core/services/parida.service';
+import { FincaDto, FincaService } from 'src/app/core/services/finca.service';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { CreateEscoteraDto, EscoteraService } from '../../../../core/services/escotera.service';
 
 // ===== Tipos =====
-interface EscoteraResumen {
-  id: string;
-  numero: number;
-  nombre: string;
-}
+
 interface EscoteraDetalle {
   id: string;
-  numeroEscotera: number;
+  numero: number;
   nombre: string;
   color?: string | null;
   procedencia?: string | null;
@@ -70,32 +69,30 @@ interface EscoteraDetalle {
     MatTooltipModule,
     MatDividerModule,
     MatSortModule,
+    MatAutocompleteModule,
   ],
 })
-export class EscoteraComponent implements OnInit, AfterViewInit {
-  private fb = inject(FormBuilder);
-  // private svc = inject(EscoteraService);
-  private svc: any = null;
 
+export class EscoteraComponent implements OnInit, AfterViewInit {
+  constructor(
+    private paridaService: ParidaService,
+    private fincaService: FincaService,
+    private escoteraService: EscoteraService,
+  ) {}
+  private fb = inject(FormBuilder);
   // UI state
   dense = false;
   loading = false;
-  consultMode = false;
 
   // selector
-  vacas: EscoteraResumen[] = [];
-  selectedId: string | null = null;
+  vacas: ParidaDto[] = [];
   totalRegistros = 0;
   get totalCrias() {
     return this.totalRegistros;
   }
 
   // catálogos dummy (si usas fincas/lo necesitas)
-  fincas = [
-    { id: 'F1', nombre: 'Tierra Nueva' },
-    { id: 'F2', nombre: 'La Más Nueva' },
-    { id: 'F3', nombre: 'San Antonio' },
-  ];
+  fincas: FincaDto[] = [];
 
   // form
   form!: FormGroup;
@@ -104,7 +101,7 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
   dataSource = new MatTableDataSource<EscoteraDetalle>([]);
   displayedColumns: string[] = [
     'idx',
-    'numeroEscotera',
+    'numero',
     'nombre',
     'color',
     'procedencia',
@@ -119,7 +116,7 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
   ];
   allColumns = [
     { key: 'idx', label: '#' },
-    { key: 'numeroEscotera', label: 'Nº ESCOTERA' },
+    { key: 'numero', label: 'Nº ESCOTERA' },
     { key: 'nombre', label: 'NOMBRE' },
     { key: 'color', label: 'COLOR' },
     { key: 'procedencia', label: 'PROCEDENCIA' },
@@ -138,14 +135,30 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
   qCtrl = new FormControl<string>('', { nonNullable: true });
   fincaCtrl = new FormControl<string>('', { nonNullable: true });
 
+  vacaCtrl = new FormControl<string | ParidaDto | null>(null);
+  vacasFiltradas: ParidaDto[] = [];
+
   // mat table hooks
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
+  displayVaca = (v: ParidaDto | string | null): string => {
+    if (!v) return '';
+
+    if (typeof v === 'string') {
+      return v;
+    }
+
+    return `${v.numero} — ${v.nombre}`;
+  };
+
   // ========= lifecycle =========
   ngOnInit(): void {
+    this.cargarFincas();
     this.form = this.fb.group({
-      numeroEscotera: [null, Validators.required],
+      vacaId: [null],
+      fincaId:[null],
+      numero: [null, Validators.required],
       nombre: [null, Validators.required],
       color: [null],
       procedencia: [null],
@@ -158,10 +171,19 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
       detalles: [null],
       fechaDestete: [null],
     });
-    //this.cargarVacas();
   }
 
   ngAfterViewInit(): void {
+    this.loadParidas();
+
+    this.vacaCtrl.valueChanges.pipe(startWith('')).subscribe((value) => {
+      const texto = typeof value === 'string' ? value.toLowerCase() : '';
+
+      this.vacasFiltradas = !texto
+        ? this.vacas.slice() // 👈 TODAS al inicio
+        : this.vacas.filter((v) => v.numero.toLowerCase().includes(texto) || v.nombre.toLowerCase().includes(texto));
+    });
+
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
 
@@ -170,7 +192,7 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
       const q = (f.q || '').toLowerCase();
       const finca = f.fincaId || '';
 
-      const matchTexto = String(row.numeroEscotera || '').includes(q) || (row.nombre || '').toLowerCase().includes(q);
+      const matchTexto = String(row.numero || '').includes(q) || (row.nombre || '').toLowerCase().includes(q);
       const matchFinca = !finca || row.fincaId === finca;
       return matchTexto && matchFinca;
     };
@@ -191,6 +213,17 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
     return this.loading;
   }
 
+  cargarFincas() {
+    this.fincaService.listar().subscribe({
+      next: (res) => (this.fincas = res),
+    });
+  }
+
+  loadParidas() {
+    this.paridaService.getAll().subscribe((paridas) => {
+      this.vacas = paridas;
+    });
+  }
   // ========= data =========
   private applyFilter() {
     this.dataSource.filter = JSON.stringify({
@@ -200,87 +233,75 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   }
 
-  async cargarVacas() {
-    this.loading = true;
-    try {
-      const res: any = new Object; //await firstValueFrom(this.svc.listarEscoteras()); // { total, items }
-      this.vacas = res.items;
-      this.totalRegistros = res.total;
-
-      // filas básicas para arrancar la tabla
-      this.dataSource.data = res.items.map((it: any) => ({
-        id: it.id,
-        numeroEscotera: it.numero,
-        nombre: it.nombre,
-        color: null,
-        procedencia: null,
-        propietario: null,
-        nroMama: null,
-        fechaNacida: null,
-        tipoLeche: null,
-        fPalpacion: null,
-        dPrenez: null,
-        detalles: null,
-        fechaDestete: null,
-        fincaId: null,
-      }));
-      this.applyFilter();
-    } finally {
-      this.loading = false;
+  onVacaSelected(vaca: ParidaDto | null) {
+    if (!vaca) {
+      this.form.patchValue({ vacaId: null });
+      return;
     }
+
+    this.form.patchValue({
+      numero: vaca.numero,
+      vacaId: vaca.id,
+      nombre: vaca.nombre ?? null,
+      color: vaca.color ?? null,
+      procedencia: vaca.procedencia ?? null,
+      propietario: vaca.propietario ?? null,
+      fechaNacida: vaca.fechaNacimiento ? new Date(vaca.fechaNacimiento) : null,
+      tipoLeche: vaca.tipoLeche ?? null,
+      fincaId: vaca.fincaId,
+    });
   }
 
-  async onConsultar() {
-    if (!this.selectedId) return;
+  save() {
+    this.form.markAllAsTouched();
+    if (this.form.invalid) return;
+
     this.loading = true;
-    try {
-      const det = (await firstValueFrom(this.svc.obtenerEscoteraPorId(this.selectedId))) as EscoteraDetalle;
-      if (!det) return;
 
-      this.form.patchValue({
-        numeroEscotera: det.numeroEscotera,
-        nombre: det.nombre,
-        color: det.color ?? null,
-        procedencia: det.procedencia ?? null,
-        propietario: det.propietario ?? null,
-        nroMama: det.nroMama ?? null,
-        fechaNacida: det.fechaNacida ?? null,
-        tipoLeche: det.tipoLeche ?? null,
-        fPalpacion: det.fPalpacion ?? null,
-        dPrenez: det.dPrenez ?? null,
-        detalles: det.detalles ?? null,
-        fechaDestete: det.fechaDestete ?? null,
-      });
+    const v = this.form.getRawValue();
 
-      this.dataSource.data = [{ ...det }];
+    const toYMD = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : d || null);
 
-      this.consultMode = true;
-      this.form.disable({ emitEvent: false });
-      this.form.get('fechaDestete')?.enable({ emitEvent: false });
-      this.applyFilter();
-    } finally {
-      this.loading = false;
-    }
+    const payload:CreateEscoteraDto = {
+      vacaId: v.vacaId ?? null,
+      numero: v.numero,
+      nombre: v.nombre,
+
+      color: v.color ?? null,
+      procedencia: v.procedencia ?? null,
+      propietario: v.propietario ?? null,
+      nroMama: v.nroMama ?? null,
+      fincaId:v.fincaId,
+      fechaNacida: toYMD(v.fechaNacida),
+      tipoLeche: v.tipoLeche ?? null,
+      fPalpacion: toYMD(v.fPalpacion),
+      dPrenez: v.dPrenez ?? null,
+
+      detalles: v.detalles ?? null,
+      fechaDestete: toYMD(v.fechaDestete),
+    };
+
+    console.log('ESCOTERA SAVE PAYLOAD', payload);
+
+    this.escoteraService.create(payload).subscribe({
+      next: () => {
+        this.form.reset();
+        this.loadEscotera();
+      },
+      error: (err) => alert(err.error?.message ?? 'Número duplicado'),
+    });
+
+    this.loading = false;
   }
 
+  loadEscotera() {
+    this.escoteraService.getAll().subscribe((data) => {
+      this.dataSource.data = data;
+    });
+  }
   onNuevo() {
-    this.selectedId = null;
-    this.consultMode = false;
     this.form.reset();
     this.form.enable({ emitEvent: false });
-  }
-
-  guardarDestete() {
-    if (!this.consultMode || !this.selectedId) return;
-    const fd = this.form.get('fechaDestete')?.value;
-    if (!fd) return;
-    const valor = fd instanceof Date ? fd.toISOString().slice(0, 10) : fd;
-
-    this.loading = true;
-    this.svc.actualizarDestete(this.selectedId, valor).subscribe({
-      next: () => (this.loading = false),
-      error: () => (this.loading = false),
-    });
   }
 
   // ========= tabla: columnas / acciones =========
@@ -312,11 +333,10 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
     console.log('eliminar()', row);
   }
 
-  trackById = (_: number, r: EscoteraDetalle) => r?.id ?? r?.numeroEscotera ?? _;
+  trackById = (_: number, r: EscoteraDetalle) => r?.id ?? r?.numero ?? _;
 
   // submit normal (si decides permitir crear/editar fuera de consulta)
   submit() {
-    if (this.consultMode) return;
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
 
@@ -324,7 +344,7 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
     const toYMD = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : d || null);
 
     const payload = {
-      numeroEscotera: v.numeroEscotera,
+      numero: v.numero,
       nombre: v.nombre,
       color: v.color ?? null,
       procedencia: v.procedencia ?? null,

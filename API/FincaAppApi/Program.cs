@@ -11,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using FincaAppDomain.Interfaces;
 using FincaAppInfrastructure.Repositories;
 using FincaAppInfrastructure.Security;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,8 +39,14 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ToroP
 builder.Services.AddScoped<IToroRepository, ToroRepository>();
 builder.Services.AddScoped<IFincaRepository, FincaRepository>();
 builder.Services.AddScoped<IParidaRepository, ParidaRepository>();
+builder.Services.AddScoped<IEscoteraRepository, EscoteraRepository>();
 
-builder.Services.AddControllers();
+
+builder.Services.AddControllers().AddJsonOptions(o =>
+{
+    o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {

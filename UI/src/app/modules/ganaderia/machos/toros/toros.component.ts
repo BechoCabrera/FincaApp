@@ -267,8 +267,6 @@ export class TorosComponent {
 
   // ===== Acciones =====
   guardarToro() {
-    debugger;
-
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

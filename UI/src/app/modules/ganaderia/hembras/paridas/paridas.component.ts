@@ -1,6 +1,6 @@
 import { Component, ViewChild, inject, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { FormBuilder, Validators, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { FormBuilder, Validators, ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 // Angular Material
@@ -19,38 +19,30 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime, startWith } from 'rxjs';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { ParidaService, CreateParidaDto } from 'src/app/core/services/parida.service';
+import { ParidaService, CreateParidaDto, ParidaDto } from 'src/app/core/services/parida.service';
 
 import { MatMenuModule } from '@angular/material/menu';
 import { FincaDto, FincaService } from 'src/app/core/services/finca.service';
 type Genero = 'Hembra' | 'Macho';
 type TipoLeche = 'Buena' | 'Regular' | 'Mala';
-
-export interface VacaParida {
-  id?: string;
-
-  numero: string;
-  nombre: string;
-
-  fechaNac?: Date | null;
-  color?: string | null;
-  procedencia?: string | null;
-  propietario?: string | null;
-
-  fechaParto: Date | null;
-  fPalpacion?: Date | null;
-
-  genero: 'Hembra' | 'Macho';
-  tipoLeche?: 'Buena' | 'Regular' | 'Mala' | null;
-
-  dp?: number | null;
-  gc?: string | null;
-
+interface ParidaForm {
+  nombre: string | null;
+  numero: string | null;
   fincaId: string | null;
-  detalles?: string | null;
+
+  generoCria: 'Hembra' | 'Macho' | null;
+
+  fechaParida: string | null;
+  fechaPalpacion: string | null;
+  fechaNacimiento: string | null;
+
+  color: string | null;
+  tipoLeche: string | null;
+  procedencia: string | null;
+
+  propietario: string | null;
+  observaciones: string | null;
 }
-
-
 @Component({
   selector: 'app-paridas',
   standalone: true,
@@ -92,19 +84,23 @@ export class ParidasComponent {
   tiposLeche: TipoLeche[] = ['Buena', 'Regular', 'Mala'];
 
   // ------ Formulario ------
-  form = this.fb.group({
-    numero: ['', [Validators.required]],
-    nombre: ['', [Validators.required]],
-    fechaNac: [null as Date | null],
-    color: [''],
-    procedencia: [''],
-    propietario: [''],
-    fechaParto: [null as Date | null, [Validators.required]],
-    fPalpacion: [null as Date | null], // opcional
-    fincaId: [null as string | null, [Validators.required]],
-    genero: ['Hembra' as Genero, [Validators.required]],
-    detalles: [''],
-    tipoLeche: [null as TipoLeche | null],
+  form = new FormGroup({
+    nombre: new FormControl<string | null>(null, { nonNullable: false, validators: Validators.required }),
+    numero: new FormControl<string | null>(null, { nonNullable: false, validators: Validators.required }),
+    fincaId: new FormControl<string | null>(null, { nonNullable: false, validators: Validators.required }),
+
+    generoCria: new FormControl<'Hembra' | 'Macho' | null>('Hembra', Validators.required),
+
+    fechaParida: this.fb.control<Date | null>(null, Validators.required),
+    fechaPalpacion: this.fb.control<Date | null>(null),
+    fechaNacimiento: this.fb.control<Date | null>(null),
+
+    color: new FormControl<string | null>(null),
+    tipoLeche: new FormControl<string | null>(null),
+    procedencia: new FormControl<string | null>(null),
+
+    propietario: new FormControl<string | null>(null),
+    observaciones: new FormControl<string | null>(null),
   });
 
   isSaving = signal(false);
@@ -124,18 +120,17 @@ export class ParidasComponent {
   defaultColumns: string[] = [
     'numero',
     'nombre',
-    'fechaNac',
+    'fechaNacimiento',
     'color',
     'tipoLeche',
     'procedencia',
     'propietario',
-    'dp',
-    'fPalpacion',
-    'fechaParto',
-    'gc',
-    'detalles',
+    'fechaPalpacion',
+    'fechaParida',
+    'observaciones',
     'acciones',
   ];
+
   displayedColumns: string[] = [...this.defaultColumns];
 
   // === Helpers para el checkbox maestro ===
@@ -166,24 +161,23 @@ export class ParidasComponent {
       this.displayedColumns = this.displayedColumns.filter((c) => c !== key);
     }
   }
+  editingId: string | null = null;
 
-  dataSource = new MatTableDataSource<VacaParida>([]);
+  dataSource = new MatTableDataSource<ParidaDto>([]);
 
   // Columnas (conmutables desde menú)
   allColumns = [
     { key: 'idx', label: '#' },
     { key: 'numero', label: 'Nº' },
     { key: 'nombre', label: 'Nombre' },
-    { key: 'fechaNac', label: 'Nacimiento' },
+    { key: 'fechaNacimiento', label: 'Nacimiento' },
     { key: 'color', label: 'Color' },
     { key: 'tipoLeche', label: 'Leche' },
     { key: 'procedencia', label: 'Procedencia' },
     { key: 'propietario', label: 'Propietario' },
-    { key: 'dp', label: 'D.P' },
-    { key: 'fPalpacion', label: 'F. Palpación' },
-    { key: 'fechaParto', label: 'Fec. Parto' },
-    { key: 'gc', label: 'G.C' },
-    { key: 'detalles', label: 'Detalles' },
+    { key: 'fechaPalpacion', label: 'F. Palpación' },
+    { key: 'fechaParida', label: 'Fec. Parto' },
+    { key: 'observaciones', label: 'Detalles' },
     { key: 'acciones', label: 'Acciones' },
   ];
 
@@ -207,7 +201,7 @@ export class ParidasComponent {
     // this.sort.sortChange.emit();
 
     // 👇 asegura que fechas nulas vayan al final y números se comparen como números
-    this.dataSource.sortingDataAccessor = (item: VacaParida, prop: string) => {
+    this.dataSource.sortingDataAccessor = (item: ParidaDto, prop: string) => {
       const v = (item as any)[prop];
       if (prop === 'fechaParto' || prop === 'fechaNac') {
         return v ? new Date(v).getTime() : null; // null -> al final (lo manejamos abajo)
@@ -236,7 +230,7 @@ export class ParidasComponent {
     };
 
     // Predicado de filtro compuesto (texto + finca + genero)
-    this.dataSource.filterPredicate = (data: VacaParida, raw: string) => {
+    this.dataSource.filterPredicate = (data: ParidaDto, raw: string) => {
       const f = JSON.parse(raw || '{}') as { q: string; fincaId: string; genero: string };
       const q = (f.q || '').trim().toLowerCase();
       const byText =
@@ -246,7 +240,7 @@ export class ParidasComponent {
         (data.propietario || '').toLowerCase().includes(q);
 
       const byFinca = !f.fincaId || f.fincaId === (data.fincaId || '');
-      const byGenero = !f.genero || f.genero === (data.genero || '');
+      const byGenero = !f.genero || f.genero === (data.generoCria || '');
 
       return byText && byFinca && byGenero;
     };
@@ -269,47 +263,6 @@ export class ParidasComponent {
     this.cargarFincas();
   }
 
-  // mockRows(n = 5): VacaParida[] {
-  //   const fincas = this.fincas.map(f => f.id);
-  //   const colores = ['Blanca', 'Roja', 'Pintada', 'Negra', 'Baya'];
-  //   const nombres = ['Blanquita Gigantona', 'Abril', 'Estrella', 'Canela', 'Luna'];
-
-  //   const pick = <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
-  //   const randDate = (from: Date, to: Date) =>
-  //     new Date(from.getTime() + Math.random() * (to.getTime() - from.getTime()));
-
-  //   const today = new Date();
-  //   const start = new Date(today.getFullYear() - 8, 0, 1);
-
-  //   const rows: VacaParida[] = [];
-  //   for (let i = 0; i < n; i++) {
-  //     const fechaNac = randDate(start, today);
-  //     const fechaParto = randDate(new Date(today.getFullYear() - 1, 0, 1), today);
-  //     const genero: Genero = Math.random() < 0.85 ? 'Hembra' : 'Macho'; // mayoría hembras
-
-  //     const numero = String(7 + i * 3); // just for variety
-
-  //     rows.push({
-  //       id: crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
-  //       numero,
-  //       nombre: pick(nombres),
-  //       fechaNac,
-  //       color: pick(colores),
-  //       procedencia: ['Cría', 'H-casa blanca', 'Compra'][Math.floor(Math.random() * 3)],
-  //       propietario: 'MC',
-  //       tipoLeche: ['Buena', 'Regular', 'Mala'][Math.floor(Math.random() * 3)] as TipoLeche,
-  //       fechaParto,
-  //       fPalpacion: randDate(new Date(today.getFullYear() - 1, 0, 1), today),
-  //       genero,
-  //       dp: this.calcDP(fechaParto),
-  //       gc: genero === 'Macho' ? 'M' : 'H',
-  //       detalles: Math.random() < 0.3 ? 'Sin observaciones' : '',
-  //       fincaId: pick(fincas),
-  //     });
-  //   }
-  //   return rows;
-  // }
-
   get totalVacas(): number {
     return this.dataSource.data.length;
   }
@@ -320,111 +273,103 @@ export class ParidasComponent {
     this.fincaCtrl.setValue('');
     this.generoCtrl.setValue('');
   }
-
   submit() {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+    if (this.form.invalid) return;
 
-    const v = this.form.getRawValue();
+    const raw = this.form.getRawValue();
 
-    const dto: CreateParidaDto = {
-      numero: v.numero!, // luego será un selector real
-      fincaId: v.fincaId!,
-      fechaParida: v.fechaParto!,
-      generoCria: v.genero === 'Macho' ? 'Macho' : 'Hembra',
-      fechaPalpacion: v.fPalpacion,
-      tipoLeche: v.tipoLeche,
-      observaciones: v.detalles,
+    const payload: CreateParidaDto = {
+      nombre: raw.nombre!,
+      numero: raw.numero!,
+      fincaId: raw.fincaId!,
+
+      generoCria: raw.generoCria!,
+
+      fechaParida: raw.fechaParida!.toISOString(),
+      fechaPalpacion: raw.fechaPalpacion ? raw.fechaPalpacion.toISOString() : null,
+      fechaNacimiento: raw.fechaNacimiento ? raw.fechaNacimiento.toISOString() : null,
+
+      color: raw.color ?? null,
+      tipoLeche: raw.tipoLeche ?? null,
+      procedencia: raw.procedencia ?? null,
+
+      propietario: raw.propietario ?? null,
+      observaciones: raw.observaciones ?? null,
     };
+    debugger;
+    if (this.editingId) {
+      this.paridaService.update(this.editingId, payload).subscribe({
+        next: () => {
+          this.form.reset();
+          this.editingId = null;
+          this.loadParidas();
+        },
+        error: (err) => alert(err.error?.message ?? 'Número duplicado'),
+      });
+    } else {
+      this.paridaService.create(payload).subscribe({
+        next: () => {
+          this.form.reset();
+          this.loadParidas();
+        },
+        error: (err) => alert(err.error?.message ?? 'Número duplicado'),
+      });
+    }
+  }
 
-    this.isSaving.set(true);
-
-    this.paridaService.create(dto).subscribe({
-      next: () => {
-        this.form.reset();
-        this.loadParidas();
-      },
-      complete: () => this.isSaving.set(false),
-      error: () => this.isSaving.set(false),
+  loadParidas() {
+    this.paridaService.getAll().subscribe((paridas) => {
+      this.dataSource.data = paridas;
     });
   }
- loadParidas() {
-  this.paridaService.getAll().subscribe(paridas => {
 
-    const mapTipoLeche = (v?: string | null): TipoLeche | null =>
-      v === 'Buena' || v === 'Regular' || v === 'Mala' ? v : null;
-
-    this.dataSource.data = paridas.map(p => ({
-      id: p.id,
-
-      // ===== IDENTIFICACIÓN =====
-      numero: p.numero,              // API → tabla
-      nombre: p.nombre,                   // no viene del API (por ahora)
-
-      // ===== DATOS NO DISPONIBLES (por ahora) =====
-      fechaNac: null,
-      color: null,
-      procedencia: null,
-      propietario: null,
-
-      // ===== EVENTO =====
-      fechaParto: new Date(p.fechaParida),      // 👈 CLAVE
-      fPalpacion: p.fechaPalpacion
-        ? new Date(p.fechaPalpacion)
-        : null,
-
-      // ===== CLASIFICACIÓN =====
-      genero: p.generoCria === 'Macho' ? 'Macho' : 'Hembra',
-      tipoLeche: mapTipoLeche(p.tipoLeche),
-
-      // ===== CAMPOS CALCULADOS =====
-      dp: this.calcDP(new Date(p.fechaParida)),
-      gc: p.generoCria === 'Macho' ? 'M' : 'H',
-
-      // ===== OTROS =====
-      fincaId: p.fincaId,
-      detalles: p.observaciones ?? null,  // API → tabla
-    }));
-  });
-}
-
-
-  private calcDP(fechaParto: Date | null): number | null {
-    if (!fechaParto) return null;
-    const ms = Date.now() - new Date(fechaParto).getTime();
-    return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
-  }
-
-  verDetalle(row: VacaParida) {
+  verDetalle(row: ParidaDto) {
     // TODO: abre un modal o navega a detalle
     console.log('Detalle:', row);
   }
 
-  editar(row: VacaParida) {
-    // TODO: cargar el row al formulario para edición
+  editar(row: ParidaDto) {
+    this.editingId = row.id;
     this.form.patchValue({
-      numero: row.numero,
       nombre: row.nombre,
-      fechaNac: row.fechaNac,
-      color: row.color,
-      procedencia: row.procedencia,
-      propietario: row.propietario,
-      fechaParto: row.fechaParto,
-      fPalpacion: row.fPalpacion,
+      numero: row.numero,
       fincaId: row.fincaId,
-      genero: row.gc === 'M' ? 'Macho' : 'Hembra',
-      detalles: row.detalles,
+
+      generoCria: row.generoCria,
+
+      fechaParida: row.fechaParida ? new Date(row.fechaParida) : null,
+      fechaPalpacion: row.fechaPalpacion ? new Date(row.fechaPalpacion) : null,
+      fechaNacimiento: row.fechaNacimiento ? new Date(row.fechaNacimiento) : null,
+
+      color: row.color,
       tipoLeche: row.tipoLeche,
+      procedencia: row.procedencia,
+
+      propietario: row.propietario,
+      observaciones: row.observaciones,
     });
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-  trackById = (_: number, item: VacaParida) => item.id ?? `${item.numero}-${item.nombre}`;
+  trackById = (_: number, item: ParidaDto) => item.id ?? `${item.numero}-${item.nombre}`;
 
   private colLabel(key: string) {
     return this.allColumns.find((c) => c.key === key)?.label ?? key;
   }
+
+  eliminar(row: ParidaDto) {
+  const ok = confirm(`¿Eliminar la parida Nº ${row.numero}?`);
+  if (!ok) return;
+
+  this.paridaService.delete(row.id).subscribe({
+    next: () => {
+      this.loadParidas();
+    },
+    error: err => {
+      alert(err.error?.message ?? 'Error al eliminar');
+    }
+  });
+}
 
   exportPdf() {
     // Solo columnas visibles y “reales” (excluye acciones/idx si no quieres exportarlas)
@@ -458,7 +403,7 @@ export class ParidasComponent {
     // Título
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.text('Vacas Paridas', marginX, 32);
+    doc.text('Vacas ParidaDtos', marginX, 32);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
@@ -482,7 +427,7 @@ export class ParidasComponent {
       },
     });
 
-    const file = `vacas-paridas_${this.date.transform(new Date(), 'yyyy-MM-dd')}.pdf`;
+    const file = `vacas-ParidaDtos_${this.date.transform(new Date(), 'yyyy-MM-dd')}.pdf`;
     doc.save(file);
   }
 }

@@ -6,7 +6,7 @@ using FincaAppApplication.Features.Requests.ParidaRequest;
 namespace FincaAppApplication.Features.Handlers.Parida;
 
 public class ListParidasHandler
-    : IRequestHandler<ListParidasRequest, List<ParidaListDto>>
+    : IRequestHandler<ListParidasRequest, List<ParidaDto>>
 {
     private readonly IParidaRepository _repo;
 
@@ -15,23 +15,38 @@ public class ListParidasHandler
         _repo = repo;
     }
 
-    public async Task<List<ParidaListDto>> Handle(
+    public async Task<List<ParidaDto>> Handle(
         ListParidasRequest request,
         CancellationToken ct)
     {
         var items = await _repo.GetAllAsync(ct);
+        return items.Select(p =>
+        {
+        var dp = (int?)(DateTime.UtcNow.Date - p.FechaParida.Date).TotalDays;
 
-        return items.Select(p => new ParidaListDto
+        return new ParidaDto
         {
             Id = p.Id,
             Numero = p.Numero,
-            FincaId = p.FincaId,
+            Nombre = p.Nombre,
+
+            FechaNacimiento = p.FechaNacimiento,
             FechaParida = p.FechaParida,
-            GeneroCria = p.GeneroCria,
             FechaPalpacion = p.FechaPalpacion,
+
+            Color = p.Color,
             TipoLeche = p.TipoLeche,
+            Procedencia = p.Procedencia,
+            Propietario = p.Propietario,
+
+            Dp = dp,
+            GeneroCria = p.GeneroCria,
             Observaciones = p.Observaciones,
-            Nombre = p.Nombre
-        }).ToList();
+
+            FincaId = p.FincaId
+        };
+    })
+    .ToList();
+
     }
 }

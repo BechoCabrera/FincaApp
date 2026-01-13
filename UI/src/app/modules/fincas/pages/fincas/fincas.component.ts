@@ -31,11 +31,11 @@ import { MatIconModule } from '@angular/material/icon';
     MatTableModule,
     MatIconModule,
     MatTooltipModule,
-    MatCheckboxModule
+    MatCheckboxModule,
   ],
 })
 export class FincasComponent implements OnInit {
-  constructor(private fb: FormBuilder, private fincaService: FincaService) { }
+  constructor(private fb: FormBuilder, private fincaService: FincaService) {}
 
   isSaving = false;
   formOk() {
@@ -73,7 +73,7 @@ export class FincasComponent implements OnInit {
     if (this.form.invalid) return;
 
     const v = this.form.getRawValue();
-    debugger;
+
     const payload = {
       id: this.editingId || '',
       codigo: v.codigo!,

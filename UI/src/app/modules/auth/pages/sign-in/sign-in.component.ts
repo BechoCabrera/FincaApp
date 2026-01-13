@@ -22,12 +22,11 @@ import { SessionService } from 'src/app/core/services/session.service';
   imports: [
     FormsModule,
     ReactiveFormsModule,
-    RouterLink,
     AngularSvgIconModule,
     NgIf,
     NgClass,
-    ButtonComponent,
-  ],
+    ButtonComponent
+],
 })
 export class SignInComponent implements OnInit {
   form!: FormGroup;
@@ -60,7 +59,6 @@ export class SignInComponent implements OnInit {
   }
 
   onSubmit(): void {
-    debugger;
     this.submitted = true;
     this.error = undefined;
 

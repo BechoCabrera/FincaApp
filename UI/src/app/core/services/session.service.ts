@@ -14,7 +14,6 @@ export class SessionService {
   }
 
   setSession(session: Session): void {
-    debugger;
     this.session = session;
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   }

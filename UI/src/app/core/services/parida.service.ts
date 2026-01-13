@@ -4,26 +4,40 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 export interface CreateParidaDto {
+  nombre: string;
   numero: string;
   fincaId: string;
-  fechaParida: Date;
+
   generoCria: 'Hembra' | 'Macho';
-  fechaPalpacion?: Date | null;
+
+  fechaParida: string;
+  fechaPalpacion?: string | null;
+  fechaNacimiento?: string | null;
+
+  color?: string | null;
   tipoLeche?: string | null;
+  procedencia?: string | null;
+
+  propietario?: string | null;
   observaciones?: string | null;
 }
 
 export interface ParidaDto {
   id: string;
-  vacaMadreId: string;
-  fincaId: string;
-  fechaParida: string;
-  generoCria: string;
-  tipoLeche?: string;
-  observaciones?: string;
-  fechaPalpacion?: string;
-  numero: string;
   nombre: string;
+  numero: string;
+  fincaId: string;
+  generoCria: 'Hembra' | 'Macho';
+  fechaParida: string;
+  fechaPalpacion?: string | null;
+  fechaNacimiento?: string | null;
+  color?: string | null;
+  tipoLeche?: string | null;
+  procedencia?: string | null;
+  observaciones?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  propietario?: string | null;
 }
 
 @Injectable({
@@ -44,5 +58,12 @@ export class ParidaService {
 
   getById(id: string): Observable<ParidaDto> {
     return this.http.get<ParidaDto>(`${this.apiUrl}/${id}`);
+  }
+
+  update(id: string, dto: CreateParidaDto): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, dto);
+  }
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

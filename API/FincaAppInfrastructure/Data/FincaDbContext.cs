@@ -12,7 +12,8 @@ public class FincaDbContext : DbContext
 
     public FincaDbContext(DbContextOptions<FincaDbContext> options, ITenantProvider tenant)
         : base(options) => _tenant = tenant;
-    public DbSet<Parida> Paridas => Set<Parida>();
+    public DbSet<Escoteras> Escoteras => Set<Escoteras>();
+    public DbSet<Paridas> Paridas => Set<Paridas>();
     public DbSet<Toro> Toros => Set<Toro>();
     public DbSet<Finca> Fincas => Set<Finca>();
     public DbSet<User> Users { get; set; }
@@ -107,6 +108,13 @@ public class FincaDbContext : DbContext
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<Escoteras>(entity =>
+        {
+            entity.ToTable("Escoteras");
+            entity.HasKey(x => x.Id);
+        });
+
 
 
         // Filtro global por TenantId
