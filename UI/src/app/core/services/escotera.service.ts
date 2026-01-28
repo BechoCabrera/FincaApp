@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 export interface EscoteraDto {
-  id: string;
+  id: string | null;
 
   numero: number;
   nombre: string;
@@ -58,8 +58,8 @@ export class EscoteraService {
   constructor(private http: HttpClient) {}
 
   /** CREATE */
-  create(dto: CreateEscoteraDto): Observable<{ id: string }> {
-    return this.http.post<{ id: string }>(this.apiUrl, dto);
+  create(dto: CreateEscoteraDto): Observable<void> {
+    return this.http.post<void>(this.apiUrl, dto);
   }
 
   /** LIST */
@@ -74,10 +74,7 @@ export class EscoteraService {
 
   /** UPDATE */
   update(id: string, dto: EscoteraDto): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${id}`, {
-      ...dto,
-      id,
-    });
+    return this.http.put<void>(`${this.apiUrl}/${id}`, dto);
   }
 
   /** DELETE */

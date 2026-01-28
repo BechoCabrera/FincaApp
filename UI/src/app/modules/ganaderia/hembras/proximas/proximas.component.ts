@@ -23,31 +23,27 @@ import { MatNativeDateModule } from '@angular/material/core';
 // PDF
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { EscoteraService } from 'src/app/core/services/escotera.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 // Servicio (te lo paso si lo pides)
 // import { ProximasService } from './proximas.service';
 
 type TipoOrigen = 'escotera' | 'novilla';
 
-interface OpcionAnimal {
-  id: string;
-  numero: number | string;
-  nombre: string;
-}
-
 interface ProximaDetalle {
   id: string;
   tipo: TipoOrigen; // de dónde viene (escotera/novilla)
   numero: number | string;
   nombre: string;
-  fechaNac?: string | Date | null;
+  fechaNacida?: string | Date | null;
   color?: string | null;
   nroMama?: number | string | null;
   procedencia?: string | null;
   propietario?: string | null;
   fechaDestete?: string | Date | null;
   fPalpacion?: string | Date | null;
-  dPrenes?: number | null;
+  dPrenez?: number | null;
   detalles?: string | null;
   fincaId?: string | null;
 }
@@ -83,13 +79,14 @@ export class ProximasComponent implements OnInit, AfterViewInit {
   // private svc = inject(ProximasService);
 
   // ===== UI State
+  valueAnimalSelect = null;
   loading = false;
   dense = false;
   consultMode = false;
 
   // ===== Selectores
   tipo: TipoOrigen = 'escotera';
-  opciones: OpcionAnimal[] = []; // opciones del select según tipo
+  opciones: any[] = []; // opciones del select según tipo
   selectedId: string | null = null;
 
   total = 0;
@@ -107,14 +104,14 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     'tipo',
     'numero',
     'nombre',
-    'fechaNac',
+    'fechaNacida',
     'color',
     'nroMama',
     'procedencia',
     'propietario',
     'fechaDestete',
     'fPalpacion',
-    'dPrenes',
+    'dPrenez',
     'detalles',
     'acciones',
   ];
@@ -123,14 +120,14 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     { key: 'tipo', label: 'ORIGEN' },
     { key: 'numero', label: 'Nº' },
     { key: 'nombre', label: 'NOMBRE' },
-    { key: 'fechaNac', label: 'F. NACIO' },
+    { key: 'fechaNacida', label: 'F. NACIO' },
     { key: 'color', label: 'COLOR' },
     { key: 'nroMama', label: 'N° MAMA' },
     { key: 'procedencia', label: 'PROCEDENCIA' },
     { key: 'propietario', label: 'PROPIETARIO' },
     { key: 'fechaDestete', label: 'F. DESTETE' },
     { key: 'fPalpacion', label: 'F. PALPACIÓN' },
-    { key: 'dPrenes', label: 'D. PREÑES' },
+    { key: 'dPrenez', label: 'D. PREÑES' },
     { key: 'detalles', label: 'DETALLES' },
     { key: 'acciones', label: 'ACCIONES' },
   ];
@@ -143,24 +140,32 @@ export class ProximasComponent implements OnInit, AfterViewInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
+  detalles?: string | null;
+  fechaDestete?: string | null;
+
+  vacaId?: string | null;
+  fincaId?: string | null;
+  constructor(private snack: MatSnackBar, private escoteraService: EscoteraService) {}
+
   // ====== Lifecycle
   ngOnInit(): void {
     this.form = this.fb.group({
       numero: [null, Validators.required],
       nombre: [null, Validators.required],
-      fechaNac: [null],
+      fechaNacida: [null],
       color: [null],
       nroMama: [null],
       procedencia: [null],
       propietario: [null],
       fechaDestete: [null],
       fPalpacion: [null],
-      dPrenes: [null],
+      dPrenez: [null],
       detalles: [null],
+      fincaId: [null],
     });
 
     this.cargarOpciones(); // carga opciones para el tipo inicial
-    //this.cargarTabla(); // carga tabla (ambos tipos o el que decidas mostrar)
+    this.cargarTabla(); // carga tabla (ambos tipos o el que decidas mostrar)
   }
 
   ngAfterViewInit(): void {
@@ -198,26 +203,70 @@ export class ProximasComponent implements OnInit, AfterViewInit {
   }
 
   async cargarOpciones() {
-    // carga opciones para el tipo seleccionado
-    const res: any = new Object// await firstValueFrom(this.svc.listarOpciones(this.tipo));
-    this.opciones = res.items; // [{id, numero, nombre}]
+    this.opciones = [];
+    switch (this.tipo) {
+      case 'escotera':
+        this.escoteraService.getAll().subscribe((res) => {
+          this.opciones = res.map((e) => ({
+            id: e.id,
+            numero: e.numero,
+            nombre: e.nombre,
+            fincaId: e.fincaId,
+            color: e.color,
+            propietario: e.propietario,
+            procedencia: e.procedencia,
+            nroMama: e.nroMama,
+            fechaNacida: e.fechaNacida,
+            fechaDestete: e.fechaDestete,
+            detalles: e.detalles,
+            tipoLeche: e.tipoLeche,
+            fPalpacion: e.fPalpacion,
+            dPrenez: e.dPrenez,
+          }));
+        });
+        break;
+      case 'novilla':
+        break;
+    }
     this.selectedId = null;
   }
 
+  onSelectAnimal(arg: any) {
+    switch (this.tipo) {
+      case 'escotera':
+        const esc = this.opciones.find((e) => e.id === arg.value);
+        if (esc == null) {
+          this.snack.open('Error, no en contrado, intente nuevamente', 'OK', { duration: 3000 });
+          this.form.reset();
+
+          return;
+        } else {
+          this.form = this.fb.group({
+            numero: esc.numero,
+            nombre: esc.nombre,
+            fechaNacida: esc.fechaNacida || null,
+            color: esc.color,
+            nroMama: esc.nroMama,
+            procedencia: esc.procedencia || null,
+            propietario: esc.propietario || null,
+            fechaDestete: esc.fechaDestete || null,
+            fPalpacion: esc.fPalpacion || null,
+            dPrenez: esc.dPrenez || null,
+            detalles: esc.detalles || null,
+            fincaId: esc.fincaId,
+          });
+        }
+        break;
+      case 'novilla':
+        break;
+    }
+  }
   async cargarTabla() {
     this.loading = true;
     try {
-      // Puedes cargar ambos tipos concatenados para mostrar un padrón general
-      const [esc, nov]: any = await Promise.all([
-        firstValueFrom(this.svc.listar('escotera')),
-        firstValueFrom(this.svc.listar('novilla')),
-      ]);
-      const a: ProximaDetalle[] = [
-        ...esc.items.map((x: any) => ({ ...x, tipo: 'escotera' as const })),
-        ...nov.items.map((x: any) => ({ ...x, tipo: 'novilla' as const })),
-      ];
-      this.dataSource.data = a;
-      this.total = esc.total + nov.total;
+
+      this.dataSource.data = [];
+      this.total = 0;
       this.applyFilter();
     } finally {
       this.loading = false;
@@ -228,20 +277,20 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     if (!this.selectedId) return;
     this.loading = true;
     try {
-      const det:any = await firstValueFrom(this.svc.obtenerPorId(this.tipo, this.selectedId));
+      const det: any = await firstValueFrom(this.svc.obtenerPorId(this.tipo, this.selectedId));
       if (!det) return;
 
       this.form.patchValue({
         numero: det.numero,
         nombre: det.nombre,
-        fechaNac: det.fechaNac ?? null,
+        fechaNacida: det.fechaNac ?? null,
         color: det.color ?? null,
         nroMama: det.nroMama ?? null,
         procedencia: det.procedencia ?? null,
         propietario: det.propietario ?? null,
         fechaDestete: det.fechaDestete ?? null,
         fPalpacion: det.fPalpacion ?? null,
-        dPrenes: det.dPrenes ?? null,
+        dPrenez: det.dPrenez ?? null,
         detalles: det.detalles ?? null,
       });
 
@@ -258,7 +307,9 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     }
   }
 
-  submit() {}
+  submit() {
+    console.log('submit()', this.form.value);
+  }
 
   onNuevo() {
     this.consultMode = false;
@@ -319,8 +370,8 @@ export class ProximasComponent implements OnInit, AfterViewInit {
         switch (k) {
           case 'idx':
             return String(idx + 1);
-          case 'fechaNac':
-            return r.fechaNac ? this.formatDate(r.fechaNac) : '';
+          case 'fechaNacida':
+            return r.fechaNacida ? this.formatDate(r.fechaNacida) : '';
           case 'fechaDestete':
             return r.fechaDestete ? this.formatDate(r.fechaDestete) : '';
           case 'fPalpacion':

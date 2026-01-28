@@ -18,11 +18,12 @@ public class FincaDbContext : DbContext
     public DbSet<Finca> Fincas => Set<Finca>();
     public DbSet<User> Users { get; set; }
     public DbSet<UserTenant> UserTenants { get; set; }
+    public DbSet<Proxima> Proximas => Set<Proxima>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(FincaDbContext).Assembly);       
         base.OnModelCreating(modelBuilder);
-
         // Índice único por tenant + negocio
         modelBuilder.Entity<Toro>(b =>
         {
@@ -167,4 +168,5 @@ public class FincaDbContext : DbContext
                 entry.Entity.CreatedAt = DateTime.UtcNow;
         }
     }
+
 }

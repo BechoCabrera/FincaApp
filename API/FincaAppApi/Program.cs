@@ -12,6 +12,8 @@ using FincaAppDomain.Interfaces;
 using FincaAppInfrastructure.Repositories;
 using FincaAppInfrastructure.Security;
 using System.Text.Json;
+using FincaAppDomain.Repositories;
+using FincaAppInfrastructure.Data.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +42,7 @@ builder.Services.AddScoped<IToroRepository, ToroRepository>();
 builder.Services.AddScoped<IFincaRepository, FincaRepository>();
 builder.Services.AddScoped<IParidaRepository, ParidaRepository>();
 builder.Services.AddScoped<IEscoteraRepository, EscoteraRepository>();
+builder.Services.AddScoped<IProximaRepository, ProximaRepository>();
 
 
 builder.Services.AddControllers().AddJsonOptions(o =>

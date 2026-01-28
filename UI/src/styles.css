@@ -350,7 +350,7 @@ body {
 @layer components {
   .ui-form { /* grid base para formularios */
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
+    grid-template-columns: repeat(25, 1fr);
     gap: 14px;
   }
 
@@ -464,7 +464,7 @@ body {
 :root { --font-zoom: 1; }
 
 /* Todo el sitio escala con esta variable */
-html { font-size: calc(16px * var(--font-zoom)); }
+html { font-size: calc(18px * var(--font-zoom)); }
 
 /* Transición suave (opcional) */
 html { transition: font-size .15s ease-out; }

@@ -33,12 +33,7 @@
     </div>
 
     <!-- Formulario -->
-    <form
-      [formGroup]="form"
-      #formDir="ngForm"
-      class="ui-form"
-      (ngSubmit)="submit()"
-      [class.was-submitted]="formDir.submitted">
+    <form [formGroup]="form" #formDir="ngForm" class="ui-form" [class.was-submitted]="formDir.submitted">
       <!-- fila 1 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Nº Escotera</mat-label>
@@ -108,14 +103,16 @@
 
       <!-- fecha destete (editable en consulta) -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Ingrese fecha destete</mat-label>
+        <mat-label>F. destete</mat-label>
         <input matInput [matDatepicker]="desPicker" formControlName="fechaDestete" />
+        <mat-error *ngIf="has('fechaDestete', 'required')">Requerido</mat-error>
         <mat-datepicker-toggle matSuffix [for]="desPicker"></mat-datepicker-toggle>
         <mat-datepicker #desPicker></mat-datepicker>
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Finca</mat-label>
+        <mat-error *ngIf="has('fincaId', 'required')">Requerido</mat-error>
         <mat-select formControlName="fincaId">
           <mat-option *ngFor="let f of fincas" [value]="f.id">
             {{ f.nombre }}
@@ -243,6 +240,11 @@
         <ng-container matColumnDef="tipoLeche">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>TIPO LECHE</th>
           <td mat-cell *matCellDef="let r">{{ r.tipoLeche }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="fechaDestete">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>F. DESTETE</th>
+          <td mat-cell *matCellDef="let r">{{ r.fechaDestete | date : 'yyyy-MM-dd' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="fPalpacion">
