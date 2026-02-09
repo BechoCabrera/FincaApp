@@ -4,6 +4,7 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { AuthInterceptor } from './interceptor/auth.interceptor';
 import { TenantInterceptor } from './interceptor/tenant.interceptor';
+import { LoadingInterceptor } from './interceptor/loading.interceptor';
 
 @NgModule({
   imports: [
@@ -19,6 +20,11 @@ import { TenantInterceptor } from './interceptor/tenant.interceptor';
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TenantInterceptor,
+      multi: true,
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: LoadingInterceptor,
       multi: true,
     },
   ],

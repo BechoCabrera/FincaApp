@@ -1,4 +1,4 @@
-import { NgClass, NgIf } from '@angular/common';
+import { AsyncPipe, NgClass, NgIf } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import {
   FormBuilder,
@@ -13,6 +13,7 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ButtonComponent } from '../../../../shared/components/button/button.component';
 import { AuthService } from '../../services/auth.service';
 import { SessionService } from 'src/app/core/services/session.service';
+import { LoadingService } from 'src/app/core/services/loading.service';
 
 @Component({
   selector: 'app-sign-in',
@@ -25,21 +26,23 @@ import { SessionService } from 'src/app/core/services/session.service';
     AngularSvgIconModule,
     NgIf,
     NgClass,
+    AsyncPipe,
     ButtonComponent
 ],
 })
 export class SignInComponent implements OnInit {
   form!: FormGroup;
   submitted = false;
-  loading = false;
   error?: string;
   passwordTextType = false;
+  readonly loading$ = this.loadingService.loading$;
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly authService: AuthService,
     private readonly sessionService: SessionService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly loadingService: LoadingService
   ) {}
 
   ngOnInit(): void {
@@ -66,8 +69,6 @@ export class SignInComponent implements OnInit {
       return;
     }
 
-    this.loading = true;
-
     this.authService.login(this.form.value).subscribe({
       next: (res) => {
         // Guardar sesión (token + tenant)
@@ -82,7 +83,6 @@ export class SignInComponent implements OnInit {
       },
       error: () => {
         this.error = 'Credenciales inválidas';
-        this.loading = false;
       },
     });
   }

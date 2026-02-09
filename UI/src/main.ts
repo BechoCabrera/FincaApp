@@ -10,6 +10,7 @@ import { AppRoutingModule } from './app/app-routing.module';
 import { RouterModule } from '@angular/router';
 import { AuthInterceptor } from './app/core/interceptor/auth.interceptor';
 import { TenantInterceptor } from './app/core/interceptor/tenant.interceptor';
+import { LoadingInterceptor } from './app/core/interceptor/loading.interceptor';
 
 if (environment.production) {
   enableProdMode();
@@ -34,6 +35,11 @@ bootstrapApplication(AppComponent, {
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TenantInterceptor,
+      multi: true,
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: LoadingInterceptor,
       multi: true,
     },
   ],

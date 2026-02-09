@@ -3,25 +3,25 @@
     <h3 class="section-title">Registro Novilla de Vientre</h3>
 
     <!-- ===== toolbar selección/consulta ===== -->
-    <div class="ui-actions ui-field-full" style="gap:12px; align-items:center; margin-bottom:.5rem;">
+    <div class="ui-actions ui-field-full" style="gap: 12px; align-items: center; margin-bottom: 0.5rem">
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Seleccione recria</mat-label>
-        <mat-select [(ngModel)]="selectedId" [ngModelOptions]="{standalone:true}">
+        <mat-select
+          [(ngModel)]="selectedId"
+          [ngModelOptions]="{standalone:true}"
+          (selectionChange)="onSelectRecria($event.value)">
           <mat-option [value]="null">Seleccione recria</mat-option>
-          <mat-option *ngFor="let r of recrias" [value]="r.id">
-            {{ r.numero }} — {{ r.nombre }}
-          </mat-option>
+          <mat-option *ngFor="let r of recrias" [value]="r.id"> {{ r.numero }} — {{ r.nombre }} </mat-option>
         </mat-select>
       </mat-form-field>
 
-      <button class="ui-btn ui-btn-primary" mat-flat-button color="primary" type="button" (click)="onConsultar()">
-        Consultar
+      <button class="ui-btn" mat-flat-button type="button" style="background: var(--primary)" (click)="onNuevo()">
+        Nuevo
       </button>
-      <button class="ui-btn ui-btn-primary-cancel" mat-flat-button type="button" (click)="onNuevo()">Nuevo</button>
 
       <span
         class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
-        style="margin-left:auto; background: var(--table-head-bg); color: var(--table-ink)">
+        style="margin-left: auto; background: var(--table-head-bg); color: var(--table-ink)">
         TOTAL DE NOVILLAS: {{ totalNovillas }}
       </span>
     </div>
@@ -33,55 +33,70 @@
       class="ui-form"
       (ngSubmit)="submit()"
       [class.was-submitted]="formDir.submitted">
-
       <!-- fila 1 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Número Escotera</mat-label>
-        <input matInput formControlName="numero" placeholder="Nro Escotera" />
+        <mat-label>Número</mat-label>
+        <input matInput formControlName="numero" placeholder="Nro" />
         <mat-error *ngIf="has('numero', 'required')">Requerido</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Nombre</mat-label>
-        <input matInput formControlName="nombre" placeholder="Nombre de la Novilla" />
+        <input matInput formControlName="nombre" placeholder="Nombre de la novilla" />
         <mat-error *ngIf="has('nombre', 'required')">Requerido</mat-error>
       </mat-form-field>
 
       <!-- fila 2 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Color</mat-label>
-        <input matInput formControlName="color" placeholder="Color de la novilla" />
-      </mat-form-field>
-
-      <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Propietario</mat-label>
-        <input matInput formControlName="propietario" placeholder="Propietario" />
-      </mat-form-field>
-
-      <!-- fila 3 -->
-      <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Peso en kg</mat-label>
-        <input matInput type="number" formControlName="pesoKg" placeholder="Peso en kg" />
-      </mat-form-field>
-
-      <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Procedencia</mat-label>
-        <input matInput formControlName="procedencia" placeholder="Procedencia" />
-      </mat-form-field>
-
-      <!-- fila 4 -->
-      <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Fecha Nacimiento</mat-label>
+        <mat-label>F. Nacimiento</mat-label>
         <input matInput [matDatepicker]="nacPicker" formControlName="fechaNac" />
         <mat-datepicker-toggle matSuffix [for]="nacPicker"></mat-datepicker-toggle>
         <mat-datepicker #nacPicker></mat-datepicker>
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Fecha Destete</mat-label>
+        <mat-label>F. Destete</mat-label>
         <input matInput [matDatepicker]="destPicker" formControlName="fechaDestete" />
         <mat-datepicker-toggle matSuffix [for]="destPicker"></mat-datepicker-toggle>
         <mat-datepicker #destPicker></mat-datepicker>
+      </mat-form-field>
+
+      <!-- fila 3 -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Peso en kg</mat-label>
+        <input matInput type="number" formControlName="pesoKg" placeholder="Ej: 95" />
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Color</mat-label>
+        <input matInput formControlName="color" placeholder="Roja, Pintada..." />
+      </mat-form-field>
+
+      <!-- fila 4 -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Propietario</mat-label>
+        <input matInput formControlName="propietario" placeholder="Nombre del propietario" />
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Finca</mat-label>
+        <mat-select formControlName="fincaId">
+          <mat-option *ngFor="let f of fincas" [value]="f.id">{{ f.nombre }}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="has('fincaId', 'required')">Requerido</mat-error>
+      </mat-form-field>
+
+      <!-- fila 5 -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Vaca (madre)</mat-label>
+        <mat-select formControlName="madreNumero">
+          <mat-option *ngFor="let m of madres" [value]="m.numero"> {{ m.numero }} — {{ m.nombre }} </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Procedencia</mat-label>
+        <input matInput formControlName="procedencia" placeholder="Procedencia" />
       </mat-form-field>
 
       <!-- detalles -->
@@ -92,8 +107,14 @@
 
       <!-- acciones -->
       <div class="ui-actions ui-field-full">
-        <button class="ui-btn ui-btn-primary-cancel" mat-flat-button type="button">Cancelar</button>
-        <button style="background: var(--primary)" mat-flat-button type="submit" [disabled]="!formOk() || isSaving()">
+        <button class="ui-btn ui-btn-primary-cancel" mat-flat-button type="button" (click)="onNuevo()">
+          Cancelar
+        </button>
+        <button
+          style="background: var(--primary)"
+          mat-flat-button
+          type="submit"
+          [disabled]="!formOk() || isSaving()">
           Guardar
         </button>
       </div>
@@ -107,7 +128,7 @@
         <span
           class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
           style="background: var(--table-head-bg); color: var(--table-ink)">
-          TOTAL: {{ dataSource.filteredData.length }} / {{ totalNovillas }}
+          TOTAL: {{ dataSource.filteredData.length || 0 }} / {{ totalNovillas }}
         </span>
       </div>
 
@@ -135,7 +156,7 @@
           <mat-icon class="mr-1">view_column</mat-icon> Columnas
         </button>
         <button
-         style="background: var(--primary)"
+          style="background: var(--primary)"
           mat-mini-fab
           class="ui-fab-pdf mb-4"
           (click)="exportPdf()"
@@ -160,7 +181,7 @@
     </div>
 
     <div class="ui-table-wrapper">
-      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1 ui-table">
+      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1 ui-table" [trackBy]="trackById">
         <!-- índice -->
         <ng-container matColumnDef="idx">
           <th mat-header-cell *matHeaderCellDef class="col-sticky" mat-sort-header>#</th>
@@ -185,6 +206,7 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header>F. NACIMIENTO</th>
           <td mat-cell *matCellDef="let r">{{ r.fechaNac | date : 'yyyy-MM-dd' }}</td>
         </ng-container>
+
         <ng-container matColumnDef="fechaDestete">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>F. DESTETE</th>
           <td mat-cell *matCellDef="let r">{{ r.fechaDestete | date : 'yyyy-MM-dd' }}</td>
@@ -215,16 +237,15 @@
           <td mat-cell *matCellDef="let r">{{ r.madreNombre }}</td>
         </ng-container>
 
+        <ng-container matColumnDef="procedencia">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>PROCEDENCIA</th>
+          <td mat-cell *matCellDef="let r">{{ r.procedencia }}</td>
+        </ng-container>
+
         <ng-container matColumnDef="detalles">
           <th mat-header-cell *matHeaderCellDef>DETALLES</th>
           <td mat-cell *matCellDef="let r">
             <span class="line-clamp-1" [matTooltip]="r.detalles || ''">{{ r.detalles }}</span>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="procedencia">
-          <th mat-header-cell *matHeaderCellDef>Procedencia</th>
-          <td mat-cell *matCellDef="let r">
-            <span class="line-clamp-1" [matTooltip]="r.procedencia || ''">{{ r.procedencia }}</span>
           </td>
         </ng-container>
 
@@ -242,14 +263,10 @@
 
         <!-- filas -->
         <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
 
-      <mat-paginator
-        #paginator
-        [pageSize]="10"
-        [pageSizeOptions]="[5, 10, 20, 50]"
-        showFirstLastButtons>
+      <mat-paginator #paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 20, 50]" showFirstLastButtons>
       </mat-paginator>
     </div>
   </section>

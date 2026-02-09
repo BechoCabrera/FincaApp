@@ -7,7 +7,22 @@
       "request": "launch",
       "url": "http://localhost:4200",
       "webRoot": "${workspaceFolder}",
-      "sourceMaps": true
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///src/*": "${webRoot}/src/*",
+        "webpack:///*": "*",
+        "webpack:///./src/*": "${webRoot}/src/*"
+      },
+      "pathMapping": {
+        "/": "${workspaceFolder}/",
+        "/src/": "${workspaceFolder}/src/"
+      },
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "preLaunchTask": "ng serve",
+      "preLaunchTaskWaitOnClose": false
     }
   ]
 }

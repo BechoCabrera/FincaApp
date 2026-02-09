@@ -271,6 +271,14 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    // Calcular días de preñez si hay fecha de palpación
+    let dPrenez: number | null = null;
+    if (vaca.fechaPalpacion) {
+      const fechaPalpacion = new Date(vaca.fechaPalpacion);
+      const today = new Date();
+      dPrenez = Math.floor((today.getTime() - fechaPalpacion.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
     this.form.patchValue({
       numero: vaca.numero,
       vacaId: vaca.id,
@@ -280,6 +288,9 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
       propietario: vaca.propietario ?? null,
       fechaNacida: vaca.fechaNacimiento ? new Date(vaca.fechaNacimiento) : null,
       tipoLeche: vaca.tipoLeche ?? null,
+      fPalpacion: vaca.fechaPalpacion ? new Date(vaca.fechaPalpacion) : null,
+      dPrenez: dPrenez,
+      detalles: vaca.observaciones ?? null,
       fincaId: vaca.fincaId,
     });
   }

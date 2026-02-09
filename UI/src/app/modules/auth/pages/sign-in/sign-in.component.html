@@ -87,7 +87,15 @@
 
   <!-- Submit Button -->
   <div>
-    <app-button full impact="bold" tone="primary" shape="rounded" size="medium">Iniciar sesión</app-button>
+    <app-button
+      full
+      impact="bold"
+      tone="primary"
+      shape="rounded"
+      size="medium"
+      [disabled]="(loading$ | async) || form.invalid">
+      Iniciar sesión
+    </app-button>
   </div>
 
   <!-- Sign-up -->

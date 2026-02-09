@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, FormControl } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { RecriasService } from './recrias.service';
+import { RecriaHembrasService } from 'src/app/core/services/recrias-hembras.service';
+import { FincaService } from 'src/app/core/services/finca.service';
+import { ParidaService } from 'src/app/core/services/parida.service';
 
 // Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -24,6 +26,9 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 // PDF
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { CriaHembra } from '../crias-hembras/crias-hembras.component';
+import { CriaHembrasService } from 'src/app/core/services/cria-hembras.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 /** Tipos locales (ajústalos si ya los exportas desde el servicio) */
 interface RecriaResumen {
@@ -74,8 +79,12 @@ interface RecriaDetalle {
 })
 export class RecriasHembrasComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
-  // private svc = inject(RecriasService);
-  private svc: any = null;
+  private recriasService = inject(RecriaHembrasService);
+  private fincaService = inject(FincaService);
+  private paridaService = inject(ParidaService);
+
+  constructor(private criaService: CriaHembrasService, private snack: MatSnackBar) {}
+  selectCriaHembra: any[] = [];
 
   /** UI state */
   dense = false;
@@ -85,22 +94,15 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
   /** Select de recrías */
   recrias: RecriaResumen[] = [];
   selectedId: string | null = null;
+  private editingId: string | null = null;
   totalRecrias = 0;
   get totalCrias() {
     return this.totalRecrias;
   } // alias usado por el HTML
 
-  /** Catálogos (dummy; reemplaza por servicio si aplica) */
-  fincas = [
-    { id: 'F1', nombre: 'Tierra Nueva' },
-    { id: 'F2', nombre: 'La Más Nueva' },
-    { id: 'F3', nombre: 'San Antonio' },
-  ];
-  madres = [
-    { numero: '42', nombre: 'Reina' },
-    { numero: '382', nombre: 'Brisa' },
-    { numero: '309', nombre: 'Luna' },
-  ];
+  /** Catálogos desde API */
+  fincas: any[] = [];
+  madres: any[] = [];
 
   /** Form principal */
   form!: FormGroup;
@@ -155,9 +157,13 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
       fincaId: [null, Validators.required],
       madreNumero: [null],
       detalles: [null],
-      fechaDestete: [null],
+      fechaDestete: [null, Validators.required],
     });
-    //this.cargarRecrias();
+    this.cargarSelectRecrias();
+    this.cargarFincas();
+    this.cargarMadres();
+    this.cargarCrias();
+    this.cargarRecrias();
   }
 
   ngAfterViewInit(): void {
@@ -199,28 +205,114 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   }
 
+  private cargarSelectRecrias() {
+    this.recriasService.getAll().subscribe({
+      next: (res) => {
+        this.recrias = res.map((item: any) => ({
+          id: item.id,
+          numero: item.numero,
+          nombre: item.nombre,
+        }));
+        this.totalRecrias = res.length;
+      },
+      error: () => {
+        // Mantiene los datos por defecto si falla
+      },
+    });
+  }
+
+  private cargarFincas() {
+    this.fincaService.listar().subscribe({
+      next: (res) => {
+        this.fincas = res.map((f: any) => ({ id: f.id, nombre: f.nombre }));
+      },
+      error: () => {
+        // Mantiene las fincas por defecto si falla
+      },
+    });
+  }
+
+  private cargarCrias() {
+    this.criaService.getAll().subscribe({
+      next: (res) => {
+        this.selectCriaHembra = res.map((item: any) => ({
+          id: item.id,
+          numero: item.numero,
+          nombre: item.nombre,
+        }));
+      },
+      error: () => {
+        this.snack.open('No se pudo cargar el listado', 'OK', { duration: 3000 });
+      },
+    });
+  }
+
+  private cargarMadres() {
+    this.paridaService.getAll().subscribe({
+      next: (res) => {
+        this.madres = res.map((p: any) => ({ numero: p.numero, nombre: p.nombre }));
+      },
+      error: () => {
+        // Mantiene las madres por defecto si falla
+      },
+    });
+  }
+
+  async onSelectCria(id: string | null) {
+    if (!id) {
+      this.onNuevo();
+      return;
+    }
+    this.loading = true;
+    try {
+      const det: any = await firstValueFrom(this.criaService.getById(id));
+      if (!det) return;
+      //this.editingId = id;
+
+      this.form.patchValue({
+        numero: det.numero,
+        nombre: det.nombre,
+        fechaNac: det.fechaNac ? new Date(det.fechaNac) : null,
+        pesoKg: det.pesoKg ?? null,
+        color: det.color ?? null,
+        propietario: det.propietario ?? null,
+        fincaId: det.fincaId ?? null,
+        madreNumero: det.madreNumero ?? null,
+        detalles: det.detalles ?? null,
+        fechaDestete: det.fechaDestete ? new Date(det.fechaDestete) : null,
+      });
+
+      this.consultMode = false;
+      this.form.enable({ emitEvent: false });
+    } finally {
+      this.loading = false;
+    }
+  }
+
   async cargarRecrias() {
     this.loading = true;
     try {
-      const res: any = new Object// await firstValueFrom(this.svc.listarRecrias());
-      this.recrias = res.items;
-      this.totalRecrias = res.total;
+      const res: any = await firstValueFrom(this.recriasService.getAll());
+      this.recrias = (res || []).map((item: any) => ({
+        id: item.id,
+        numero: item.numero,
+        nombre: item.nombre,
+      }));
+      this.totalRecrias = this.recrias.length;
 
-      // Si tu endpoint de listado no trae todos los campos de la tabla,
-      // mapea con valores por defecto para que renderice sin errores.
-      const rows: RecriaDetalle[] = res.items.map((it: any) => ({
+      const rows: RecriaDetalle[] = (res || []).map((it: any) => ({
         id: it.id,
         numero: it.numero,
         nombre: it.nombre,
-        fechaNac: null,
-        pesoKg: null,
-        color: null,
-        propietario: null,
-        fincaId: null,
-        madreNumero: null,
-        madreNombre: null,
-        detalles: null,
-        fechaDestete: null,
+        fechaNac: it.fechaNac || null,
+        pesoKg: it.pesoKg || null,
+        color: it.color || null,
+        propietario: it.propietario || null,
+        fincaId: it.fincaId || null,
+        madreNumero: it.madreNumero || null,
+        madreNombre: it.madreNombre || null,
+        detalles: it.detalles || null,
+        fechaDestete: it.fechaDestete || null,
       }));
       this.dataSource.data = rows;
       this.applyFilter();
@@ -233,23 +325,23 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
     if (!this.selectedId) return;
     this.loading = true;
     try {
-      const det: any = await firstValueFrom(this.svc.obtenerRecriaPorId(this.selectedId));
+      const det: any = await firstValueFrom(this.recriasService.getById(this.selectedId));
       if (!det) return;
 
       this.form.patchValue({
         numero: det.numero,
         nombre: det.nombre,
-        fechaNac: det.fechaNac ?? null,
+        fechaNac: det.fechaNac ? new Date(det.fechaNac) : null,
         pesoKg: det.pesoKg ?? null,
         color: det.color ?? null,
         propietario: det.propietario ?? null,
         fincaId: det.fincaId ?? null,
         madreNumero: det.madreNumero ?? null,
         detalles: det.detalles ?? null,
-        fechaDestete: det.fechaDestete ?? null,
+        fechaDestete: det.fechaDestete ? new Date(det.fechaDestete) : null,
       });
 
-      // Mostrar la consultada en la tabla (opcional)
+      // Mostrar la consultada en la tabla (solo esta recría)
       this.dataSource.data = [
         {
           ...det,
@@ -271,6 +363,7 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
   onNuevo() {
     this.selectedId = null;
     this.consultMode = false;
+    this.editingId = null;
     this.form.reset();
     this.form.enable({ emitEvent: false });
   }
@@ -278,13 +371,25 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
   guardarDestete() {
     if (!this.consultMode || !this.selectedId) return;
     const fd = this.form.get('fechaDestete')?.value;
-    if (!fd) return;
+    if (!fd) {
+      this.form.get('fechaDestete')?.markAsTouched();
+      this.snack.open('La fecha de destete es obligatoria', 'OK', { duration: 3000 });
+      return;
+    }
     const valor = fd instanceof Date ? fd.toISOString().substring(0, 10) : fd;
 
     this.loading = true;
-    this.svc.actualizarDestete(this.selectedId, valor).subscribe({
-      next: () => (this.loading = false),
-      error: () => (this.loading = false),
+    const updateDto = { ...this.form.getRawValue(), fechaDestete: valor };
+    this.recriasService.update(this.selectedId, updateDto).subscribe({
+      next: () => {
+        this.loading = false;
+        this.snack.open('Fecha de destete guardada', 'OK', { duration: 3000 });
+        this.cargarRecrias();
+      },
+      error: () => {
+        this.loading = false;
+        this.snack.open('No se pudo guardar', 'OK', { duration: 3000 });
+      },
     });
   }
 
@@ -311,13 +416,39 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
   }
 
   editar(row: RecriaDetalle) {
-    // TODO: abre modal/route edición
-    console.log('editar()', row);
+    this.editingId = row.id;
+    this.consultMode = false;
+    this.form.enable({ emitEvent: false });
+    this.form.patchValue({
+      numero: row.numero,
+      nombre: row.nombre,
+      fechaNac: row.fechaNac ? new Date(row.fechaNac) : null,
+      pesoKg: row.pesoKg ?? null,
+      color: row.color ?? null,
+      propietario: row.propietario ?? null,
+      fincaId: row.fincaId ?? null,
+      madreNumero: row.madreNumero ?? null,
+      detalles: row.detalles ?? null,
+      fechaDestete: row.fechaDestete ? new Date(row.fechaDestete) : null,
+    });
   }
 
   eliminar(row: RecriaDetalle) {
-    // TODO: confirma y elimina
-    console.log('eliminar()', row);
+    if (!row?.id) return;
+    const ok = confirm('¿Eliminar esta recría hembra?');
+    if (!ok) return;
+    this.loading = true;
+    this.recriasService.delete(row.id).subscribe({
+      next: () => {
+        this.loading = false;
+        this.snack.open('Registro eliminado', 'OK', { duration: 3000 });
+        this.cargarRecrias();
+      },
+      error: () => {
+        this.loading = false;
+        this.snack.open('No se pudo eliminar', 'OK', { duration: 3000 });
+      },
+    });
   }
 
   /** ===== Exportación PDF real ===== */
@@ -402,7 +533,6 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
   submit() {
     // En modo consulta no se guarda (el guardado ahí es guardarDestete)
     if (this.consultMode) return;
-
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
 
@@ -422,10 +552,22 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
       fechaDestete: toYMD(v.fechaDestete),
     };
 
-    // TODO: llama a tu servicio de crear/actualizar aquí
-    // this.loading = true;
-    // this.svc.guardarRecria(payload).subscribe({ next: () => this.loading = false, error: () => this.loading = false });
+    this.loading = true;
+    const req$ = this.editingId
+      ? this.recriasService.update(this.editingId, payload)
+      : this.recriasService.create(payload);
 
-    console.log('submit()', payload);
+    req$.subscribe({
+      next: () => {
+        this.loading = false;
+        this.snack.open(this.editingId ? 'Registro actualizado' : 'Registro creado', 'OK', { duration: 3000 });
+        this.onNuevo();
+        this.cargarRecrias();
+      },
+      error: () => {
+        this.loading = false;
+        this.snack.open('No se pudo guardar', 'OK', { duration: 3000 });
+      },
+    });
   }
 }

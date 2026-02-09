@@ -3,27 +3,20 @@
     <h3 class="section-title">Registro Recría Hembra</h3>
 
     <!-- ===== toolbar selección/consulta ===== -->
-    <div class="ui-actions ui-field-full" style="gap:12px; align-items:center; margin-bottom:.5rem;">
+    <div class="ui-actions ui-field-full" style="gap: 12px; align-items: center; margin-bottom: 0.5rem">
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Seleccione recría</mat-label>
-        <mat-select [(ngModel)]="selectedId" [ngModelOptions]="{standalone:true}">
-          <mat-option [value]="null">Seleccione recría</mat-option>
-          <mat-option *ngFor="let r of recrias" [value]="r.id">
-            {{ r.numero }} — {{ r.nombre }}
-          </mat-option>
+        <mat-label>Seleccione cria</mat-label>
+        <mat-select
+          [(ngModel)]="selectedId"
+          [ngModelOptions]="{ standalone: true }"
+          (selectionChange)="onSelectCria($event.value)">
+          <mat-option [value]="null">Seleccione cria</mat-option>
+          <mat-option *ngFor="let r of selectCriaHembra" [value]="r.id"> {{ r.numero }} — {{ r.nombre }} </mat-option>
         </mat-select>
       </mat-form-field>
-
-      <button class="ui-btn" mat-flat-button color="primary" style="background: var(--primary)" type="button" (click)="onConsultar()">
-        Consultar
+      <button class="ui-btn" mat-flat-button type="button" style="background: var(--primary)" (click)="onNuevo()">
+        Nuevo
       </button>
-      <button class="ui-btn" mat-flat-button type="button" style="background: var(--primary)" (click)="onNuevo()">Nuevo</button>
-
-      <span
-        class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
-        style="margin-left:auto; background: var(--table-head-bg); color: var(--table-ink)">
-        TOTAL DE RECRÍA HEMBRA: {{ totalRecrias }}
-      </span>
     </div>
 
     <!-- ===== formulario ===== -->
@@ -33,23 +26,22 @@
       class="ui-form"
       (ngSubmit)="submit()"
       [class.was-submitted]="formDir.submitted">
-
       <!-- fila 1 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Número</mat-label>
         <input matInput formControlName="numero" placeholder="Nro" />
-        <mat-error *ngIf="has('numero','required')">Requerido</mat-error>
+        <mat-error *ngIf="has('numero', 'required')">Requerido</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Nombre</mat-label>
         <input matInput formControlName="nombre" placeholder="Nombre de la recría" />
-        <mat-error *ngIf="has('nombre','required')">Requerido</mat-error>
+        <mat-error *ngIf="has('nombre', 'required')">Requerido</mat-error>
       </mat-form-field>
 
       <!-- fila 2 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Fecha Nacimiento</mat-label>
+        <mat-label>F. Nacimiento</mat-label>
         <input matInput [matDatepicker]="nacPicker" formControlName="fechaNac" />
         <mat-datepicker-toggle matSuffix [for]="nacPicker"></mat-datepicker-toggle>
         <mat-datepicker #nacPicker></mat-datepicker>
@@ -73,19 +65,17 @@
 
       <!-- fila 4 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Seleccione la finca</mat-label>
+        <mat-label>Finca</mat-label>
         <mat-select formControlName="fincaId">
           <mat-option *ngFor="let f of fincas" [value]="f.id">{{ f.nombre }}</mat-option>
         </mat-select>
-        <mat-error *ngIf="has('fincaId','required')">Requerido</mat-error>
+        <mat-error *ngIf="has('fincaId', 'required')">Requerido</mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Seleccione la vaca (madre)</mat-label>
+        <mat-label>Vaca (madre)</mat-label>
         <mat-select formControlName="madreNumero">
-          <mat-option *ngFor="let m of madres" [value]="m.numero">
-            {{ m.numero }} — {{ m.nombre }}
-          </mat-option>
+          <mat-option *ngFor="let m of madres" [value]="m.numero"> {{ m.numero }} — {{ m.nombre }} </mat-option>
         </mat-select>
       </mat-form-field>
 
@@ -97,7 +87,7 @@
 
       <!-- fecha destete (editable también cuando se consulta) -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Ingrese fecha destete</mat-label>
+        <mat-label>F. destete</mat-label>
         <input matInput [matDatepicker]="desPicker" formControlName="fechaDestete" />
         <mat-datepicker-toggle matSuffix [for]="desPicker"></mat-datepicker-toggle>
         <mat-datepicker #desPicker></mat-datepicker>
@@ -109,7 +99,7 @@
 
         <!-- Guardado según modo -->
         <button
-        class="ui-btn-primary"
+          class="ui-btn-primary"
           mat-flat-button
           type="button"
           *ngIf="consultMode"
@@ -190,13 +180,7 @@
     </div>
 
     <div class="ui-table-wrapper">
-      <table
-        mat-table
-        [dataSource]="dataSource"
-        matSort
-        class="mat-elevation-z1 ui-table"
-        [trackBy]="trackById">
-
+      <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1 ui-table" [trackBy]="trackById">
         <!-- índice -->
         <ng-container matColumnDef="idx">
           <th mat-header-cell *matHeaderCellDef class="col-sticky" mat-sort-header>#</th>
@@ -268,14 +252,10 @@
 
         <!-- filas -->
         <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
 
-      <mat-paginator
-        #paginator
-        [pageSize]="10"
-        [pageSizeOptions]="[5, 10, 20, 50]"
-        showFirstLastButtons>
+      <mat-paginator #paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 20, 50]" showFirstLastButtons>
       </mat-paginator>
     </div>
   </section>

@@ -24,6 +24,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { EscoteraService } from 'src/app/core/services/escotera.service';
+import { ProximaService, CreateProximaDto, UpdateProximaDto, ProximaDto } from 'src/app/core/services/proxima.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 // Servicio (te lo paso si lo pides)
@@ -75,8 +76,8 @@ interface ProximaDetalle {
 })
 export class ProximasComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
-  private svc: any = null;
-  // private svc = inject(ProximasService);
+  private currentDetail?: ProximaDto;
+  private editingId: string | null = null;
 
   // ===== UI State
   valueAnimalSelect = null;
@@ -145,7 +146,11 @@ export class ProximasComponent implements OnInit, AfterViewInit {
 
   vacaId?: string | null;
   fincaId?: string | null;
-  constructor(private snack: MatSnackBar, private escoteraService: EscoteraService) {}
+  constructor(
+    private snack: MatSnackBar,
+    private escoteraService: EscoteraService,
+    private proximaService: ProximaService,
+  ) {}
 
   // ====== Lifecycle
   ngOnInit(): void {
@@ -264,9 +269,12 @@ export class ProximasComponent implements OnInit, AfterViewInit {
   async cargarTabla() {
     this.loading = true;
     try {
-
-      this.dataSource.data = [];
-      this.total = 0;
+      const items = await firstValueFrom(this.proximaService.search());
+      this.dataSource.data = items.map((i) => ({
+        ...i,
+        tipo: (i as any).tipo ?? 'escotera',
+      }));
+      this.total = this.dataSource.data.length;
       this.applyFilter();
     } finally {
       this.loading = false;
@@ -277,13 +285,14 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     if (!this.selectedId) return;
     this.loading = true;
     try {
-      const det: any = await firstValueFrom(this.svc.obtenerPorId(this.tipo, this.selectedId));
+      const det = await firstValueFrom(this.proximaService.getById(this.selectedId));
       if (!det) return;
+      this.currentDetail = det;
 
       this.form.patchValue({
         numero: det.numero,
         nombre: det.nombre,
-        fechaNacida: det.fechaNac ?? null,
+        fechaNacida: det.fechaNacida ?? null,
         color: det.color ?? null,
         nroMama: det.nroMama ?? null,
         procedencia: det.procedencia ?? null,
@@ -292,10 +301,11 @@ export class ProximasComponent implements OnInit, AfterViewInit {
         fPalpacion: det.fPalpacion ?? null,
         dPrenez: det.dPrenez ?? null,
         detalles: det.detalles ?? null,
+        fincaId: det.fincaId ?? null,
       });
 
       // Mostrar sólo lo consultado (opcional)
-      this.dataSource.data = [{ ...det, tipo: this.tipo }];
+      this.dataSource.data = [{ ...det, tipo: this.tipo } as ProximaDetalle];
 
       // Bloquear salvo fechaDestete (igual que antes)
       this.consultMode = true;
@@ -308,12 +318,66 @@ export class ProximasComponent implements OnInit, AfterViewInit {
   }
 
   submit() {
-    console.log('submit()', this.form.value);
+    if (!this.form.valid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const v = this.form.getRawValue();
+    const toYmd = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : d || null);
+
+    const payload: CreateProximaDto = {
+      numero: v.numero,
+      nombre: v.nombre,
+      fechaNacida: toYmd(v.fechaNacida),
+      color: v.color ?? null,
+      nroMama: v.nroMama ?? null,
+      procedencia: v.procedencia ?? null,
+      propietario: v.propietario ?? null,
+      fechaDestete: toYmd(v.fechaDestete),
+      fPalpacion: toYmd(v.fPalpacion),
+      dPrenez: v.dPrenez ?? null,
+      detalles: v.detalles ?? null,
+      fincaId: v.fincaId ?? null,
+    };
+
+    this.loading = true;
+    if (this.editingId) {
+      const update: UpdateProximaDto = { ...payload, id: this.editingId };
+      this.proximaService.update(update).subscribe({
+        next: () => {
+          this.snack.open('Registro actualizado', 'OK', { duration: 2500 });
+          this.onNuevo();
+          this.cargarTabla();
+          this.loading = false;
+        },
+        error: () => {
+          this.snack.open('No se pudo actualizar', 'OK', { duration: 3000 });
+          this.loading = false;
+        },
+      });
+      return;
+    }
+
+    this.proximaService.create(payload).subscribe({
+      next: () => {
+        this.snack.open('Registro creado', 'OK', { duration: 2500 });
+        this.onNuevo();
+        this.cargarTabla();
+        this.loading = false;
+      },
+      error: () => {
+        this.snack.open('No se pudo crear', 'OK', { duration: 3000 });
+        this.loading = false;
+      },
+    });
   }
 
   onNuevo() {
     this.consultMode = false;
     this.selectedId = null;
+    this.editingId = null;
+    this.currentDetail = undefined;
     this.form.reset();
     this.form.enable({ emitEvent: false });
   }
@@ -322,12 +386,35 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     if (!this.consultMode || !this.selectedId) return;
     const fd = this.form.get('fechaDestete')?.value;
     if (!fd) return;
-    const yyyyMmDd = fd instanceof Date ? fd.toISOString().slice(0, 10) : fd;
+    const toYmd = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : d || null);
+    const v = this.form.getRawValue();
+    const update: UpdateProximaDto = {
+      id: this.selectedId,
+      numero: v.numero,
+      nombre: v.nombre,
+      fechaNacida: toYmd(v.fechaNacida),
+      color: v.color ?? null,
+      nroMama: v.nroMama ?? null,
+      procedencia: v.procedencia ?? null,
+      propietario: v.propietario ?? null,
+      fechaDestete: toYmd(v.fechaDestete),
+      fPalpacion: toYmd(v.fPalpacion),
+      dPrenez: v.dPrenez ?? null,
+      detalles: v.detalles ?? null,
+      fincaId: v.fincaId ?? null,
+    };
 
     this.loading = true;
-    this.svc.actualizarDestete(this.tipo, this.selectedId, yyyyMmDd).subscribe({
-      next: () => (this.loading = false),
-      error: () => (this.loading = false),
+    this.proximaService.update(update).subscribe({
+      next: () => {
+        this.snack.open('Destete actualizado', 'OK', { duration: 2500 });
+        this.loading = false;
+        this.cargarTabla();
+      },
+      error: () => {
+        this.snack.open('No se pudo actualizar destete', 'OK', { duration: 3000 });
+        this.loading = false;
+      },
     });
   }
 
@@ -353,10 +440,40 @@ export class ProximasComponent implements OnInit, AfterViewInit {
   }
 
   editar(row: ProximaDetalle) {
-    console.log('editar()', row);
+    this.consultMode = false;
+    this.editingId = row.id;
+    this.selectedId = row.id;
+    this.form.enable({ emitEvent: false });
+    this.form.patchValue({
+      numero: row.numero,
+      nombre: row.nombre,
+      fechaNacida: row.fechaNacida ?? null,
+      color: row.color ?? null,
+      nroMama: row.nroMama ?? null,
+      procedencia: row.procedencia ?? null,
+      propietario: row.propietario ?? null,
+      fechaDestete: row.fechaDestete ?? null,
+      fPalpacion: row.fPalpacion ?? null,
+      dPrenez: row.dPrenez ?? null,
+      detalles: row.detalles ?? null,
+      fincaId: row.fincaId ?? null,
+    });
   }
   eliminar(row: ProximaDetalle) {
-    console.log('eliminar()', row);
+    const ok = confirm(`¿Eliminar registro ${row.numero} - ${row.nombre}?`);
+    if (!ok) return;
+    this.loading = true;
+    this.proximaService.delete(row.id).subscribe({
+      next: () => {
+        this.snack.open('Registro eliminado', 'OK', { duration: 2500 });
+        this.loading = false;
+        this.cargarTabla();
+      },
+      error: () => {
+        this.snack.open('No se pudo eliminar', 'OK', { duration: 3000 });
+        this.loading = false;
+      },
+    });
   }
 
   // ====== Exportación PDF

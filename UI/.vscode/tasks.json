@@ -5,14 +5,19 @@
       "label": "ng serve",
       "type": "shell",
       "command": "ng",
-      "args": ["serve", "--configuration", "development"],
+      "args": ["serve", "--configuration", "development", "--poll", "2000"],
       "isBackground": true,
       "problemMatcher": {
-        "base": "$tsc-watch",
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": ".*",
-          "endsPattern": "Compiled successfully"
+          "beginsPattern": "^.*Initial Chunk Files.*$",
+          "endsPattern": "^.*Application bundle generation complete.*$"
         }
       },
       "group": {

@@ -1,0 +1,6 @@
+<div class="loading-backdrop" *ngIf="loading.loading$ | async">
+  <div class="loading-card" role="status" aria-live="polite" aria-label="Cargando">
+    <mat-progress-spinner mode="indeterminate" diameter="42"></mat-progress-spinner>
+    <span class="loading-text">Cargando…</span>
+  </div>
+</div>

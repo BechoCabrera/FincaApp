@@ -19,9 +19,13 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { debounceTime, startWith } from 'rxjs';
 import { MatCardAvatar } from "@angular/material/card";
+import { CriaHembrasService, CreateCriaHembraDto, CriaHembraDto } from 'src/app/core/services/cria-hembras.service';
+import { FincaService } from 'src/app/core/services/finca.service';
+import { ParidaService } from 'src/app/core/services/parida.service';
 
 export interface CriaHembra {
   id?: string;
@@ -58,7 +62,14 @@ export interface CriaHembra {
 export class CriasHembrasComponent {
   private fb = inject(FormBuilder);
   private date = inject(DatePipe);
-  // ===== opciones mock (cámbialas por tu API) =====
+  constructor(
+    private criaService: CriaHembrasService,
+    private fincaService: FincaService,
+    private paridaService: ParidaService,
+    private snack: MatSnackBar
+  ) {}
+
+  // ===== fincas desde API =====
   fincas = [
     { id: 'F1', nombre: 'Tierra Nueva' },
     { id: 'F2', nombre: 'La Más Nueva' },
@@ -88,6 +99,7 @@ export class CriasHembrasComponent {
   isSaving = signal(false);
   formOk = signal(false);
   canSubmit = computed(() => this.form.valid && !this.isSaving());
+  private editingId: string | null = null;
 
   has(ctrl: string, err: string) {
     const c = this.form.get(ctrl);
@@ -141,7 +153,9 @@ export class CriasHembrasComponent {
     this.form.statusChanges.subscribe(() => {
       this.formOk.set(this.form.valid);
     });
-    this.setData(this.mockRows(12));
+    this.cargarCrias();
+    this.cargarFincas();
+    this.cargarMadres();
   }
 
   // === init ===
@@ -192,6 +206,7 @@ export class CriasHembrasComponent {
       const payload = { q: this.qCtrl.value, fincaId: this.fincaCtrl.value };
       this.dataSource.filter = JSON.stringify(payload);
       if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
+      this.buscarCrias(payload);
     };
 
     this.qCtrl.valueChanges
@@ -233,34 +248,66 @@ export class CriasHembrasComponent {
     return this.dataSource.data.length;
   }
 
-  mockRows(n = 8): CriaHembra[] {
-    const pick = <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
-    const randDate = (from: Date, to: Date) =>
-      new Date(from.getTime() + Math.random() * (to.getTime() - from.getTime()));
+  private toYmd(d: any) {
+    return d instanceof Date ? d.toISOString().slice(0, 10) : d || null;
+  }
 
-    const today = new Date();
-    const start = new Date(today.getFullYear() - 3, 0, 1);
-    const colores = ['Blanca', 'Roja', 'Pintada', 'Negra', 'Baya'];
-    const nombres = ['Flor', 'Nieve', 'Estelita', 'Arena', 'Menta', 'Lluvia'];
+  private mapDtoToModel(dto: CriaHembraDto): CriaHembra {
+    return {
+      id: dto.id,
+      numero: dto.numero,
+      nombre: dto.nombre,
+      fechaNac: dto.fechaNac ? new Date(dto.fechaNac) : null,
+      color: dto.color ?? null,
+      propietario: dto.propietario ?? null,
+      pesoKg: dto.pesoKg ?? null,
+      fincaId: dto.fincaId ?? null,
+      madreNumero: dto.madreNumero ?? null,
+      madreNombre: dto.madreNombre ?? null,
+      detalles: dto.detalles ?? null,
+    };
+  }
 
-    const rows: CriaHembra[] = [];
-    for (let i = 0; i < n; i++) {
-      const madre = pick(this.madres);
-      rows.push({
-        id: crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
-        numero: String(200 + i),
-        nombre: pick(nombres),
-        fechaNac: randDate(start, today),
-        color: pick(colores),
-        propietario: 'MC',
-        pesoKg: Math.round(20 + Math.random() * 140),
-        fincaId: pick(this.fincas).id,
-        madreNumero: madre.numero,
-        madreNombre: madre.nombre,
-        detalles: Math.random() < 0.25 ? 'Sin observaciones' : '',
-      });
-    }
-    return rows;
+  cargarCrias() {
+    this.criaService.getAll().subscribe({
+      next: (res) => this.setData(res.map((r) => this.mapDtoToModel(r))),
+      error: () => {
+        this.setData([]);
+        this.snack.open('No se pudo cargar el listado', 'OK', { duration: 3000 });
+      },
+    });
+  }
+
+  private cargarFincas() {
+    this.fincaService.listar().subscribe({
+      next: (res) => {
+        this.fincas = res.map((f) => ({ id: f.id, nombre: f.nombre }));
+      },
+      error: () => {
+        // Mantiene las fincas por defecto si falla
+      },
+    });
+  }
+
+  private cargarMadres() {
+    this.paridaService.getAll().subscribe({
+      next: (res) => {
+        this.madres = res.map((p) => ({ numero: p.numero, nombre: p.nombre }));
+      },
+      error: () => {
+        // Mantiene las madres por defecto si falla
+      },
+    });
+  }
+
+  private buscarCrias(opts: { q?: string; fincaId?: string }) {
+    this.criaService.search(opts).subscribe({
+      next: (res) => this.setData(res.map((r) => this.mapDtoToModel(r))),
+      error: () => {
+        this.snack.open('No se pudo filtrar en el servidor', 'OK', { duration: 2500 });
+        // Si el backend no soporta search, mantenemos el filtrado local
+      },
+    });
   }
 
   // ===== acciones =====
@@ -274,11 +321,10 @@ export class CriasHembrasComponent {
     // si seleccionó madre por número, resolvemos nombre
     const madre = this.madres.find(m => m.numero === v.madreNumero || m.nombre === v.madreNumero);
 
-    const nueva: CriaHembra = {
-      id: crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
+    const payload: CreateCriaHembraDto = {
       numero: String(v.numero ?? ''),
       nombre: String(v.nombre ?? ''),
-      fechaNac: v.fechaNac ?? null,
+      fechaNac: this.toYmd(v.fechaNac),
       color: v.color ?? null,
       propietario: v.propietario ?? null,
       pesoKg: v.pesoKg ?? null,
@@ -288,11 +334,40 @@ export class CriasHembrasComponent {
       detalles: v.detalles ?? null,
     };
 
-    this.dataSource.data = [nueva, ...this.dataSource.data];
-    this.form.reset({ fincaId: null, madreNumero: null, pesoKg: null });
+    this.isSaving.set(true);
+    if (this.editingId) {
+      this.criaService.update(this.editingId, payload).subscribe({
+        next: () => {
+          this.isSaving.set(false);
+          this.editingId = null;
+          this.form.reset({ fincaId: null, madreNumero: null, pesoKg: null });
+          this.cargarCrias();
+          this.snack.open('Cría actualizada', 'OK', { duration: 2500 });
+        },
+        error: () => {
+          this.isSaving.set(false);
+          this.snack.open('No se pudo actualizar', 'OK', { duration: 3000 });
+        },
+      });
+      return;
+    }
+
+    this.criaService.create(payload).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.form.reset({ fincaId: null, madreNumero: null, pesoKg: null });
+        this.cargarCrias();
+        this.snack.open('Cría guardada', 'OK', { duration: 2500 });
+      },
+      error: () => {
+        this.isSaving.set(false);
+        this.snack.open('No se pudo guardar', 'OK', { duration: 3000 });
+      },
+    });
   }
 
   editar(row: CriaHembra) {
+    this.editingId = row.id ?? null;
     this.form.patchValue({
       numero: row.numero,
       nombre: row.nombre,
@@ -310,7 +385,23 @@ export class CriasHembrasComponent {
   eliminar(row: CriaHembra) {
     const ok = confirm(`¿Eliminar cría ${row.numero} - ${row.nombre}?`);
     if (!ok) return;
-    this.dataSource.data = this.dataSource.data.filter(r => r !== row);
+    if (!row.id) {
+      this.dataSource.data = this.dataSource.data.filter(r => r !== row);
+      this.snack.open('Cría eliminada', 'OK', { duration: 2500 });
+      return;
+    }
+    this.isSaving.set(true);
+    this.criaService.delete(row.id).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.dataSource.data = this.dataSource.data.filter(r => r.id !== row.id);
+        this.snack.open('Cría eliminada', 'OK', { duration: 2500 });
+      },
+      error: () => {
+        this.isSaving.set(false);
+        this.snack.open('No se pudo eliminar', 'OK', { duration: 3000 });
+      },
+    });
   }
 
   trackById = (_: number, item: CriaHembra) =>

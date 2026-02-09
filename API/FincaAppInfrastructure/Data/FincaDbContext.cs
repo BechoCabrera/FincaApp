@@ -19,12 +19,67 @@ public class FincaDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<UserTenant> UserTenants { get; set; }
     public DbSet<Proxima> Proximas => Set<Proxima>();
-
+    public DbSet<CriaHembra> CriasHembras { get; set; }
+    public DbSet<RecriaHembra> RecriasHembras { get; set; }
+    public DbSet<NovillaVientre> NovillasVientre { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(FincaDbContext).Assembly);       
         base.OnModelCreating(modelBuilder);
         // Índice único por tenant + negocio
+
+        modelBuilder.Entity<CriaHembra>(b =>
+        {
+            b.ToTable("CriasHembras");
+
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id)
+                .ValueGeneratedNever();
+
+            b.Property(x => x.Numero)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            b.Property(x => x.Nombre)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            b.Property(x => x.FechaNac)
+                .HasColumnType("datetime2(7)");
+
+            b.Property(x => x.Color)
+                .HasMaxLength(30);
+
+            b.Property(x => x.Propietario)
+                .HasMaxLength(50);
+
+            b.Property(x => x.PesoKg)
+                .HasPrecision(18, 2);
+
+            b.Property(x => x.FincaId);
+
+            b.Property(x => x.MadreNumero)
+                .HasMaxLength(50);
+
+            b.Property(x => x.MadreNombre)
+                .HasMaxLength(50);
+
+            b.Property(x => x.Detalles)
+                .HasMaxLength(200);
+
+            b.Property(x => x.CreatedAt)
+                .HasColumnType("datetime2(7)")
+                .IsRequired();
+
+            b.Property(x => x.UpdatedAt)
+                .HasColumnType("datetime2(7)");
+
+            // Índice único por tenant + numero
+            b.HasIndex(x => new { x.TenantId, x.Numero })
+                .IsUnique();
+        });
+
         modelBuilder.Entity<Toro>(b =>
         {
             b.ToTable("Toros");

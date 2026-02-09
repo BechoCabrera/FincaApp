@@ -43,6 +43,10 @@ builder.Services.AddScoped<IFincaRepository, FincaRepository>();
 builder.Services.AddScoped<IParidaRepository, ParidaRepository>();
 builder.Services.AddScoped<IEscoteraRepository, EscoteraRepository>();
 builder.Services.AddScoped<IProximaRepository, ProximaRepository>();
+builder.Services.AddScoped<ICriaHembraRepository, CriaHembraRepository>();
+builder.Services.AddScoped<IRecriaHembraRepository, RecriaHembraRepository>();
+builder.Services.AddScoped<INovillaVientreRepository, NovillaVientreRepository>();
+builder.Services.AddScoped<INovillaVientreRepository, NovillaVientreRepository>();
 
 
 builder.Services.AddControllers().AddJsonOptions(o =>
