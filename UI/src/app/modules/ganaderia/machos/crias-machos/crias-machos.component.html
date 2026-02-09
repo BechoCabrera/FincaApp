@@ -39,6 +39,7 @@
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Seleccione la finca</mat-label>
         <mat-select formControlName="fincaId">
+          <mat-option *ngIf="isLoadingFincas()" [disabled]="true">Cargando...</mat-option>
           <mat-option *ngFor="let f of fincas" [value]="f.id">{{ f.nombre }}</mat-option>
         </mat-select>
         <mat-error *ngIf="has('fincaId','required')">Requerido</mat-error>
@@ -47,8 +48,9 @@
       <!-- fila 4 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Seleccione la vaca (madre)</mat-label>
-        <mat-select formControlName="madreNumero">
-          <mat-option *ngFor="let m of madres" [value]="m.numero">{{ m.numero }} — {{ m.nombre }}</mat-option>
+        <mat-select formControlName="madreId">
+          <mat-option *ngIf="isLoadingMadres()" [disabled]="true">Cargando...</mat-option>
+          <mat-option *ngFor="let m of madres" [value]="m.id">{{ m.numero }} — {{ m.nombre }}</mat-option>
         </mat-select>
       </mat-form-field>
 
@@ -73,6 +75,10 @@
               style="background: var(--table-head-bg); color: var(--table-ink)">
           TOTAL: {{ dataSource.filteredData.length }} / {{ totalCrias }}
         </span>
+        <span *ngIf="isLoadingCrias()" class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+              style="background: var(--table-head-bg); color: var(--table-ink)">
+          Cargando...
+        </span>
       </div>
 
       <div class="flex flex-col gap-2 md:flex-row md:items-center">
@@ -88,6 +94,7 @@
           <mat-label>Finca</mat-label>
           <mat-select [formControl]="fincaCtrl">
             <mat-option value="">Todas</mat-option>
+            <mat-option *ngIf="isLoadingFincas()" [disabled]="true">Cargando...</mat-option>
             <mat-option *ngFor="let f of fincas" [value]="f.id">{{ f.nombre }}</mat-option>
           </mat-select>
         </mat-form-field>

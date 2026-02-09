@@ -3,9 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, FormControl } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-
-// Servicio (ajusta el nombre si el tuyo es distinto)
-// import { RecriasMachosService } from './recrias-machos.service';
+import { RecriasMachosService, RecriaResumen, RecriaDetalle } from 'src/app/core/services/recrias-machos.service';
 
 // Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -27,27 +25,6 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ToroService } from 'src/app/core/services/toro.service';
-
-/** Tipos (ajústalos si ya los exportas desde el servicio) */
-interface ToreteResumen {
-  id: string;
-  numero: number;
-  nombre: string;
-}
-interface ToreteDetalle {
-  id: string;
-  numero: number;
-  nombre: string;
-  fechaNac?: Date | null;
-  pesoKg?: number | null;
-  color?: string | null;
-  propietario?: string | null;
-  fincaId?: string | null;
-  madreNumero?: number | string | null;
-  madreNombre?: string | null;
-  detalles?: string | null;
-  fechaDestete?: string | Date | null;
-}
 
 @Component({
   selector: 'app-toretes',
@@ -79,7 +56,7 @@ export class ToretesComponent implements OnInit, AfterViewInit {
   constructor(private toroService: ToroService) {}
 
   private fb = inject(FormBuilder);
-  private svc: any = null;
+  private svc = inject(RecriasMachosService);
 
   /** UI state */
   dense = false;
@@ -87,7 +64,7 @@ export class ToretesComponent implements OnInit, AfterViewInit {
   consultMode = false;
 
   /** Select de Toretes */
-  toretes: ToreteResumen[] = [];
+  toretes: RecriaResumen[] = [];
   selectedId: string | null = null;
   totalToretes = 0;
   get totalCrias() {
@@ -110,7 +87,7 @@ export class ToretesComponent implements OnInit, AfterViewInit {
   form!: FormGroup;
 
   /** Tabla */
-  dataSource: any = new MatTableDataSource<ToreteDetalle>([]);
+  dataSource: any = new MatTableDataSource<RecriaDetalle>([]);
   displayedColumns: string[] = [
     'idx',
     'numero',
@@ -206,12 +183,12 @@ export class ToretesComponent implements OnInit, AfterViewInit {
   async cargarToretes() {
     this.loading = true;
     try {
-      const res: any = await firstValueFrom(this.svc.listarToretes());
+      const res: any = await firstValueFrom(this.svc.listarRecrias());
       this.toretes = res.items;
       this.totalToretes = res.total;
 
       // Mapeo básico para la tabla si el listado no trae todos los campos
-      const rows: ToreteDetalle[] = res.items.map((it: any) => ({
+      const rows: RecriaDetalle[] = res.items.map((it: any) => ({
         id: it.id,
         numero: it.numero,
         nombre: it.nombre,
@@ -236,7 +213,7 @@ export class ToretesComponent implements OnInit, AfterViewInit {
     if (!this.selectedId) return;
     this.loading = true;
     try {
-      const det: any = await firstValueFrom(this.svc.obtenerToretePorId(this.selectedId));
+      const det: any = await firstValueFrom(this.svc.obtenerRecriaPorId(this.selectedId));
       if (!det) return;
 
       this.form.patchValue({
@@ -269,6 +246,12 @@ export class ToretesComponent implements OnInit, AfterViewInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  onSelectRecria(id: string | null) {
+    this.selectedId = id;
+    if (!id) return;
+    this.onConsultar();
   }
 
   onNuevo() {
@@ -313,12 +296,12 @@ export class ToretesComponent implements OnInit, AfterViewInit {
     this.displayedColumns = this.allColumns.map((c) => c.key).filter((k) => this.visible.has(k));
   }
 
-  editar(row: ToreteDetalle) {
+  editar(row: RecriaDetalle) {
     // TODO: editar
     console.log('editar()', row);
   }
 
-  eliminar(row: ToreteDetalle) {
+  eliminar(row: RecriaDetalle) {
     // TODO: eliminar
     console.log('eliminar()', row);
   }
@@ -395,7 +378,7 @@ export class ToretesComponent implements OnInit, AfterViewInit {
   }
 
   /** trackBy para mat-table */
-  trackById = (_: number, r: ToreteDetalle) => r?.id ?? r?.numero ?? _;
+  trackById = (_: number, r: RecriaDetalle) => r?.id ?? r?.numero ?? _;
 
   /** Submit (modo creación/edición normal) */
   submit() {

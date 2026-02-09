@@ -3,16 +3,15 @@
     <h3 class="section-title">Registro de Toretes</h3>
 
     <!-- ===== toolbar selección/consulta ===== -->
-    <div class="ui-actions ui-field-full" style="gap: 12px; align-items: center; margin-bottom: 0.5rem">
+    <div class="ui-actions ui-field-full ui-form" style="gap: 12px; align-items: center; margin-bottom: 0.5rem">
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Seleccione Torete</mat-label>
-        <mat-select [(ngModel)]="selectedId" [ngModelOptions]="{ standalone: true }">
-          <mat-option [value]="null">Seleccione Torete</mat-option>
+        <mat-label>Seleccione recría</mat-label>
+        <mat-select [(ngModel)]="selectedId" [ngModelOptions]="{ standalone: true }" (selectionChange)="onSelectRecria($event.value)">
+          <mat-option [value]="null">Seleccione recría</mat-option>
           <mat-option *ngFor="let t of toretes" [value]="t.id"> {{ t.numero }} — {{ t.nombre }} </mat-option>
         </mat-select>
       </mat-form-field>
 
-      <button class="ui-btn" mat-flat-button color="primary" type="button" (click)="onConsultar()" style="background: var(--primary)">Consultar</button>
       <button class="ui-btn" mat-flat-button type="button" (click)="onNuevo()" style="background: var(--primary)">Nuevo</button>
 
       <span

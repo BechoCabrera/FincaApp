@@ -2,10 +2,10 @@ import { Component, OnInit, AfterViewInit, ViewChild, inject } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormControl } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
 
-// Servicio (ajusta el nombre si el tuyo es distinto)
-import { RecriasMachosService } from './recrias-machos.service';
+import { RecriasMachosService, RecriaResumen, RecriaDetalle, RecriaCreate } from 'src/app/core/services/recrias-machos.service';
+import { FincaService } from 'src/app/core/services/finca.service';
+import { ParidaService } from 'src/app/core/services/parida.service';
 
 // Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -22,31 +22,11 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 // PDF
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
-/** Tipos (ajústalos si ya los exportas desde el servicio) */
-interface RecriaResumen {
-  id: string;
-  numero: number;
-  nombre: string;
-}
-interface RecriaDetalle {
-  id: string;
-  numero: number;
-  nombre: string;
-  fechaNac?: Date | null;
-  pesoKg?: number | null;
-  color?: string | null;
-  propietario?: string | null;
-  fincaId?: string | null;
-  madreNumero?: number | string | null;
-  madreNombre?: string | null;
-  detalles?: string | null;
-  fechaDestete?: string | Date | null;
-}
 
 @Component({
   selector: 'app-recrias-machos',
@@ -72,16 +52,23 @@ interface RecriaDetalle {
     MatTooltipModule,
     MatDividerModule,
     MatSortModule,
+    MatSnackBarModule,
   ],
 })
 export class RecriasMachosComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
-  private svc: any = null;
+  private svc = inject(RecriasMachosService);
+  private fincaService = inject(FincaService);
+  private paridaService = inject(ParidaService);
+  private snack = inject(MatSnackBar);
 
   /** UI state */
   dense = false;
   loading = false;
   consultMode = false;
+  isLoadingRecrias = false;
+  isLoadingFincas = false;
+  isLoadingMadres = false;
 
   /** Select de recrías */
   recrias: RecriaResumen[] = [];
@@ -98,13 +85,14 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     { id: 'F3', nombre: 'San Antonio' },
   ];
   madres = [
-    { numero: '42', nombre: 'Reina' },
-    { numero: '382', nombre: 'Brisa' },
-    { numero: '309', nombre: 'Luna' },
+    { id: 'M1', numero: '42', nombre: 'Reina' },
+    { id: 'M2', numero: '382', nombre: 'Brisa' },
+    { id: 'M3', numero: '309', nombre: 'Luna' },
   ];
 
   /** Form principal */
   form!: FormGroup;
+  private editingId: string | null = null;
 
   /** Tabla */
   dataSource: any = new MatTableDataSource<RecriaDetalle>([]);
@@ -154,11 +142,13 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
       color: [null],
       propietario: [null],
       fincaId: [null, Validators.required],
-      madreNumero: [null],
+      madreId: [null],
       detalles: [null],
       fechaDestete: [null as Date | null],
     });
-     //this.cargarRecrias();
+    this.cargarRecrias();
+    this.cargarFincas();
+    this.cargarMadres();
   }
 
   ngAfterViewInit(): void {
@@ -201,76 +191,124 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   }
 
   async cargarRecrias() {
-    this.loading = true;
-    try {
-      const res: any = await firstValueFrom(this.svc.listarRecrias());
-      this.recrias = res.items;
-      this.totalRecrias = res.total;
+    this.isLoadingRecrias = true;
+    this.svc.listarRecrias().subscribe({
+      next: (res) => {
+        this.recrias = res.items;
+        this.totalRecrias = res.total;
+        const rows: RecriaDetalle[] = res.items.map((it) => ({
+          id: it.id,
+          numero: it.numero,
+          nombre: it.nombre,
+          fechaNac: null,
+          pesoKg: null,
+          color: null,
+          propietario: null,
+          fincaId: null,
+          madreId: null,
+          madreNumero: null,
+          madreNombre: null,
+          detalles: null,
+          fechaDestete: null,
+        }));
+        this.dataSource.data = rows;
+        this.applyFilter();
+        this.isLoadingRecrias = false;
+      },
+      error: () => {
+        this.recrias = [];
+        this.totalRecrias = 0;
+        this.dataSource.data = [];
+        this.isLoadingRecrias = false;
+        this.snack.open('No se pudo cargar las recrias', 'OK', { duration: 3000 });
+      },
+    });
+  }
 
-      // Mapeo básico para la tabla si el listado no trae todos los campos
-      const rows: RecriaDetalle[] = res.items.map((it: any) => ({
-        id: it.id,
-        numero: it.numero,
-        nombre: it.nombre,
-        fechaNac: null,
-        pesoKg: null,
-        color: null,
-        propietario: null,
-        fincaId: null,
-        madreNumero: null,
-        madreNombre: null,
-        detalles: null,
-        fechaDestete: null,
-      }));
-      this.dataSource.data = rows;
-      this.applyFilter();
-    } finally {
-      this.loading = false;
-    }
+  private cargarFincas() {
+    this.isLoadingFincas = true;
+    this.form.get('fincaId')?.disable({ emitEvent: false });
+    this.fincaCtrl.disable({ emitEvent: false });
+    this.fincaService.listar().subscribe({
+      next: (res) => {
+        this.fincas = res.filter((f) => f.isActive).map((f) => ({ id: f.id, nombre: f.nombre }));
+        this.isLoadingFincas = false;
+        if (this.form.enabled) this.form.get('fincaId')?.enable({ emitEvent: false });
+        this.fincaCtrl.enable({ emitEvent: false });
+      },
+      error: () => {
+        this.isLoadingFincas = false;
+        if (this.form.enabled) this.form.get('fincaId')?.enable({ emitEvent: false });
+        this.fincaCtrl.enable({ emitEvent: false });
+        this.snack.open('No se pudo cargar las fincas', 'OK', { duration: 3000 });
+      },
+    });
+  }
+
+  private cargarMadres() {
+    this.isLoadingMadres = true;
+    this.form.get('madreId')?.disable({ emitEvent: false });
+    this.paridaService.getAll().subscribe({
+      next: (res) => {
+        this.madres = res
+          .filter((p) => p.generoCria === 'Macho')
+          .map((p) => ({ id: p.id, numero: p.numero, nombre: p.nombre }));
+        this.isLoadingMadres = false;
+        if (this.form.enabled) this.form.get('madreId')?.enable({ emitEvent: false });
+      },
+      error: () => {
+        this.isLoadingMadres = false;
+        if (this.form.enabled) this.form.get('madreId')?.enable({ emitEvent: false });
+        this.snack.open('No se pudo cargar las madres', 'OK', { duration: 3000 });
+      },
+    });
   }
 
   async onConsultar() {
     if (!this.selectedId) return;
     this.loading = true;
-    try {
-      const det: any = await firstValueFrom(this.svc.obtenerRecriaPorId(this.selectedId));
-      if (!det) return;
+    this.svc.obtenerRecriaPorId(this.selectedId).subscribe({
+      next: (det) => {
+        if (!det) return;
 
-      this.form.patchValue({
-        numero: det.numero,
-        nombre: det.nombre,
-        fechaNac: det.fechaNac ?? null,
-        pesoKg: det.pesoKg ?? null,
-        color: det.color ?? null,
-        propietario: det.propietario ?? null,
-        fincaId: det.fincaId ?? null,
-        madreNumero: det.madreNumero ?? null,
-        detalles: det.detalles ?? null,
-        fechaDestete: det.fechaDestete ?? null,
-      });
+        this.form.patchValue({
+          numero: det.numero,
+          nombre: det.nombre,
+          fechaNac: det.fechaNac ?? null,
+          pesoKg: det.pesoKg ?? null,
+          color: det.color ?? null,
+          propietario: det.propietario ?? null,
+          fincaId: det.fincaId ?? null,
+          madreId: det.madreId ?? null,
+          detalles: det.detalles ?? null,
+          fechaDestete: det.fechaDestete ?? null,
+        });
 
-      // Mostrar consultada en la tabla (opcional)
-      this.dataSource.data = [
-        {
-          ...det,
-          madreNombre: det.madreNombre ?? null,
-        },
-      ];
+        this.dataSource.data = [
+          {
+            ...det,
+            madreNombre: det.madreNombre ?? null,
+          },
+        ];
 
-      // Bloquear form salvo fechaDestete
-      this.consultMode = true;
-      this.form.disable({ emitEvent: false });
-      this.form.get('fechaDestete')?.enable({ emitEvent: false });
+        this.consultMode = true;
+        this.form.disable({ emitEvent: false });
+        this.form.get('fechaDestete')?.enable({ emitEvent: false });
 
-      this.applyFilter();
-    } finally {
-      this.loading = false;
-    }
+        this.applyFilter();
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.snack.open('No se pudo consultar', 'OK', { duration: 3000 });
+      },
+    });
   }
 
   onNuevo() {
     this.selectedId = null;
     this.consultMode = false;
+    this.editingId = null;
     this.form.reset();
     this.form.enable({ emitEvent: false });
   }
@@ -283,8 +321,15 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
 
     this.loading = true;
     this.svc.actualizarDestete(this.selectedId, valor).subscribe({
-      next: () => (this.loading = false),
-      error: () => (this.loading = false),
+      next: () => {
+        this.loading = false;
+        this.cargarRecrias();
+        this.snack.open('Destete actualizado', 'OK', { duration: 2500 });
+      },
+      error: () => {
+        this.loading = false;
+        this.snack.open('No se pudo actualizar destete', 'OK', { duration: 3000 });
+      },
     });
   }
 
@@ -311,13 +356,49 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   }
 
   editar(row: RecriaDetalle) {
-    // TODO: editar
-    console.log('editar()', row);
+    if (!row?.id) return;
+    this.loading = true;
+    this.svc.obtenerRecriaPorId(row.id).subscribe({
+      next: (det) => {
+        this.consultMode = false;
+        this.editingId = det.id;
+        this.form.enable({ emitEvent: false });
+        this.form.patchValue({
+          numero: det.numero,
+          nombre: det.nombre,
+          fechaNac: det.fechaNac ?? null,
+          pesoKg: det.pesoKg ?? null,
+          color: det.color ?? null,
+          propietario: det.propietario ?? null,
+          fincaId: det.fincaId ?? null,
+          madreId: det.madreId ?? null,
+          detalles: det.detalles ?? null,
+          fechaDestete: det.fechaDestete ?? null,
+        });
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.snack.open('No se pudo cargar para editar', 'OK', { duration: 3000 });
+      },
+    });
   }
 
   eliminar(row: RecriaDetalle) {
-    // TODO: eliminar
-    console.log('eliminar()', row);
+    if (!row?.id) return;
+    if (!confirm(`¿Eliminar recría ${row.nombre}?`)) return;
+    this.loading = true;
+    this.svc.eliminar(row.id).subscribe({
+      next: () => {
+        this.loading = false;
+        this.cargarRecrias();
+        this.snack.open('Recria eliminada', 'OK', { duration: 2500 });
+      },
+      error: () => {
+        this.loading = false;
+        this.snack.open('No se pudo eliminar', 'OK', { duration: 3000 });
+      },
+    });
   }
 
   /** ===== Exportación PDF ===== */
@@ -402,8 +483,9 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
 
     const v = this.form.getRawValue();
     const toYMD = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : d || null);
+    const m = this.madres.find((x) => x.id === v.madreId);
 
-    const payload = {
+    const payload: RecriaCreate = {
       numero: v.numero,
       nombre: v.nombre,
       fechaNac: toYMD(v.fechaNac),
@@ -411,12 +493,31 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
       color: v.color ?? null,
       propietario: v.propietario ?? null,
       fincaId: v.fincaId,
-      madreNumero: v.madreNumero ?? null,
+      madreId: m?.id ?? v.madreId ?? null,
+      madreNumero: m?.numero ?? null,
+      madreNombre: m?.nombre ?? null,
       detalles: v.detalles ?? null,
       fechaDestete: toYMD(v.fechaDestete),
     };
 
-    // TODO: this.svc.guardarRecria(payload).subscribe(...)
-    console.log('submit()', payload);
+    this.loading = true;
+    const isEdit = !!this.editingId;
+    const request = this.editingId
+      ? this.svc.actualizarRecria(this.editingId, payload)
+      : this.svc.crearRecria(payload);
+
+    request.subscribe({
+      next: () => {
+        this.loading = false;
+        this.editingId = null;
+        this.form.reset();
+        this.cargarRecrias();
+        this.snack.open(isEdit ? 'Recria actualizada' : 'Recria guardada', 'OK', { duration: 2500 });
+      },
+      error: () => {
+        this.loading = false;
+        this.snack.open('No se pudo guardar', 'OK', { duration: 3000 });
+      },
+    });
   }
 }

@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
-/** ===== Tipos ===== */
 export interface RecriaResumen {
   id: string;
   numero: number;
@@ -18,23 +18,21 @@ export interface RecriaDetalle {
   color?: string | null;
   propietario?: string | null;
   fincaId?: string | null;
+  madreId?: string | null;
   madreNumero?: number | string | null;
   madreNombre?: string | null;
   detalles?: string | null;
   fechaDestete?: string | Date | null;
 }
 
-/** Payloads para crear/actualizar */
 export type RecriaCreate = Omit<RecriaDetalle, 'id'>;
 export type RecriaUpdate = Partial<RecriaCreate>;
 
 @Injectable({ providedIn: 'root' })
 export class RecriasMachosService {
   private http = inject(HttpClient);
-  /** Ajusta esta ruta a tu backend */
-  private api = '/api/ganaderia/recrias-machos';
+  private apiUrl = `${environment.apiUrl}/api/ganaderia/recrias-machos`;
 
-  /** Lista resumida para el selector/tabla */
   listarRecrias(opts?: { q?: string; fincaId?: string; page?: number; pageSize?: number }):
     Observable<{ total: number; items: RecriaResumen[] }> {
     let params = new HttpParams();
@@ -42,32 +40,26 @@ export class RecriasMachosService {
     if (opts?.fincaId) params = params.set('fincaId', opts.fincaId);
     if (opts?.page != null) params = params.set('page', String(opts.page));
     if (opts?.pageSize != null) params = params.set('pageSize', String(opts.pageSize));
-    return this.http.get<{ total: number; items: RecriaResumen[] }>(this.api, { params });
+    return this.http.get<{ total: number; items: RecriaResumen[] }>(this.apiUrl, { params });
   }
 
-  /** Detalle por id (para Consultar) */
   obtenerRecriaPorId(id: string): Observable<RecriaDetalle> {
-    return this.http.get<RecriaDetalle>(`${this.api}/${id}`);
+    return this.http.get<RecriaDetalle>(`${this.apiUrl}/${id}`);
   }
 
-  /** Crear nueva recría (si lo usas desde submit) */
   crearRecria(payload: RecriaCreate): Observable<RecriaDetalle> {
-    return this.http.post<RecriaDetalle>(this.api, payload);
+    return this.http.post<RecriaDetalle>(this.apiUrl, payload);
   }
 
-  /** Actualizar recría (opcional) */
   actualizarRecria(id: string, payload: RecriaUpdate): Observable<RecriaDetalle> {
-    return this.http.put<RecriaDetalle>(`${this.api}/${id}`, payload);
+    return this.http.put<RecriaDetalle>(`${this.apiUrl}/${id}`, payload);
   }
 
-  /** Actualizar solo la fecha de destete (flujo de consulta) */
   actualizarDestete(id: string, fechaDestete: string): Observable<void> {
-    // fechaDestete en formato YYYY-MM-DD
-    return this.http.put<void>(`${this.api}/${id}/destete`, { fechaDestete });
+    return this.http.put<void>(`${this.apiUrl}/${id}/destete`, { fechaDestete });
   }
 
-  /** Eliminar (opcional) */
   eliminar(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.api}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

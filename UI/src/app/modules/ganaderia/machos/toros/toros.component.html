@@ -3,7 +3,25 @@
     <h3 class="section-title">Registro Toro</h3>
 
     <form [formGroup]="form" class="ui-form">
-      <!-- fila 1 -->
+      <!-- fila 1 (origen de datos) -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Tipo de registro</mat-label>
+        <mat-select [formControl]="sourceTypeCtrl">
+          <mat-option value="">— Seleccione —</mat-option>
+          <mat-option *ngFor="let t of sourceTypes" [value]="t.key">{{ t.label }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Registro</mat-label>
+        <mat-select [formControl]="sourceIdCtrl">
+          <mat-option value="">— Seleccione —</mat-option>
+          <mat-option *ngIf="isLoadingSourceList" [disabled]="true">Cargando...</mat-option>
+          <mat-option *ngFor="let r of sourceItems" [value]="r.id">{{ r.nombre }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- fila 2 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>N° Toro</mat-label>
         <input matInput formControlName="numero" placeholder="N° Toro" />
@@ -16,7 +34,7 @@
         <mat-error *ngIf="has('nombre', 'required')">Requerido</mat-error>
       </mat-form-field>
 
-      <!-- fila 2 -->
+      <!-- fila 3 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Color</mat-label>
         <input matInput formControlName="color" placeholder="Color del toro" />
@@ -27,12 +45,12 @@
         <input matInput formControlName="propietario" placeholder="Nombre del propietario" />
       </mat-form-field>
 
-      <!-- fila 3 -->
+      <!-- fila 4 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Peso en kg</mat-label>
-        <input matInput type="number" formControlName="peso" placeholder="Ej: 485" />
+        <input matInput type="number" formControlName="pesoKg" placeholder="Ej: 485" />
       </mat-form-field>
-      <!-- fila 4 -->
+      <!-- fila 5 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Madre</mat-label>
         <mat-select formControlName="madreNumero">

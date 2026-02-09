@@ -26,6 +26,7 @@ import autoTable from 'jspdf-autotable';
 import { EscoteraService } from 'src/app/core/services/escotera.service';
 import { ProximaService, CreateProximaDto, UpdateProximaDto, ProximaDto } from 'src/app/core/services/proxima.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { NovillasVientreService, NovillaVientreDto } from 'src/app/core/services/novillas-vientre.service';
 
 // Servicio (te lo paso si lo pides)
 // import { ProximasService } from './proximas.service';
@@ -150,6 +151,7 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     private snack: MatSnackBar,
     private escoteraService: EscoteraService,
     private proximaService: ProximaService,
+    private novillasService: NovillasVientreService,
   ) {}
 
   // ====== Lifecycle
@@ -231,6 +233,21 @@ export class ProximasComponent implements OnInit, AfterViewInit {
         });
         break;
       case 'novilla':
+        this.novillasService.getAll().subscribe((res: NovillaVientreDto[]) => {
+          this.opciones = res.map((n) => ({
+            id: n.id,
+            numero: n.numero,
+            nombre: n.nombre,
+            fincaId: n.fincaId,
+            color: n.color,
+            procedencia: n.procedencia,
+            nroMama: n.madreNumero,
+            fechaNacida: n.fechaNac ?? null,
+            fechaDestete: n.fechaDestete ?? null,
+            propietario: n.propietario ?? null,
+            detalles: n.detalles ?? null,
+          }));
+        });
         break;
     }
     this.selectedId = null;
@@ -263,6 +280,27 @@ export class ProximasComponent implements OnInit, AfterViewInit {
         }
         break;
       case 'novilla':
+        const nov = this.opciones.find((e) => e.id === arg.value);
+        if (nov == null) {
+          this.snack.open('Error, no encontrado, intente nuevamente', 'OK', { duration: 3000 });
+          this.form.reset();
+          return;
+        } else {
+          this.form = this.fb.group({
+            numero: nov.numero,
+            nombre: nov.nombre,
+            fechaNacida: nov.fechaNacida || null,
+            color: nov.color,
+            nroMama: nov.nroMama,
+            procedencia: nov.procedencia || null,
+            propietario: nov.propietario || null,
+            fechaDestete: nov.fechaDestete || null,
+            fPalpacion: null,
+            dPrenez: null,
+            detalles: nov.detalles || null,
+            fincaId: nov.fincaId,
+          });
+        }
         break;
     }
   }

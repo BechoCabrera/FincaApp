@@ -47,6 +47,8 @@ builder.Services.AddScoped<ICriaHembraRepository, CriaHembraRepository>();
 builder.Services.AddScoped<IRecriaHembraRepository, RecriaHembraRepository>();
 builder.Services.AddScoped<INovillaVientreRepository, NovillaVientreRepository>();
 builder.Services.AddScoped<INovillaVientreRepository, NovillaVientreRepository>();
+builder.Services.AddScoped<ICriaMachoRepository, CriaMachoRepository>();
+
 
 
 builder.Services.AddControllers().AddJsonOptions(o =>

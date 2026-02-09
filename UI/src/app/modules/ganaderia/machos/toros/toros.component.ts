@@ -24,6 +24,10 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { debounceTime, startWith } from 'rxjs';
 import { CreateToroDto, ToroService } from 'src/app/core/services/toro.service';
 import { FincaService } from 'src/app/core/services/finca.service';
+import { ParidaService } from 'src/app/core/services/parida.service';
+import { CriaMachosService } from 'src/app/core/services/cria-machos.service';
+import { RecriasMachosService } from 'src/app/core/services/recrias-machos.service';
+import { ToretesService, ToreteDetalle } from 'src/app/core/services/toretes.service';
 
 interface Toro {
   id?: string;
@@ -72,14 +76,25 @@ export class TorosComponent {
 
   private fb = inject(FormBuilder);
   private date = inject(DatePipe);
+  private paridaService = inject(ParidaService);
+  private criaMachosService = inject(CriaMachosService);
+  private recriasMachosService = inject(RecriasMachosService);
+  private toretesService = inject(ToretesService);
 
   // ===== mock (cámbialo por tu API) =====
   fincas: any[] = [];
-  madres = [
-    { numero: '32', nombre: 'Reina' },
-    { numero: '42', nombre: 'Brisa' },
-    { numero: '53', nombre: 'Luna' },
+  madres: any[] = [];
+
+  sourceTypeCtrl = new FormControl<string>('', { nonNullable: true });
+  sourceIdCtrl = new FormControl<string>('', { nonNullable: true });
+  sourceTypes = [
+    { key: 'toretes', label: 'Torete' },
+    { key: 'recrias', label: 'Recrias Macho' },
+    { key: 'crias', label: 'Crias Macho' },
   ];
+  sourceItems: Array<{ id: string; nombre: string }> = [];
+  isLoadingSourceList = false;
+  isLoadingSourceDetail = false;
 
   // ===== Form =====
   form = this.fb.group({
@@ -147,6 +162,25 @@ export class TorosComponent {
     this.form.statusChanges.subscribe(() => this.formOk.set(this.form.valid));
     this.setData();
     this.cargarFincas();
+    this.cargarMadres();
+    this.sourceIdCtrl.disable({ emitEvent: false });
+
+    this.sourceTypeCtrl.valueChanges.subscribe((tipo) => {
+      this.sourceIdCtrl.setValue('');
+      this.sourceItems = [];
+      this.limpiarFormulario();
+      if (!tipo) {
+        this.sourceIdCtrl.disable({ emitEvent: false });
+        return;
+      }
+      this.cargarSourceList(tipo);
+    });
+
+    this.sourceIdCtrl.valueChanges.subscribe((id) => {
+      const tipo = this.sourceTypeCtrl.value;
+      if (!tipo || !id) return;
+      this.cargarSourceDetalle(tipo, id);
+    });
   }
 
   ngAfterViewInit() {
@@ -265,6 +299,122 @@ export class TorosComponent {
     return rows;
   }
 
+  private limpiarFormulario() {
+    this.form.reset({
+      numero: null,
+      nombre: null,
+      fechaNacimiento: null,
+      color: null,
+      propietario: null,
+      pesoKg: null,
+      fincaId: null,
+      madreNumero: null,
+      fechaDestete: null,
+      detalles: null,
+    });
+  }
+
+  private asDate(v: any): Date | null {
+    if (!v) return null;
+    return v instanceof Date ? v : new Date(v);
+  }
+
+  private cargarSourceList(tipo: string) {
+    this.isLoadingSourceList = true;
+    this.sourceIdCtrl.disable({ emitEvent: false });
+
+    if (tipo === 'toretes') {
+      this.toretesService.listarToretes().subscribe({
+        next: (res) => {
+          this.sourceItems = res.items.map((it) => ({ id: it.id, nombre: it.nombre }));
+          this.isLoadingSourceList = false;
+          this.sourceIdCtrl.enable({ emitEvent: false });
+        },
+        error: () => {
+          this.sourceItems = [];
+          this.isLoadingSourceList = false;
+          this.sourceIdCtrl.enable({ emitEvent: false });
+        },
+      });
+      return;
+    }
+
+    if (tipo === 'recrias') {
+      this.recriasMachosService.listarRecrias().subscribe({
+        next: (res) => {
+          this.sourceItems = res.items.map((it) => ({ id: it.id, nombre: it.nombre }));
+          this.isLoadingSourceList = false;
+          this.sourceIdCtrl.enable({ emitEvent: false });
+        },
+        error: () => {
+          this.sourceItems = [];
+          this.isLoadingSourceList = false;
+          this.sourceIdCtrl.enable({ emitEvent: false });
+        },
+      });
+      return;
+    }
+
+    if (tipo === 'crias') {
+      this.criaMachosService.getAll().subscribe({
+        next: (res) => {
+          this.sourceItems = res.map((it) => ({ id: it.id, nombre: it.nombre }));
+          this.isLoadingSourceList = false;
+          this.sourceIdCtrl.enable({ emitEvent: false });
+        },
+        error: () => {
+          this.sourceItems = [];
+          this.isLoadingSourceList = false;
+          this.sourceIdCtrl.enable({ emitEvent: false });
+        },
+      });
+    }
+  }
+
+  private cargarSourceDetalle(tipo: string, id: string) {
+    this.isLoadingSourceDetail = true;
+
+    const applyDetail = (det: any) => {
+      const fechaNac = det?.fechaNac ?? det?.fechaNacimiento ?? null;
+      this.form.patchValue({
+        numero: det?.numero ?? null,
+        nombre: det?.nombre ?? null,
+        fechaNacimiento: this.asDate(fechaNac),
+        pesoKg: det?.pesoKg ?? null,
+        color: det?.color ?? null,
+        propietario: det?.propietario ?? null,
+        fincaId: det?.fincaId ?? null,
+        madreNumero: det?.madreNumero ?? null,
+        fechaDestete: this.asDate(det?.fechaDestete ?? null),
+        detalles: det?.detalles ?? null,
+      });
+      this.isLoadingSourceDetail = false;
+    };
+
+    if (tipo === 'toretes') {
+      this.toretesService.obtenerToretePorId(id).subscribe({
+        next: (det: ToreteDetalle) => applyDetail(det),
+        error: () => { this.isLoadingSourceDetail = false; },
+      });
+      return;
+    }
+
+    if (tipo === 'recrias') {
+      this.recriasMachosService.obtenerRecriaPorId(id).subscribe({
+        next: (det) => applyDetail(det),
+        error: () => { this.isLoadingSourceDetail = false; },
+      });
+      return;
+    }
+
+    if (tipo === 'crias') {
+      this.criaMachosService.getById(id).subscribe({
+        next: (det) => applyDetail(det),
+        error: () => { this.isLoadingSourceDetail = false; },
+      });
+    }
+  }
+
   // ===== Acciones =====
   guardarToro() {
     if (this.form.invalid) {
@@ -306,8 +456,33 @@ export class TorosComponent {
   }
 
   cargarFincas() {
+    this.form.get('fincaId')?.disable({ emitEvent: false });
+    this.fincaCtrl.disable({ emitEvent: false });
     this.fincaService.listar().subscribe({
-      next: (res) => (this.fincas = res),
+      next: (res) => {
+        this.fincas = res.filter((f) => f.isActive !== false);
+        this.form.get('fincaId')?.enable({ emitEvent: false });
+        this.fincaCtrl.enable({ emitEvent: false });
+      },
+      error: () => {
+        this.form.get('fincaId')?.enable({ emitEvent: false });
+        this.fincaCtrl.enable({ emitEvent: false });
+      },
+    });
+  }
+
+  cargarMadres() {
+    this.form.get('madreNumero')?.disable({ emitEvent: false });
+    this.paridaService.getAll().subscribe({
+      next: (res) => {
+        this.madres = res
+          .filter((p) => p.generoCria === 'Macho')
+          .map((p) => ({ id: p.id, numero: p.numero, nombre: p.nombre }));
+        this.form.get('madreNumero')?.enable({ emitEvent: false });
+      },
+      error: () => {
+        this.form.get('madreNumero')?.enable({ emitEvent: false });
+      },
     });
   }
 

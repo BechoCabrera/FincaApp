@@ -20,8 +20,12 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { debounceTime, startWith } from 'rxjs';
+import { CriaMachosService, CriaMachoDto, CreateCriaMachoDto } from 'src/app/core/services/cria-machos.service';
+import { FincaService } from 'src/app/core/services/finca.service';
+import { ParidaService } from 'src/app/core/services/parida.service';
 
 export interface CriaMacho {
   id?: string;
@@ -31,6 +35,7 @@ export interface CriaMacho {
   propietario?: string | null;
   pesoKg?: number | null;
   fincaId: string | null;
+  madreId?: string | null;
   madreNumero?: string | null;
   madreNombre?: string | null;
   detalles?: string | null;
@@ -45,7 +50,7 @@ export interface CriaMacho {
     MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
     MatDatepickerModule, MatNativeDateModule, MatDividerModule, MatSelectModule,
     MatTableModule, MatPaginatorModule, MatSortModule, MatTooltipModule,
-    MatMenuModule, MatCheckboxModule,
+    MatMenuModule, MatCheckboxModule, MatSnackBarModule,
   ],
   providers: [DatePipe],
   templateUrl: './crias-machos.component.html',
@@ -54,18 +59,14 @@ export interface CriaMacho {
 export class CriasMachosComponent {
   private fb = inject(FormBuilder);
   private date = inject(DatePipe);
+  private criaService = inject(CriaMachosService);
+  private fincaService = inject(FincaService);
+  private paridaService = inject(ParidaService);
+  private snack = inject(MatSnackBar);
 
   // ===== mock (reemplaza por tu API) =====
-  fincas = [
-    { id: 'F1', nombre: 'Tierra Nueva' },
-    { id: 'F2', nombre: 'La Más Nueva' },
-    { id: 'F3', nombre: 'San Antonio' },
-  ];
-  madres = [
-    { numero: '42',  nombre: 'Reina' },
-    { numero: '382', nombre: 'Brisa' },
-    { numero: '309', nombre: 'Luna' },
-  ];
+  fincas: any[] = [];
+  madres: any[] = [];
 
   // ===== Form =====
   form = this.fb.group({
@@ -75,11 +76,14 @@ export class CriasMachosComponent {
     propietario: [''],
     pesoKg: [null as number | null],
     fincaId: [null as string | null, [Validators.required]],
-    madreNumero: [null as string | null],
+    madreId: [null as string | null],
     detalles: [''],
   });
 
   isSaving = signal(false);
+  isLoadingCrias = signal(false);
+  isLoadingFincas = signal(false);
+  isLoadingMadres = signal(false);
   formOk = signal(false);
   canSubmit = computed(() => this.form.valid && !this.isSaving());
 
@@ -120,7 +124,9 @@ export class CriasMachosComponent {
 
   ngOnInit() {
     this.form.statusChanges.subscribe(() => this.formOk.set(this.form.valid));
-    this.setData(this.mockRows(12));
+    this.cargarCrias();
+    this.cargarFincas();
+    this.cargarMadres();
   }
 
   ngAfterViewInit() {
@@ -196,56 +202,115 @@ export class CriasMachosComponent {
   setData(rows: CriaMacho[]) { this.dataSource.data = rows ?? []; }
   get totalCrias()           { return this.dataSource.data.length; }
 
-  mockRows(n = 10): CriaMacho[] {
-    const pick = <T>(a: T[]) => a[Math.floor(Math.random() * a.length)];
-    const randDate = (from: Date, to: Date) =>
-      new Date(from.getTime() + Math.random() * (to.getTime() - from.getTime()));
+  private mapDtoToModel(dto: CriaMachoDto): CriaMacho {
+    return {
+      id: dto.id,
+      nombre: dto.nombre,
+      fechaNac: dto.fechaNac ? new Date(dto.fechaNac) : null,
+      color: dto.color ?? null,
+      propietario: dto.propietario ?? null,
+      pesoKg: dto.pesoKg ?? null,
+      fincaId: dto.fincaId ?? null,
+      madreId: dto.madreId ?? null,
+      madreNumero: dto.madreNumero ?? null,
+      madreNombre: dto.madreNombre ?? null,
+      detalles: dto.detalles ?? null,
+    };
+  }
 
-    const today = new Date();
-    const start = new Date(today.getFullYear() - 3, 0, 1);
-    const colores = ['Chocolate', 'Rojo', 'Pinto', 'Negro', 'Bayo'];
-    const nombres = ['Secretario', 'Buque', 'Rayo', 'Trueno', 'Lucero', 'Centella'];
+  private toYmd(d: Date | string | null | undefined) {
+    if (!d) return null;
+    return d instanceof Date ? d.toISOString().slice(0, 10) : d;
+  }
 
-    const rows: CriaMacho[] = [];
-    for (let i = 0; i < n; i++) {
-      const m = pick(this.madres);
-      rows.push({
-        id: crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
-        nombre: pick(nombres),
-        fechaNac: randDate(start, today),
-        color: pick(colores),
-        propietario: 'MC',
-        pesoKg: Math.round(20 + Math.random() * 140),
-        fincaId: pick(this.fincas).id,
-        madreNumero: m.numero,
-        madreNombre: m.nombre,
-        detalles: Math.random() < 0.25 ? 'Sin observaciones' : '',
-      });
-    }
-    return rows;
+  private cargarCrias() {
+    this.isLoadingCrias.set(true);
+    this.criaService.getAll().subscribe({
+      next: (res) => {
+        this.setData(res.map((r) => this.mapDtoToModel(r)));
+        this.isLoadingCrias.set(false);
+      },
+      error: () => {
+        this.setData([]);
+        this.isLoadingCrias.set(false);
+        this.snack.open('No se pudo cargar las crias', 'OK', { duration: 3000 });
+      },
+    });
+  }
+
+  private cargarFincas() {
+    this.isLoadingFincas.set(true);
+    this.form.get('fincaId')?.disable({ emitEvent: false });
+    this.fincaCtrl.disable({ emitEvent: false });
+    this.fincaService.listar().subscribe({
+      next: (res) => {
+        this.fincas = res
+          .filter((f) => f.isActive !== false)
+          .map((f) => ({ id: f.id, nombre: f.nombre }));
+        this.isLoadingFincas.set(false);
+        this.form.get('fincaId')?.enable({ emitEvent: false });
+        this.fincaCtrl.enable({ emitEvent: false });
+      },
+      error: () => {
+        // Mantiene las fincas por defecto si falla
+        this.isLoadingFincas.set(false);
+        this.form.get('fincaId')?.enable({ emitEvent: false });
+        this.fincaCtrl.enable({ emitEvent: false });
+        this.snack.open('No se pudo cargar las fincas', 'OK', { duration: 3000 });
+      },
+    });
+  }
+
+  private cargarMadres() {
+    this.isLoadingMadres.set(true);
+    this.form.get('madreId')?.disable({ emitEvent: false });
+    this.paridaService.getAll().subscribe({
+      next: (res) => {
+        this.madres = res.map((p) => ({ id: p.id, numero: p.numero, nombre: p.nombre }));
+        this.isLoadingMadres.set(false);
+        this.form.get('madreId')?.enable({ emitEvent: false });
+      },
+      error: () => {
+        // Mantiene las madres por defecto si falla
+        this.isLoadingMadres.set(false);
+        this.form.get('madreId')?.enable({ emitEvent: false });
+        this.snack.open('No se pudo cargar las madres', 'OK', { duration: 3000 });
+      },
+    });
   }
 
   // ===== Acciones =====
   submit() {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     const v = this.form.getRawValue();
-    const m = this.madres.find(x => x.numero === v.madreNumero);
+    const m = this.madres.find(x => x.id === v.madreId);
 
-    const nueva: CriaMacho = {
-      id: crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
+    const payload: CreateCriaMachoDto = {
       nombre: String(v.nombre ?? ''),
-      fechaNac: v.fechaNac ?? null,
+      fechaNac: this.toYmd(v.fechaNac),
       color: v.color ?? null,
       propietario: v.propietario ?? null,
       pesoKg: v.pesoKg ?? null,
       fincaId: v.fincaId ?? null,
-      madreNumero: m?.numero ?? v.madreNumero ?? null,
+      madreId: m?.id ?? v.madreId ?? null,
+      madreNumero: m?.numero ?? null,
       madreNombre: m?.nombre ?? null,
       detalles: v.detalles ?? null,
     };
 
-    this.dataSource.data = [nueva, ...this.dataSource.data];
-    this.form.reset({ fincaId: null, madreNumero: null, pesoKg: null });
+    this.isSaving.set(true);
+    this.criaService.create(payload).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.form.reset({ fincaId: null, madreId: null, pesoKg: null });
+        this.cargarCrias();
+        this.snack.open('Cria guardada', 'OK', { duration: 2500 });
+      },
+      error: () => {
+        this.isSaving.set(false);
+        this.snack.open('No se pudo guardar', 'OK', { duration: 3000 });
+      },
+    });
   }
 
   editar(r: CriaMacho) {
@@ -256,7 +321,7 @@ export class CriasMachosComponent {
       propietario: r.propietario,
       pesoKg: r.pesoKg ?? null,
       fincaId: r.fincaId,
-      madreNumero: r.madreNumero ?? null,
+      madreId: r.madreId ?? null,
       detalles: r.detalles,
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -265,6 +330,7 @@ export class CriasMachosComponent {
   eliminar(r: CriaMacho) {
     if (!confirm(`¿Eliminar cría ${r.nombre}?`)) return;
     this.dataSource.data = this.dataSource.data.filter(x => x !== r);
+    this.snack.open('Cria eliminada', 'OK', { duration: 2500 });
   }
 
   trackById = (_: number, it: CriaMacho) => it.id ?? `${it.nombre}-${it.fechaNac ?? ''}`;

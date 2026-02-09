@@ -22,6 +22,8 @@ public class FincaDbContext : DbContext
     public DbSet<CriaHembra> CriasHembras { get; set; }
     public DbSet<RecriaHembra> RecriasHembras { get; set; }
     public DbSet<NovillaVientre> NovillasVientre { get; set; }
+    public DbSet<CriaMacho> CriasMachos { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(FincaDbContext).Assembly);       
