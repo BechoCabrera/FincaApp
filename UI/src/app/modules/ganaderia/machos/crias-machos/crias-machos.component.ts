@@ -85,7 +85,9 @@ export class CriasMachosComponent {
   isLoadingFincas = signal(false);
   isLoadingMadres = signal(false);
   formOk = signal(false);
+  editingId = signal<string | null>(null);
   canSubmit = computed(() => this.form.valid && !this.isSaving());
+  isEditing = computed(() => this.editingId() !== null);
 
   has(ctrl: string, err: string) {
     const c = this.form.get(ctrl);
@@ -299,12 +301,18 @@ export class CriasMachosComponent {
     };
 
     this.isSaving.set(true);
-    this.criaService.create(payload).subscribe({
+    const editId = this.editingId();
+    const request = editId
+      ? this.criaService.update(editId, payload)
+      : this.criaService.create(payload);
+
+    request.subscribe({
       next: () => {
         this.isSaving.set(false);
+        this.editingId.set(null);
         this.form.reset({ fincaId: null, madreId: null, pesoKg: null });
         this.cargarCrias();
-        this.snack.open('Cria guardada', 'OK', { duration: 2500 });
+        this.snack.open(editId ? 'Cria actualizada' : 'Cria guardada', 'OK', { duration: 2500 });
       },
       error: () => {
         this.isSaving.set(false);
@@ -314,6 +322,11 @@ export class CriasMachosComponent {
   }
 
   editar(r: CriaMacho) {
+    if (!r.id) {
+      this.snack.open('Error: No se puede editar este registro', 'OK', { duration: 3000 });
+      return;
+    }
+    this.editingId.set(r.id);
     this.form.patchValue({
       nombre: r.nombre,
       fechaNac: r.fechaNac,
@@ -325,6 +338,11 @@ export class CriasMachosComponent {
       detalles: r.detalles,
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  cancelarEdicion() {
+    this.editingId.set(null);
+    this.form.reset({ fincaId: null, madreId: null, pesoKg: null });
   }
 
   eliminar(r: CriaMacho) {
