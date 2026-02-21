@@ -11,7 +11,7 @@ export interface RecriaResumen {
 
 export interface RecriaDetalle {
   id: string;
-  numero: number;
+  numero?: number;
   nombre: string;
   fechaNac?: string | Date | null;
   pesoKg?: number | null;
@@ -31,7 +31,8 @@ export type RecriaUpdate = Partial<RecriaCreate>;
 @Injectable({ providedIn: 'root' })
 export class RecriasMachosService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/api/ganaderia/recrias-machos`;
+  // Backend controller route: api/RecriasMachos (see RecriasMachosController)
+  private apiUrl = `${environment.apiUrl}/api/RecriasMachos`;
 
   listarRecrias(opts?: { q?: string; fincaId?: string; page?: number; pageSize?: number }):
     Observable<{ total: number; items: RecriaResumen[] }> {

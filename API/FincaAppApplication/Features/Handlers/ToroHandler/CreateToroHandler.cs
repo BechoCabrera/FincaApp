@@ -23,14 +23,13 @@ public class CreateToroHandler : IRequestHandler<CreateToroRequest, ToroDto>
         var toro = new Toro
         {
             Id = Guid.NewGuid(),
-            Numero = request.Numero,
             Nombre = request.Nombre,
-            FechaNacimiento = request.FechaNac,
+            FechaNac = request.FechaNac,
             PesoKg = request.PesoKg,
             Color = request.Color,
             Propietario = request.Propietario,
             FincaId = request.FincaId,
-            MadreNumero = request.MadreNumero,
+            MadreId = request.MadreId,
             Detalles = request.Detalles,
             FechaDestete = request.FechaDestete
         };
@@ -42,7 +41,7 @@ public class CreateToroHandler : IRequestHandler<CreateToroRequest, ToroDto>
         catch (Exception ex) when (IsUniqueConstraintViolation(ex))
         {
             throw new InvalidOperationException(
-                $"Ya existe un toro con número '{request.Numero}' en esta finca.");
+                $"Error.");
         }
 
         return _mapper.Map<ToroDto>(toro);

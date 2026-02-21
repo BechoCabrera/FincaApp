@@ -26,20 +26,23 @@ import { CreateToroDto, ToroService } from 'src/app/core/services/toro.service';
 import { FincaService } from 'src/app/core/services/finca.service';
 import { ParidaService } from 'src/app/core/services/parida.service';
 import { CriaMachosService } from 'src/app/core/services/cria-machos.service';
+import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
 import { RecriasMachosService } from 'src/app/core/services/recrias-machos.service';
 import { ToretesService, ToreteDetalle } from 'src/app/core/services/toretes.service';
+import { NotificationService } from 'src/app/core/services/notification.service';
 
 interface Toro {
   id?: string;
-  numero: string;
   nombre: string;
-  fechaNacimiento?: Date | null;
+  fechaNac?: Date | null;
   color?: string | null;
   propietario?: string | null;
   pesoKg?: number | null;
   fechaDestete?: Date | null;
   detalles?: string | null;
+  madreId?: string | null;
   madreNumero?: string | null;
+  madreNombre?: string | null;
   fincaId?: string | null;
 }
 
@@ -64,6 +67,8 @@ interface Toro {
     MatTooltipModule,
     MatMenuModule,
     MatCheckboxModule,
+    // shared
+    TableFiltersComponent,
   ],
   providers: [DatePipe],
   templateUrl: './toros.component.html',
@@ -80,6 +85,7 @@ export class TorosComponent {
   private criaMachosService = inject(CriaMachosService);
   private recriasMachosService = inject(RecriasMachosService);
   private toretesService = inject(ToretesService);
+  private notify = inject(NotificationService);
 
   // ===== mock (cámbialo por tu API) =====
   fincas: any[] = [];
@@ -98,14 +104,13 @@ export class TorosComponent {
 
   // ===== Form =====
   form = this.fb.group({
-    numero: ['', [Validators.required]],
     nombre: ['', [Validators.required]],
-    fechaNacimiento: [null as Date | null],
+    fechaNac: [null as Date | null],
     color: [''],
     propietario: [''],
     pesoKg: [null as number | null],
     fincaId: [null as string | null, [Validators.required]],
-    madreNumero: [null as string | null],
+    madreId: [null as string | null],
     fechaDestete: [null as Date | null],
     detalles: [''],
   });
@@ -113,6 +118,7 @@ export class TorosComponent {
   isSaving = signal(false);
   formOk = signal(false);
   canSubmit = computed(() => this.form.valid && !this.isSaving());
+  private editingId: string | null = null;
 
   has(ctrl: string, err: string) {
     const c = this.form.get(ctrl);
@@ -121,14 +127,13 @@ export class TorosComponent {
 
   // ===== Tabla =====
   displayedColumns: string[] = [
-    'numero',
     'nombre',
-    'fechaNacimiento',
+    'fechaNac',
     'color',
     'pesoKg',
     'propietario',
     'madreNumero',
-
+    'madreNombre',
     'detalles',
     'acciones',
   ];
@@ -136,14 +141,14 @@ export class TorosComponent {
 
   allColumns = [
     { key: 'idx', label: 'N°' },
-    { key: 'numero', label: 'Nº' },
     { key: 'nombre', label: 'Nombre' },
-    { key: 'fechaNacimiento', label: 'F. Nacimiento' },
+    { key: 'fechaNac', label: 'F. Nacimiento' },
     { key: 'color', label: 'Color' },
     { key: 'pesoKg', label: 'PesoKg' },
     { key: 'madreNumero', label: 'N° Madre' },
     { key: 'fechaDestete', label: 'Fec. Destete' },
     { key: 'detalles', label: 'Detalles' },
+    { key: 'madreNombre', label: 'Nombre Madre  ' },
     { key: 'acciones', label: 'Acciones' },
   ];
 
@@ -190,7 +195,7 @@ export class TorosComponent {
     // sort: fechas/números correctos y nulos al final
     this.dataSource.sortingDataAccessor = (item: Toro, prop: string) => {
       const v = (item as any)[prop];
-      if (prop === 'fechaNacimiento' || prop === 'fechaDestete') return v ? new Date(v).getTime() : null;
+      if (prop === 'fechaNac' || prop === 'fechaDestete') return v ? new Date(v).getTime() : null;
       if (prop === 'pesoKg') return typeof v === 'number' ? v : null;
       return typeof v === 'string' ? v.toLowerCase() : v;
     };
@@ -216,9 +221,9 @@ export class TorosComponent {
       const q = (f.q || '').trim().toLowerCase();
       const byText =
         !q ||
-        (row.numero || '').toLowerCase().includes(q) ||
         (row.nombre || '').toLowerCase().includes(q) ||
-        (row.madreNumero || '').toLowerCase().includes(q);
+        (row.madreNumero || '').toLowerCase().includes(q) ||
+        (row.madreNombre || '').toLowerCase().includes(q);
       const byFinca = !f.fincaId || f.fincaId === (row.fincaId || '');
       return byText && byFinca;
     };
@@ -262,6 +267,7 @@ export class TorosComponent {
       error: (err: any) => {
         console.error('Error cargando toros', err);
         this.dataSource.data = [];
+        this.notify.error('No se pudo cargar los toros');
       },
     });
   }
@@ -285,9 +291,11 @@ export class TorosComponent {
       const m = pick(this.madres);
       rows.push({
         id: crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
-        numero: String(273 + i),
+        madreId: m?.id ?? null,
+        madreNumero: m?.numero ?? null,
+        madreNombre: m?.nombre ?? null,
         nombre: pick(nombres),
-        fechaNacimiento: randDate(start, today), // Corregido aquí
+        fechaNac: randDate(start, today), // Corregido aquí
         color: pick(colores),
         propietario: 'MC',
         pesoKg: Math.round(200 + Math.random() * 500),
@@ -301,14 +309,13 @@ export class TorosComponent {
 
   private limpiarFormulario() {
     this.form.reset({
-      numero: null,
       nombre: null,
-      fechaNacimiento: null,
+      fechaNac: null,
       color: null,
       propietario: null,
       pesoKg: null,
       fincaId: null,
-      madreNumero: null,
+      madreId: null,
       fechaDestete: null,
       detalles: null,
     });
@@ -334,6 +341,7 @@ export class TorosComponent {
           this.sourceItems = [];
           this.isLoadingSourceList = false;
           this.sourceIdCtrl.enable({ emitEvent: false });
+          this.notify.error('No se pudo cargar los toretes');
         },
       });
       return;
@@ -350,6 +358,7 @@ export class TorosComponent {
           this.sourceItems = [];
           this.isLoadingSourceList = false;
           this.sourceIdCtrl.enable({ emitEvent: false });
+          this.notify.error('No se pudo cargar las recrias');
         },
       });
       return;
@@ -366,6 +375,7 @@ export class TorosComponent {
           this.sourceItems = [];
           this.isLoadingSourceList = false;
           this.sourceIdCtrl.enable({ emitEvent: false });
+          this.notify.error('No se pudo cargar las crias');
         },
       });
     }
@@ -375,16 +385,15 @@ export class TorosComponent {
     this.isLoadingSourceDetail = true;
 
     const applyDetail = (det: any) => {
-      const fechaNac = det?.fechaNac ?? det?.fechaNacimiento ?? null;
+      const fechaNac = det?.fechaNac ?? det?.fechaNac ?? null;
       this.form.patchValue({
-        numero: det?.numero ?? null,
         nombre: det?.nombre ?? null,
-        fechaNacimiento: this.asDate(fechaNac),
+        fechaNac: this.asDate(fechaNac),
         pesoKg: det?.pesoKg ?? null,
         color: det?.color ?? null,
         propietario: det?.propietario ?? null,
         fincaId: det?.fincaId ?? null,
-        madreNumero: det?.madreNumero ?? null,
+        madreId: det?.madreId ?? null,
         fechaDestete: this.asDate(det?.fechaDestete ?? null),
         detalles: det?.detalles ?? null,
       });
@@ -394,7 +403,10 @@ export class TorosComponent {
     if (tipo === 'toretes') {
       this.toretesService.obtenerToretePorId(id).subscribe({
         next: (det: ToreteDetalle) => applyDetail(det),
-        error: () => { this.isLoadingSourceDetail = false; },
+        error: () => {
+          this.isLoadingSourceDetail = false;
+          this.notify.error('No se pudo cargar el detalle');
+        },
       });
       return;
     }
@@ -402,7 +414,10 @@ export class TorosComponent {
     if (tipo === 'recrias') {
       this.recriasMachosService.obtenerRecriaPorId(id).subscribe({
         next: (det) => applyDetail(det),
-        error: () => { this.isLoadingSourceDetail = false; },
+        error: () => {
+          this.isLoadingSourceDetail = false;
+          this.notify.error('No se pudo cargar el detalle');
+        },
       });
       return;
     }
@@ -410,7 +425,10 @@ export class TorosComponent {
     if (tipo === 'crias') {
       this.criaMachosService.getById(id).subscribe({
         next: (det) => applyDetail(det),
-        error: () => { this.isLoadingSourceDetail = false; },
+        error: () => {
+          this.isLoadingSourceDetail = false;
+          this.notify.error('No se pudo cargar el detalle');
+        },
       });
     }
   }
@@ -425,32 +443,41 @@ export class TorosComponent {
     this.isSaving.set(true);
 
     const v = this.form.getRawValue();
-    const m = this.madres.find(x => x.numero === v.madreNumero);
+    const m = this.madres.find(x => x.id === v.madreId);
 
     const payload: CreateToroDto = {
-      numero: String(v.numero),
       nombre: String(v.nombre),
-      fechaNacimiento: v.fechaNacimiento,
+      fechaNac: v.fechaNac,
       pesoKg: v.pesoKg,
       color: v.color,
       propietario: v.propietario,
       fincaId: v.fincaId,
-      madreNumero: m?.numero ?? null,
+      madreId: m?.id ?? v.madreId ?? null,
       detalles: v.detalles,
       fechaDestete: v.fechaDestete,
     };
 
-    this.toroService.createToro(payload).subscribe({
+    const isEdit = !!this.editingId;
+    const request$ = this.editingId
+      ? this.toroService.updateToro(this.editingId, payload)
+      : this.toroService.createToro(payload);
+
+    request$.subscribe({
       next: (res: any) => {
         // opcional: agregar lo devuelto por la API
-        this.dataSource.data = [res, ...this.dataSource.data];
-        this.form.reset({ fincaId: null, madreNumero: null, pesoKg: null });
+        if (!isEdit) {
+          this.dataSource.data = [res, ...this.dataSource.data];
+        }
+        this.form.reset({ fincaId: null, madreId: null, pesoKg: null });
+        this.editingId = null;
         this.isSaving.set(false);
         this.setData();
+        this.notify.success(isEdit ? 'Toro actualizado' : 'Toro guardado');
       },
       error: (err: any) => {
         console.error('Error guardando toro', err);
         this.isSaving.set(false);
+        this.notify.error(isEdit ? 'No se pudo actualizar el toro' : 'No se pudo guardar el toro');
       },
     });
   }
@@ -467,35 +494,36 @@ export class TorosComponent {
       error: () => {
         this.form.get('fincaId')?.enable({ emitEvent: false });
         this.fincaCtrl.enable({ emitEvent: false });
+        this.notify.error('No se pudo cargar las fincas');
       },
     });
   }
 
   cargarMadres() {
-    this.form.get('madreNumero')?.disable({ emitEvent: false });
+    this.form.get('madreId')?.disable({ emitEvent: false });
     this.paridaService.getAll().subscribe({
       next: (res) => {
         this.madres = res
-          .filter((p) => p.generoCria === 'Macho')
           .map((p) => ({ id: p.id, numero: p.numero, nombre: p.nombre }));
-        this.form.get('madreNumero')?.enable({ emitEvent: false });
+        this.form.get('madreId')?.enable({ emitEvent: false });
       },
       error: () => {
-        this.form.get('madreNumero')?.enable({ emitEvent: false });
+        this.form.get('madreId')?.enable({ emitEvent: false });
+        this.notify.error('No se pudo cargar las madres');
       },
     });
   }
 
   editar(r: Toro) {
+    this.editingId = r.id ?? null;
     this.form.patchValue({
-      numero: r.numero,
       nombre: r.nombre,
-      fechaNacimiento: r.fechaNacimiento ?? null,
+      fechaNac: r.fechaNac ?? null,
       color: r.color,
       propietario: r.propietario,
       pesoKg: r.pesoKg ?? null,
       fincaId: r.fincaId,
-      madreNumero: r.madreNumero ?? null,
+      madreId: r.madreId ?? null,
       fechaDestete: r.fechaDestete,
       detalles: r.detalles,
     });
@@ -503,11 +531,12 @@ export class TorosComponent {
   }
 
   eliminar(r: Toro) {
-    if (!confirm(`¿Eliminar toro ${r.numero}?`)) return;
+    if (!confirm(`¿Eliminar toro ${r.nombre}?`)) return;
     this.dataSource.data = this.dataSource.data.filter((x) => x !== r);
+    this.notify.success('Toro eliminado');
   }
 
-  trackById = (_: number, it: Toro) => it.id ?? `${it.numero}-${it.nombre}`;
+  trackById = (_: number, it: Toro) => it.id ?? it.nombre;
 
   // ===== Exportar PDF =====
   exportPdf() {
@@ -517,7 +546,7 @@ export class TorosComponent {
     const body = this.dataSource.filteredData.map((row) =>
       visibleKeys.map((key) => {
         const v: any = (row as any)[key];
-        if (key === 'fechaNacimiento' || key === 'fechaDestete') return v ? this.date.transform(v, 'yyyy-MM-dd') : '';
+        if (key === 'fechaNac' || key === 'fechaDestete') return v ? this.date.transform(v, 'yyyy-MM-dd') : '';
         return v ?? '';
       }),
     );

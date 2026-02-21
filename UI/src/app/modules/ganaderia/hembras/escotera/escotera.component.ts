@@ -19,6 +19,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { firstValueFrom, startWith } from 'rxjs';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
 // Si aún no lo tienes, luego te paso el servicio.
 // Cambia el nombre si tu servicio usa otra ruta/archivo.
 import { ParidaDto, ParidaService } from 'src/app/core/services/parida.service';
@@ -72,6 +73,8 @@ interface EscoteraDetalle {
     MatTooltipModule,
     MatDividerModule,
     MatSortModule,
+    // shared
+    TableFiltersComponent,
     MatAutocompleteModule,
   ],
 })
@@ -99,6 +102,9 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
 
   // catálogos dummy (si usas fincas/lo necesitas)
   fincas: FincaDto[] = [];
+
+  // tipos de leche (igual que en Paridas)
+  tiposLeche: string[] = ['Buena', 'Regular', 'Mala'];
 
   // form
   form!: FormGroup;

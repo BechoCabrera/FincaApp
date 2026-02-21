@@ -4,6 +4,7 @@ import { FormBuilder, Validators, ReactiveFormsModule, FormControl } from '@angu
 import { DatePipe } from '@angular/common';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
 // Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -53,7 +54,9 @@ export interface CriaHembra {
     MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
     MatDatepickerModule, MatNativeDateModule, MatDividerModule, MatSelectModule,
     MatTableModule, MatPaginatorModule, MatSortModule, MatTooltipModule,
-    MatMenuModule, MatCheckboxModule
+    MatMenuModule, MatCheckboxModule,
+    // shared
+    TableFiltersComponent,
 ],
   providers: [DatePipe],
   templateUrl: './crias-hembras.component.html',

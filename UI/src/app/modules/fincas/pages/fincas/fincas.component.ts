@@ -3,6 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { MatTableDataSource } from '@angular/material/table';
 import { FincaService, FincaDto, UpdateFincaDto } from 'src/app/core/services/finca.service';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { NotificationService } from 'src/app/core/services/notification.service';
 
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -35,7 +36,11 @@ import { MatIconModule } from '@angular/material/icon';
   ],
 })
 export class FincasComponent implements OnInit {
-  constructor(private fb: FormBuilder, private fincaService: FincaService) {}
+  constructor(
+    private fb: FormBuilder,
+    private fincaService: FincaService,
+    private notify: NotificationService,
+  ) {}
 
   isSaving = false;
   formOk() {
@@ -65,6 +70,9 @@ export class FincasComponent implements OnInit {
   cargarFincas() {
     this.fincaService.listar().subscribe({
       next: (res) => (this.dataSource.data = res),
+      error: () => {
+        this.notify.error('No se pudo cargar las fincas');
+      },
     });
   }
 
@@ -84,6 +92,7 @@ export class FincasComponent implements OnInit {
 
     this.isSaving = true;
 
+    const isEdit = !!this.editingId;
     const request$ = this.editingId
       ? this.fincaService.actualizar(this.editingId, payload)
       : this.fincaService.crear(payload);
@@ -103,10 +112,12 @@ export class FincasComponent implements OnInit {
           isActive: true, // 👈 valor por defecto
         });
         this.editingId = null;
+        this.notify.success(isEdit ? 'Finca actualizada' : 'Finca guardada');
       },
       error: (err) => {
         this.isSaving = false;
         console.error('Error guardando finca', err);
+        this.notify.error('No se pudo guardar la finca');
       },
     });
   }
@@ -127,6 +138,10 @@ export class FincasComponent implements OnInit {
     this.fincaService.eliminar(f.id).subscribe({
       next: () => {
         this.dataSource.data = this.dataSource.data.filter((x) => x.id !== f.id);
+        this.notify.success('Finca eliminada');
+      },
+      error: () => {
+        this.notify.error('No se pudo eliminar la finca');
       },
     });
   }

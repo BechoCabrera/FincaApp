@@ -11,6 +11,8 @@ import { RecriasHembrasComponent } from './hembras/recrias-hembras/recrias-hembr
 import { ToretesComponent } from './machos/toretes/toretes.component';
 import { RecriasMachosComponent } from './machos/recrias-machos/recrias-machos.component';
 import { NovillasVientreComponent } from './hembras/novillas-vientre/novillas-vientre.component';
+import { VendidaComponent } from './vendida/vendida.component';
+import { FallecidaComponent } from './fallecida/fallecida.component';
 
 const routes: Routes = [
   { path: 'hembras/paridas', component: ParidasComponent },
@@ -23,6 +25,8 @@ const routes: Routes = [
   { path: 'machos/crias-macho', component: CriasMachosComponent },
   { path: 'machos/toretes', component: ToretesComponent },
   { path: 'machos/recrias-macho', component: RecriasMachosComponent },
+  { path: 'vendida', component: VendidaComponent },
+  { path: 'fallecida', component: FallecidaComponent },
 ];
 
 @NgModule({

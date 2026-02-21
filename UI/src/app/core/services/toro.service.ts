@@ -8,14 +8,13 @@ import { environment } from 'src/environments/environment';
  * (debe coincidir con CreateToroRequest)
  */
 export interface CreateToroDto {
-  numero: String;
   nombre: String;
-  fechaNacimiento: Date | null;
+  fechaNac: Date | null;
   pesoKg: number | null;
   color: string | null;
   propietario: string | null;
   fincaId: string | null;
-  madreNumero: string | null;
+  madreId: string | null;
   detalles: string | null;
   fechaDestete: Date | null;
 }
@@ -25,9 +24,8 @@ export interface CreateToroDto {
  */
 export interface ToroDto {
   id: string;
-  numero: string;
   nombre: string;
-  fechaNacimiento: string;
+  fechaNac: string;
   peso: number;
   finca: string;
 }
@@ -49,10 +47,9 @@ export class ToroService {
   /**
    * Obtener todos los toros (búsqueda)
    */
-  getToros(nombre?: string, numero?: string): Observable<ToroDto[]> {
+  getToros(nombre?: string): Observable<ToroDto[]> {
     const params: any = {};
     if (nombre) params.nombre = nombre;
-    if (numero) params.numero = numero;
 
     return this.http.get<ToroDto[]>(this.apiUrl, { params });
   }

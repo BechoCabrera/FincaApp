@@ -27,20 +27,22 @@ public class ToroRepository : IToroRepository
     }
 
     public async Task<IReadOnlyList<Toro>> SearchAsync(
-        string? nombre,
-        string? numero,
-        CancellationToken cancellationToken)
+     string? nombre,
+     string? numero,
+     CancellationToken cancellationToken)
     {
-        IQueryable<Toro> query = _context.Toros;
+        IQueryable<Toro> query = _context.Toros
+            .Include(t => t.Finca).Include(t => t.Madre);
+
+        // Si tienes una relación de navegación Madre, inclúyela:
+        // 
 
         if (!string.IsNullOrWhiteSpace(nombre))
             query = query.Where(t => t.Nombre.Contains(nombre));
 
-        if (!string.IsNullOrWhiteSpace(numero))
-            query = query.Where(t => t.Numero.Contains(numero));
-
         return await query.ToListAsync(cancellationToken);
     }
+
 
     public async Task UpdateAsync(Toro toro, CancellationToken cancellationToken)
     {

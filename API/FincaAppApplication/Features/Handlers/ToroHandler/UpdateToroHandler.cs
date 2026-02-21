@@ -24,14 +24,12 @@ public class UpdateToroHandler : IRequestHandler<UpdateToroRequest, ToroDto>
         if (toro is null)
             throw new KeyNotFoundException("Toro no encontrado.");
 
-        toro.Numero = request.Numero;
         toro.Nombre = request.Nombre;
-        toro.FechaNacimiento = request.FechaNac;
+        toro.FechaNac = request.FechaNac;
         toro.PesoKg = request.PesoKg;
         toro.Color = request.Color;
         toro.Propietario = request.Propietario;
         toro.FincaId = request.FincaId;
-        toro.MadreNumero = request.MadreNumero;
         toro.Detalles = request.Detalles;
         toro.FechaDestete = request.FechaDestete;
 

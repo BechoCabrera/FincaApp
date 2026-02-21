@@ -5,22 +5,21 @@
     <!-- ===== toolbar selección/consulta ===== -->
     <div class="ui-actions ui-field-full ui-form" style="gap: 12px; align-items: center; margin-bottom: 0.5rem">
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Seleccione recría</mat-label>
-        <mat-select [(ngModel)]="selectedId" [ngModelOptions]="{ standalone: true }" [disabled]="isLoadingRecrias">
+        <mat-label>Selecciona cria</mat-label>
+        <mat-select [formControl]="selectedIdCtrl">
           <mat-option *ngIf="isLoadingRecrias" [disabled]="true">Cargando...</mat-option>
-          <mat-option [value]="null">Seleccione recría</mat-option>
-          <mat-option *ngFor="let r of recrias" [value]="r.id"> {{ r.numero }} — {{ r.nombre }} </mat-option>
+          <mat-option [value]="null">Selecciona cria</mat-option>
+          <mat-option *ngFor="let c of crias" [value]="c.id"> {{ c.nombre }} </mat-option>
         </mat-select>
       </mat-form-field>
 
-      <button class="ui-btn" mat-flat-button color="primary" type="button" (click)="onConsultar()" style="background: var(--primary)">Consultar</button>
       <button class="ui-btn" mat-flat-button type="button" (click)="onNuevo()" style="background: var(--primary)">Nuevo</button>
-
+<!--
       <span
         class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
         style="margin-left: auto; background: var(--table-head-bg); color: var(--table-ink)">
         TOTAL DE RECRÍA MACHO: {{ totalRecrias }}
-      </span>
+      </span> -->
     </div>
 
     <!-- ===== formulario ===== -->
@@ -32,12 +31,6 @@
       [class.was-submitted]="formDir.submitted">
       <!-- fila 1 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Número</mat-label>
-        <input matInput formControlName="numero" placeholder="Nro" />
-        <mat-error *ngIf="has('numero', 'required')">Requerido</mat-error>
-      </mat-form-field>
-
-      <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Nombre</mat-label>
         <input matInput formControlName="nombre" placeholder="Nombre de la recría" />
         <mat-error *ngIf="has('nombre', 'required')">Requerido</mat-error>
@@ -45,7 +38,7 @@
 
       <!-- fila 2 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Fecha Nacimiento</mat-label>
+        <mat-label>F. Nacimiento</mat-label>
         <input matInput [matDatepicker]="nacPicker" formControlName="fechaNac" />
         <mat-datepicker-toggle matSuffix [for]="nacPicker"></mat-datepicker-toggle>
         <mat-datepicker #nacPicker></mat-datepicker>
@@ -69,7 +62,7 @@
 
       <!-- fila 4 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Seleccione la finca</mat-label>
+        <mat-label>Finca</mat-label>
         <mat-select formControlName="fincaId">
           <mat-option *ngIf="isLoadingFincas" [disabled]="true">Cargando...</mat-option>
           <mat-option *ngFor="let f of fincas" [value]="f.id">{{ f.nombre }}</mat-option>
@@ -78,7 +71,7 @@
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Seleccione la vaca (madre)</mat-label>
+        <mat-label>Madre</mat-label>
         <mat-select formControlName="madreId">
           <mat-option *ngIf="isLoadingMadres" [disabled]="true">Cargando...</mat-option>
           <mat-option *ngFor="let m of madres" [value]="m.id"> {{ m.numero }} — {{ m.nombre }} </mat-option>
@@ -93,7 +86,7 @@
 
       <!-- fecha destete (editable también cuando se consulta) -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Ingrese fecha destete</mat-label>
+        <mat-label>F. Destete</mat-label>
         <input matInput [matDatepicker]="desPicker" formControlName="fechaDestete" />
         <mat-datepicker-toggle matSuffix [for]="desPicker"></mat-datepicker-toggle>
         <mat-datepicker #desPicker></mat-datepicker>
@@ -128,63 +121,19 @@
 
   <!-- ===== tabla ===== -->
   <section class="ui-card brand-surface mt-3" [class.is-compact]="dense">
-    <div class="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-      <div class="flex items-center gap-3">
-        <span
-          class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
-          style="background: var(--table-head-bg); color: var(--table-ink)">
-          TOTAL: {{ dataSource?.filteredData?.length || 0 }} / {{ totalCrias }}
-        </span>
-      </div>
-
-      <div class="flex flex-col gap-2 md:flex-row md:items-center">
-        <!-- búsqueda -->
-        <mat-form-field appearance="outline" class="ui-search no-ripple w-full md:w-40">
-          <mat-label>Buscar por Nº o Nombre</mat-label>
-          <input matInput [formControl]="qCtrl" placeholder="Ej: 215, Toro..." />
-          <button mat-icon-button matSuffix aria-label="clear" (click)="qCtrl.setValue('')">
-            <mat-icon>search</mat-icon>
-          </button>
-        </mat-form-field>
-
-        <!-- filtro finca -->
-        <mat-form-field appearance="outline" class="w-full md:w-40">
-          <mat-label>Finca</mat-label>
-          <mat-select [formControl]="fincaCtrl">
-            <mat-option value="">Todas</mat-option>
-            <mat-option *ngIf="isLoadingFincas" [disabled]="true">Cargando...</mat-option>
-            <mat-option *ngFor="let f of fincas" [value]="f.id">{{ f.nombre }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <!-- columnas -->
-        <button mat-flat-button [matMenuTriggerFor]="colsMenu" class="ui-btn mb-4" style="background: var(--primary)">
-          <mat-icon class="mr-1">view_column</mat-icon> Columnas
-        </button>
-        <button
-          style="background: var(--primary)"
-          mat-mini-fab
-          class="ui-fab-pdf mb-4"
-          (click)="exportPdf()"
-          matTooltip="Exportar a PDF"
-          aria-label="Exportar a PDF">
-          <mat-icon>picture_as_pdf</mat-icon>
-        </button>
-        <mat-menu #colsMenu="matMenu" xPosition="before">
-          <button mat-menu-item>
-            <mat-checkbox [checked]="allSelected" [indeterminate]="someSelected" (change)="toggleAll($event.checked)">
-              Seleccionar todo
-            </mat-checkbox>
-          </button>
-          <mat-divider></mat-divider>
-          <button mat-menu-item *ngFor="let c of allColumns">
-            <mat-checkbox [checked]="isColumnVisible(c.key)" (change)="toggleColumn(c.key, $event.checked)">
-              {{ c.label }}
-            </mat-checkbox>
-          </button>
-        </mat-menu>
-      </div>
-    </div>
+    <app-table-filters
+      [qControl]="qCtrl"
+      [fincaControl]="fincaCtrl"
+      [fincas]="fincas"
+      [totalLabel]="'TOTAL: ' + (dataSource?.filteredData?.length || 0) + ' / ' + totalCrias"
+      [allColumns]="allColumns"
+      [displayedColumns]="displayedColumns"
+      [allSelected]="allSelected"
+      [someSelected]="someSelected"
+      (toggleColumn)="toggleColumn($event.key, $event.checked)"
+      (toggleAll)="toggleAll($event)"
+      (exportPdf)="exportPdf()"
+    ></app-table-filters>
 
     <div class="ui-table-wrapper">
       <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1 ui-table" [trackBy]="trackById">
@@ -193,13 +142,6 @@
           <th mat-header-cell *matHeaderCellDef class="col-sticky" mat-sort-header>#</th>
           <td mat-cell *matCellDef="let r; let i = index" class="col-sticky">
             {{ paginator.pageIndex * paginator.pageSize + i + 1 }}
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="numero">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Nº</th>
-          <td mat-cell *matCellDef="let r">
-            <strong>{{ r.numero }}</strong>
           </td>
         </ng-container>
 

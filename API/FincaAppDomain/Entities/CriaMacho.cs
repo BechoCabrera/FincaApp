@@ -17,7 +17,6 @@ namespace FincaAppDomain.Entities
         public decimal? PesoKg { get; set; }
         public Guid? FincaId { get; set; }
         public Guid? MadreId { get; set; }
-        public string? MadreNumero { get; set; }
         public string? MadreNombre { get; set; }
         public string? Detalles { get; set; }
     }

@@ -33,7 +33,6 @@ namespace FincaAppApplication.Features.Handlers.CriaMachoHandler
             entity.PesoKg = request.PesoKg.HasValue ? (decimal?)request.PesoKg.Value : null;
             entity.FincaId = request.FincaId;
             entity.MadreId = request.MadreId;
-            entity.MadreNumero = request.MadreNumero;
             entity.MadreNombre = request.MadreNombre;
             entity.Detalles = request.Detalles;
 

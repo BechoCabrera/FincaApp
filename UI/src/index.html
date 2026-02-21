@@ -4,6 +4,21 @@
     <meta charset="utf-8" />
     <title>Finca App v1</title>
     <base href="/" />
+    <script>
+      (function(){
+        try{
+          const raw = localStorage.getItem('theme');
+          if(!raw) return;
+          const t = JSON.parse(raw);
+          const root = document.documentElement;
+          if(t && typeof t === 'object'){
+            if(t.mode === 'dark') root.classList.add('dark'); else root.classList.remove('dark');
+            if(t.direction) root.setAttribute('dir', t.direction);
+            if(t.color) root.setAttribute('data-theme', t.color);
+          }
+        }catch(e){/* ignore */}
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
       <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">

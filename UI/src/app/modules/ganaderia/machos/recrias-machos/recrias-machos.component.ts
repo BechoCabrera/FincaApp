@@ -4,8 +4,10 @@ import { FormsModule, FormControl } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { RecriasMachosService, RecriaResumen, RecriaDetalle, RecriaCreate } from 'src/app/core/services/recrias-machos.service';
+import { CriaMachosService, CriaMachoDto } from 'src/app/core/services/cria-machos.service';
 import { FincaService } from 'src/app/core/services/finca.service';
 import { ParidaService } from 'src/app/core/services/parida.service';
+import { NotificationService } from 'src/app/core/services/notification.service';
 
 // Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -22,7 +24,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
 
 // PDF
 import { jsPDF } from 'jspdf';
@@ -52,17 +54,18 @@ import autoTable from 'jspdf-autotable';
     MatTooltipModule,
     MatDividerModule,
     MatSortModule,
-    MatSnackBarModule,
+    // shared
+    TableFiltersComponent,
   ],
 })
 export class RecriasMachosComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
   private svc = inject(RecriasMachosService);
+  private criaService = inject(CriaMachosService);
   private fincaService = inject(FincaService);
   private paridaService = inject(ParidaService);
-  private snack = inject(MatSnackBar);
+  private notify = inject(NotificationService);
 
-  /** UI state */
   dense = false;
   loading = false;
   consultMode = false;
@@ -70,35 +73,28 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   isLoadingFincas = false;
   isLoadingMadres = false;
 
-  /** Select de recrías */
-  recrias: RecriaResumen[] = [];
-  selectedId: string | null = null;
-  totalRecrias = 0;
-  get totalCrias() {
-    return this.totalRecrias;
-  } // alias usado por el HTML
+  crias: CriaMachoDto[] = [];
+  selectedIdCtrl = new FormControl<string | null>(null, { nonNullable: false });
+  get selectedId() {
+    return this.selectedIdCtrl.value;
+  }
+  set selectedId(v: string | null) {
+    this.selectedIdCtrl.setValue(v, { emitEvent: false });
+  }
+  totalCrias = 0;
+  get totalRecrias() {
+    return this.totalCrias;
+  }
 
-  /** Catálogos (dummy; cambia a servicio si aplica) */
-  fincas = [
-    { id: 'F1', nombre: 'Tierra Nueva' },
-    { id: 'F2', nombre: 'La Más Nueva' },
-    { id: 'F3', nombre: 'San Antonio' },
-  ];
-  madres = [
-    { id: 'M1', numero: '42', nombre: 'Reina' },
-    { id: 'M2', numero: '382', nombre: 'Brisa' },
-    { id: 'M3', numero: '309', nombre: 'Luna' },
-  ];
+  fincas: any[] = [];
+  madres: any[] = [];
 
-  /** Form principal */
   form!: FormGroup;
   private editingId: string | null = null;
 
-  /** Tabla */
   dataSource: any = new MatTableDataSource<RecriaDetalle>([]);
   displayedColumns: string[] = [
     'idx',
-    'numero',
     'nombre',
     'fechaNac',
     'color',
@@ -111,7 +107,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   ];
   allColumns = [
     { key: 'idx', label: '#' },
-    { key: 'numero', label: 'Nº' },
+
     { key: 'nombre', label: 'NOMBRE' },
     { key: 'fechaNac', label: 'F. NACIMIENTO' },
     { key: 'color', label: 'COLOR' },
@@ -124,18 +120,14 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   ];
   private visible = new Set(this.displayedColumns);
 
-  /** Filtros de tabla */
   qCtrl = new FormControl<string>('', { nonNullable: true });
   fincaCtrl = new FormControl<string>('', { nonNullable: true });
 
-  /** ViewChilds tabla */
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  /** ===== Ciclo de vida ===== */
   ngOnInit(): void {
     this.form = this.fb.group({
-      numero: [null, Validators.required],
       nombre: [null, Validators.required],
       fechaNac: [null as Date | null],
       pesoKg: [null],
@@ -146,21 +138,28 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
       detalles: [null],
       fechaDestete: [null as Date | null],
     });
+    // cargar las recrías para la tabla y las crias para el selector
     this.cargarRecrias();
+    this.cargarCrias();
     this.cargarFincas();
     this.cargarMadres();
+
+    this.selectedIdCtrl.valueChanges.subscribe((id) => {
+      if (id) {
+        this.cargarDetalleCria(id);
+      }
+    });
   }
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
 
-    // Filtro compuesto (texto + finca)
-    this.dataSource.filterPredicate = (row: { numero: any; nombre: any; fincaId: string }, filterJson: string) => {
+    this.dataSource.filterPredicate = (row: { nombre: any; fincaId: string; propietario?: any; madreNumero?: any }, filterJson: string) => {
       const f = JSON.parse(filterJson) as { q: string; fincaId: string };
       const q = (f.q || '').toLowerCase();
       const finca = f.fincaId || '';
-      const matchTexto = String(row.numero || '').includes(q) || (row.nombre || '').toLowerCase().includes(q);
+      const matchTexto = (row.nombre || '').toLowerCase().includes(q) || (row.propietario || '').toLowerCase().includes(q) || String(row.madreNumero || '').includes(q);
       const matchFinca = !finca || row.fincaId === finca;
       return matchTexto && matchFinca;
     };
@@ -169,7 +168,6 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     this.fincaCtrl.valueChanges.subscribe(() => this.applyFilter());
   }
 
-  /** ===== Utilidades de form usadas por el template ===== */
   has(ctrl: string, err: string) {
     const c = this.form.get(ctrl);
     return !!c && (c.touched || c.dirty) && c.hasError(err);
@@ -181,7 +179,6 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     return this.loading;
   }
 
-  /** ===== Data ===== */
   private applyFilter() {
     this.dataSource.filter = JSON.stringify({
       q: this.qCtrl.value || '',
@@ -190,37 +187,61 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   }
 
-  async cargarRecrias() {
+  async cargarCrias() {
+    this.isLoadingRecrias = true;
+    this.selectedIdCtrl.disable({ emitEvent: false });
+    this.criaService.getAll().subscribe({
+      next: (res) => {
+        this.crias = res || [];
+        this.totalCrias = res?.length || 0;
+        this.isLoadingRecrias = false;
+        this.selectedIdCtrl.enable({ emitEvent: false });
+      },
+      error: () => {
+        this.crias = [];
+        this.totalCrias = 0;
+        this.isLoadingRecrias = false;
+        this.selectedIdCtrl.enable({ emitEvent: false });
+        this.notify.error('No se pudo cargar las crias', 3000);
+      },
+    });
+  }
+
+  /** Carga las recrías que se muestran en la tabla (resumen) */
+  private cargarRecrias() {
     this.isLoadingRecrias = true;
     this.svc.listarRecrias().subscribe({
-      next: (res) => {
-        this.recrias = res.items;
-        this.totalRecrias = res.total;
-        const rows: RecriaDetalle[] = res.items.map((it) => ({
+      next: (res: any) => {
+        console.debug('[RecriasMachos] listarRecrias result:', res);
+
+        // Soporta dos formatos: { total, items } o un array directo
+        const items = Array.isArray(res) ? res : res?.items || [];
+        this.totalCrias = Array.isArray(res) ? items.length : res?.total || items.length || 0;
+
+        const rows: RecriaDetalle[] = items.map((it: any) => ({
           id: it.id,
-          numero: it.numero,
           nombre: it.nombre,
-          fechaNac: null,
-          pesoKg: null,
-          color: null,
-          propietario: null,
-          fincaId: null,
-          madreId: null,
-          madreNumero: null,
-          madreNombre: null,
-          detalles: null,
-          fechaDestete: null,
+          fechaNac: it.fechaNac ?? null,
+          pesoKg: it.pesoKg ?? null,
+          color: it.color ?? null,
+          propietario: it.propietario ?? null,
+          fincaId: it.fincaId ?? null,
+          madreNumero: it.madreNumero ?? null,
+          madreNombre: it.madreNombre ?? null,
+          detalles: it.detalles ?? null,
+          fechaDestete: it.fechaDestete ?? null,
         }));
+
         this.dataSource.data = rows;
         this.applyFilter();
         this.isLoadingRecrias = false;
       },
-      error: () => {
-        this.recrias = [];
-        this.totalRecrias = 0;
+      error: (err: any) => {
+        console.error('[RecriasMachos] listarRecrias error:', err);
         this.dataSource.data = [];
+        this.totalCrias = 0;
         this.isLoadingRecrias = false;
-        this.snack.open('No se pudo cargar las recrias', 'OK', { duration: 3000 });
+        this.notify.error('No se pudo cargar las recrías', 3000);
       },
     });
   }
@@ -240,7 +261,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
         this.isLoadingFincas = false;
         if (this.form.enabled) this.form.get('fincaId')?.enable({ emitEvent: false });
         this.fincaCtrl.enable({ emitEvent: false });
-        this.snack.open('No se pudo cargar las fincas', 'OK', { duration: 3000 });
+        this.notify.error('No se pudo cargar las fincas', 3000);
       },
     });
   }
@@ -251,7 +272,6 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     this.paridaService.getAll().subscribe({
       next: (res) => {
         this.madres = res
-          .filter((p) => p.generoCria === 'Macho')
           .map((p) => ({ id: p.id, numero: p.numero, nombre: p.nombre }));
         this.isLoadingMadres = false;
         if (this.form.enabled) this.form.get('madreId')?.enable({ emitEvent: false });
@@ -259,21 +279,20 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
       error: () => {
         this.isLoadingMadres = false;
         if (this.form.enabled) this.form.get('madreId')?.enable({ emitEvent: false });
-        this.snack.open('No se pudo cargar las madres', 'OK', { duration: 3000 });
+        this.notify.error('No se pudo cargar las madres', 3000);
       },
     });
   }
 
-  async onConsultar() {
-    if (!this.selectedId) return;
+  private cargarDetalleCria(id: string) {
+    if (!id) return;
     this.loading = true;
-    this.svc.obtenerRecriaPorId(this.selectedId).subscribe({
+    this.criaService.getById(id).subscribe({
       next: (det) => {
         if (!det) return;
 
         this.form.patchValue({
-          numero: det.numero,
-          nombre: det.nombre,
+          nombre: det.nombre ?? null,
           fechaNac: det.fechaNac ?? null,
           pesoKg: det.pesoKg ?? null,
           color: det.color ?? null,
@@ -281,32 +300,25 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
           fincaId: det.fincaId ?? null,
           madreId: det.madreId ?? null,
           detalles: det.detalles ?? null,
-          fechaDestete: det.fechaDestete ?? null,
+          fechaDestete: null,
         });
 
-        this.dataSource.data = [
-          {
-            ...det,
-            madreNombre: det.madreNombre ?? null,
-          },
-        ];
+        // No es consultMode: permitir edición y crear nuevo registro
+        this.consultMode = false;
+        this.editingId = null;
+        this.form.enable({ emitEvent: false });
 
-        this.consultMode = true;
-        this.form.disable({ emitEvent: false });
-        this.form.get('fechaDestete')?.enable({ emitEvent: false });
-
-        this.applyFilter();
         this.loading = false;
       },
       error: () => {
         this.loading = false;
-        this.snack.open('No se pudo consultar', 'OK', { duration: 3000 });
+        this.notify.error('No se pudo cargar la cria', 3000);
       },
     });
   }
 
   onNuevo() {
-    this.selectedId = null;
+    this.selectedIdCtrl.setValue(null, { emitEvent: false });
     this.consultMode = false;
     this.editingId = null;
     this.form.reset();
@@ -324,11 +336,11 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
       next: () => {
         this.loading = false;
         this.cargarRecrias();
-        this.snack.open('Destete actualizado', 'OK', { duration: 2500 });
+        this.notify.success('Destete actualizado', 2500);
       },
       error: () => {
         this.loading = false;
-        this.snack.open('No se pudo actualizar destete', 'OK', { duration: 3000 });
+        this.notify.error('No se pudo actualizar destete', 3000);
       },
     });
   }
@@ -364,7 +376,6 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
         this.editingId = det.id;
         this.form.enable({ emitEvent: false });
         this.form.patchValue({
-          numero: det.numero,
           nombre: det.nombre,
           fechaNac: det.fechaNac ?? null,
           pesoKg: det.pesoKg ?? null,
@@ -379,7 +390,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
       },
       error: () => {
         this.loading = false;
-        this.snack.open('No se pudo cargar para editar', 'OK', { duration: 3000 });
+        this.notify.error('No se pudo cargar para editar', 3000);
       },
     });
   }
@@ -392,11 +403,11 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
       next: () => {
         this.loading = false;
         this.cargarRecrias();
-        this.snack.open('Recria eliminada', 'OK', { duration: 2500 });
+        this.notify.success('Recria eliminada', 2500);
       },
       error: () => {
         this.loading = false;
-        this.snack.open('No se pudo eliminar', 'OK', { duration: 3000 });
+        this.notify.error('No se pudo eliminar', 3000);
       },
     });
   }
@@ -473,7 +484,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   }
 
   /** trackBy para mat-table */
-  trackById = (_: number, r: RecriaDetalle) => r?.id ?? r?.numero ?? _;
+  trackById = (_: number, r: RecriaDetalle) => r?.id ?? _;
 
   /** Submit (modo creación/edición normal) */
   submit() {
@@ -486,7 +497,6 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     const m = this.madres.find((x) => x.id === v.madreId);
 
     const payload: RecriaCreate = {
-      numero: v.numero,
       nombre: v.nombre,
       fechaNac: toYMD(v.fechaNac),
       pesoKg: v.pesoKg ?? null,
@@ -512,11 +522,11 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
         this.editingId = null;
         this.form.reset();
         this.cargarRecrias();
-        this.snack.open(isEdit ? 'Recria actualizada' : 'Recria guardada', 'OK', { duration: 2500 });
+        this.notify.success(isEdit ? 'Recria actualizada' : 'Recria guardada', 2500);
       },
       error: () => {
         this.loading = false;
-        this.snack.open('No se pudo guardar', 'OK', { duration: 3000 });
+        this.notify.error('No se pudo guardar', 3000);
       },
     });
   }

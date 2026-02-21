@@ -1,0 +1,133 @@
+<section class="ui-card">
+   <h3 class="section-title">Vendida</h3>
+  <p>Registra animales vendidos. Selecciona categoría y luego el animal.</p>
+
+  <form [formGroup]="form" class="ui-form" (ngSubmit)="submitVenta()">
+    <mat-form-field appearance="fill" class="ui-field ui-field-6">
+      <mat-label>Categoría</mat-label>
+      <mat-select formControlName="categoria">
+        <mat-option value="">— Seleccione —</mat-option>
+        <mat-option *ngFor="let c of categories" [value]="c.key">{{ c.label }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- animalSearch input removed to match Registro Toro layout; typeahead remains bound to `animalSearch` in TS -->
+
+    <mat-form-field appearance="fill" class="ui-field ui-field-6">
+      <mat-label>Animal</mat-label>
+      <mat-select formControlName="animalId">
+        <mat-option *ngIf="loadingAnimals" [disabled]="true">Cargando...</mat-option>
+        <mat-option value="">— Seleccione —</mat-option>
+        <mat-option *ngFor="let a of animals" [value]="a.id">{{ a.label }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="ui-field ui-field-6">
+      <mat-label>Fecha venta</mat-label>
+      <input matInput formControlName="fechaVenta" [matDatepicker]="pickerVenta" />
+      <mat-datepicker-toggle matSuffix [for]="pickerVenta"></mat-datepicker-toggle>
+      <mat-datepicker #pickerVenta></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="ui-field ui-field-6">
+      <mat-label>Comprador</mat-label>
+      <input matInput formControlName="comprador" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="ui-field ui-field-6">
+      <mat-label>Precio</mat-label>
+      <input matInput type="number" formControlName="precio" />
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="ui-field ui-field-full">
+      <mat-label>Notas</mat-label>
+      <textarea matInput formControlName="notas" rows="3"></textarea>
+    </mat-form-field>
+
+    <div class="ui-actions">
+      <button mat-flat-button color="primary" type="submit" style="background: var(--primary)">Registrar venta</button>
+    </div>
+  </form>
+  <!-- Tabla: buscador, columnas y exportar -->
+  <section class="ui-card" style="margin-top:16px">
+    <div class="ui-actions" style="display:flex;align-items:center;gap:12px;">
+      <mat-form-field appearance="fill" style="flex:1;max-width:360px;">
+        <input matInput placeholder="Buscar" [formControl]="qCtrl" />
+      </mat-form-field>
+      <div>Registros: {{ dataSource.data?.length || 0 }}</div>
+
+      <button mat-icon-button [matMenuTriggerFor]="colMenu" matTooltip="Columnas">
+        <mat-icon>view_column</mat-icon>
+      </button>
+      <mat-menu #colMenu="matMenu">
+        <button mat-menu-item>
+          <mat-checkbox [checked]="allSelected" (change)="toggleAll($event.checked)">Seleccionar todo</mat-checkbox>
+        </button>
+        <mat-divider></mat-divider>
+        <ng-container *ngFor="let c of allColumns">
+          <button mat-menu-item>
+            <mat-checkbox [checked]="isColumnVisible(c.key)" (change)="toggleColumn(c.key,$event.checked)">{{ c.label }}</mat-checkbox>
+          </button>
+        </ng-container>
+      </mat-menu>
+
+      <button
+          style="background: var(--primary)"
+          mat-mini-fab
+          class="ui-fab-pdf mb-4"
+          (click)="exportPdf()"
+          matTooltip="Exportar a PDF"
+          aria-label="Exportar a PDF">
+          <mat-icon>picture_as_pdf</mat-icon>
+        </button>
+    </div>
+
+    <table mat-table [dataSource]="dataSource" matSort [trackBy]="trackById" class="mat-elevation-z2" style="width:100%;margin-top:12px;">
+      <ng-container matColumnDef="idx">
+        <th mat-header-cell *matHeaderCellDef>#</th>
+        <td mat-cell *matCellDef="let row; let i = index">{{ i + 1 }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="categoria">
+        <th mat-header-cell *matHeaderCellDef>Categoría</th>
+        <td mat-cell *matCellDef="let row">{{ row.categoria }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="animalLabel">
+        <th mat-header-cell *matHeaderCellDef>Animal</th>
+        <td mat-cell *matCellDef="let row">{{ row.animalLabel }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="fechaVenta">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let row">{{ row.fechaVenta | date : 'yyyy-MM-dd' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="comprador">
+        <th mat-header-cell *matHeaderCellDef>Comprador</th>
+        <td mat-cell *matCellDef="let row">{{ row.comprador }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="precio">
+        <th mat-header-cell *matHeaderCellDef>Precio</th>
+        <td mat-cell *matCellDef="let row">{{ row.precio }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="notas">
+        <th mat-header-cell *matHeaderCellDef>Notas</th>
+        <td mat-cell *matCellDef="let row">{{ row.notas }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let row">-
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="[5,10,25]" showFirstLastButtons></mat-paginator>
+  </section>
+</section>

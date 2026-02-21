@@ -23,6 +23,8 @@ import { ParidaService, CreateParidaDto, ParidaDto } from 'src/app/core/services
 
 import { MatMenuModule } from '@angular/material/menu';
 import { FincaDto, FincaService } from 'src/app/core/services/finca.service';
+import { NotificationService } from 'src/app/core/services/notification.service';
+import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
 type Genero = 'Hembra' | 'Macho';
 type TipoLeche = 'Buena' | 'Regular' | 'Mala';
 interface ParidaForm {
@@ -67,6 +69,8 @@ interface ParidaForm {
     MatTooltipModule,
     MatMenuModule,
     MatCheckboxModule,
+    // shared
+    TableFiltersComponent,
   ],
   templateUrl: './paridas.component.html',
   styleUrls: ['./paridas.component.css'],
@@ -78,6 +82,7 @@ export class ParidasComponent {
   private paridaService = inject(ParidaService);
   private date = inject(DatePipe);
   private fb = inject(FormBuilder);
+  private notify = inject(NotificationService);
 
   // Opciones (mock; cámbialas por tu API)
   fincas: FincaDto[] = [];
@@ -114,6 +119,7 @@ export class ParidasComponent {
   cargarFincas() {
     this.fincaService.listar().subscribe({
       next: (res) => (this.fincas = res),
+      error: () => this.notify.error('No se pudo cargar las fincas'),
     });
   }
   // === Columnas por defecto e iniciales ===
@@ -296,30 +302,34 @@ export class ParidasComponent {
       propietario: raw.propietario ?? null,
       observaciones: raw.observaciones ?? null,
     };
-    debugger;
     if (this.editingId) {
       this.paridaService.update(this.editingId, payload).subscribe({
         next: () => {
           this.form.reset();
           this.editingId = null;
           this.loadParidas();
+          this.notify.success('Registro actualizado');
         },
-        error: (err) => alert(err.error?.message ?? 'Número duplicado'),
+        error: (err) => this.notify.error(err.error?.message ?? 'No se pudo actualizar'),
       });
     } else {
       this.paridaService.create(payload).subscribe({
         next: () => {
           this.form.reset();
           this.loadParidas();
+          this.notify.success('Registro guardado');
         },
-        error: (err) => alert(err.error?.message ?? 'Número duplicado'),
+        error: (err) => this.notify.error(err.error?.message ?? 'No se pudo guardar'),
       });
     }
   }
 
   loadParidas() {
-    this.paridaService.getAll().subscribe((paridas) => {
-      this.dataSource.data = paridas;
+    this.paridaService.getAll().subscribe({
+      next: (paridas) => {
+        this.dataSource.data = paridas;
+      },
+      error: () => this.notify.error('No se pudo cargar el listado'),
     });
   }
 
@@ -364,9 +374,10 @@ export class ParidasComponent {
   this.paridaService.delete(row.id).subscribe({
     next: () => {
       this.loadParidas();
+      this.notify.success('Registro eliminado');
     },
     error: err => {
-      alert(err.error?.message ?? 'Error al eliminar');
+      this.notify.error(err.error?.message ?? 'No se pudo eliminar');
     }
   });
 }

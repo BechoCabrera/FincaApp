@@ -169,6 +169,10 @@
     --destructive: #CC0033;
     --destructive-foreground: #FAFAFA;
     --border: #E2E8F0;
+    /* Primary tint/strong fallbacks (rgba) to support older browsers and avoid relying on color-mix */
+    --primary-tint: rgba(225,29,72,0.06);
+    --primary-strong: rgba(225,29,72,0.85);
+    --primary-rgb: 225,29,72;
   }
 
   .dark {
@@ -183,6 +187,9 @@
 
   :root[data-theme='violet'] {
     --primary: #6E56CF;
+    --primary-tint: rgba(110,86,207,0.06);
+    --primary-strong: rgba(110,86,207,0.85);
+    --primary-rgb: 110,86,207;
   }
 
   .dark[data-theme='violet'] {
@@ -198,6 +205,9 @@
 
   :root[data-theme='red'] {
     --primary: #CC0033;
+    --primary-tint: rgba(204,0,51,0.06);
+    --primary-strong: rgba(204,0,51,0.85);
+    --primary-rgb: 204,0,51;
   }
 
   .dark[data-theme='red'] {
@@ -206,6 +216,9 @@
 
   :root[data-theme='blue'] {
     --primary: #2490FF;
+    --primary-tint: rgba(36,144,255,0.06);
+    --primary-strong: rgba(36,144,255,0.85);
+    --primary-rgb: 36,144,255;
   }
 
   .dark[data-theme='blue'] {
@@ -221,6 +234,9 @@
 
   :root[data-theme='orange'] {
     --primary: #EA580C;
+    --primary-tint: rgba(234,88,12,0.06);
+    --primary-strong: rgba(234,88,12,0.85);
+    --primary-rgb: 234,88,12;
   }
 
   .dark[data-theme='orange'] {
@@ -236,6 +252,9 @@
 
   :root[data-theme='yellow'] {
     --primary: #FACC15;
+    --primary-tint: rgba(250,204,21,0.06);
+    --primary-strong: rgba(250,204,21,0.85);
+    --primary-rgb: 250,204,21;
   }
 
   .dark[data-theme='yellow'] {
@@ -252,6 +271,9 @@
 
   :root[data-theme='green'] {
     --primary: #22C55E;
+    --primary-tint: rgba(34,197,94,0.06);
+    --primary-strong: rgba(34,197,94,0.85);
+    --primary-rgb: 34,197,94;
   }
 
   .dark[data-theme='green'] {
@@ -259,6 +281,18 @@
     --primary-foreground: #052E16;
   }
 
+
+@layer base {
+  .mat-mdc-snack-bar-container .mdc-snackbar__surface {
+    background: var(--primary) !important;
+    color: var(--primary-foreground) !important;
+  }
+
+  .mat-mdc-snack-bar-container .mdc-snackbar__label,
+  .mat-mdc-snack-bar-container .mdc-snackbar__action {
+    color: var(--primary-foreground) !important;
+  }
+}
 }
 
 /** Scroll bar **/
@@ -581,6 +615,40 @@ html { transition: font-size .15s ease-out; }
 .ui-search.mat-mdc-form-field .mdc-notched-outline__trailing{
   border-color: var(--primary) !important;
 }
+
+/* Ajustes para la variante 'filled' del buscador: que luzca igual que los inputs */
+
+.ui-search.mat-mdc-form-field .mdc-text-field--filled{
+  /* fondo ligeramente tintado por el color de marca (se adapta al tema) */
+  --mdc-filled-text-field-container-color: rgba(var(--primary-rgb), 0.12) !important;
+  /* texto y label neutros para legibilidad */
+  --mdc-filled-text-field-input-text-color: var(--field-text) !important;
+  --mdc-filled-text-field-label-text-color: var(--field-label) !important;
+  /* indicador / borde más opaco basado en el color de marca */
+  --mdc-filled-text-field-active-indicator-color: rgba(var(--primary-rgb), 0.85) !important;
+}
+
+/* icono de búsqueda y sufijo: usar color de marca más opaco */
+.ui-search .mat-icon{
+  color: rgba(var(--primary-rgb), 0.85) !important;
+}
+
+/* For select trigger (mat-select) ensure same background when used as header filter */
+.ui-search .mat-mdc-select-trigger,
+.ui-search .mat-mdc-select-value {
+  /* Do not paint an inner rectangle — make the select trigger transparent so
+     the filled form-field background (set via --mdc-filled-text-field-container-color)
+     shows through uniformly. */
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Ensure the filled form-field container provides the tinted background for the whole field */
+.ui-search.mat-mdc-form-field .mdc-text-field--filled {
+  --mdc-filled-text-field-container-color: rgba(var(--primary-rgb), 0.12) !important;
+}
+
+.ui-search .mat-mdc-text-field-wrapper{ box-shadow: none !important; }
 
 .section-title { font-weight: 600; margin: 0 0 .5rem 0; }
 .ui-table-wrapper { overflow: auto; }

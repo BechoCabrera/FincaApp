@@ -1,5 +1,5 @@
 import { Component, ViewChild, inject, signal, computed } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, NgIf } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule, FormControl } from '@angular/forms';
 
 import jsPDF from 'jspdf';
@@ -21,6 +21,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
 
 import { debounceTime, startWith } from 'rxjs';
 import { CriaMachosService, CriaMachoDto, CreateCriaMachoDto } from 'src/app/core/services/cria-machos.service';
@@ -45,12 +46,14 @@ export interface CriaMacho {
   selector: 'app-crias-machos',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule,
+    CommonModule, NgIf, ReactiveFormsModule,
     // Material
     MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule,
     MatDatepickerModule, MatNativeDateModule, MatDividerModule, MatSelectModule,
     MatTableModule, MatPaginatorModule, MatSortModule, MatTooltipModule,
     MatMenuModule, MatCheckboxModule, MatSnackBarModule,
+    // shared
+    TableFiltersComponent,
   ],
   providers: [DatePipe],
   templateUrl: './crias-machos.component.html',
@@ -302,8 +305,18 @@ export class CriasMachosComponent {
 
     this.isSaving.set(true);
     const editId = this.editingId();
-    const request = editId
-      ? this.criaService.update(editId, payload)
+
+    // Validate editing id before calling update (avoid sending empty/invalid id)
+    if (editId != null && typeof editId === 'string' && editId.trim() === '') {
+      // treat empty-string as null
+      this.editingId.set(null);
+    }
+
+    const finalEditId = this.editingId();
+    console.debug('CriaMachos submit - editId:', finalEditId, 'payload:', payload);
+
+    const request = finalEditId
+      ? this.criaService.update(finalEditId, payload)
       : this.criaService.create(payload);
 
     request.subscribe({

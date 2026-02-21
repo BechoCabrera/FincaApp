@@ -49,9 +49,7 @@ namespace FincaAppApi.Controllers
         [FromBody] UpdateToroRequest request,
         CancellationToken ct)
         {
-            if (id != request.Id)
-                return BadRequest("El id de la URL no coincide con el cuerpo.");
-
+            request.Id = id;
             var result = await _mediator.Send(request, ct);
             return Ok(result);
         }

@@ -23,6 +23,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSort, MatSortModule } from '@angular/material/sort';
+import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
 
 // PDF
 import { jsPDF } from 'jspdf';
@@ -74,6 +75,8 @@ interface NovillaDetalle {
     MatTooltipModule,
     MatDividerModule,
     MatSortModule,
+    // shared
+    TableFiltersComponent,
   ],
 })
 export class NovillasVientreComponent implements OnInit, AfterViewInit {

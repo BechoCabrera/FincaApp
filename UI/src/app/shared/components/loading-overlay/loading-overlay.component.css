@@ -17,10 +17,16 @@
   border-radius: 12px;
   background: var(--background, #fff);
   color: var(--foreground, #0f172a);
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
   box-shadow: 0 10px 30px rgba(2, 6, 23, 0.2);
 }
 
 .loading-text {
   font-size: 0.95rem;
   font-weight: 600;
+  color: var(--primary);
+}
+
+:host ::ng-deep .mat-mdc-progress-spinner {
+  --mdc-circular-progress-active-indicator-color: var(--primary);
 }

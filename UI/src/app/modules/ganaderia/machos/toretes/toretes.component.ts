@@ -25,6 +25,9 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ToroService } from 'src/app/core/services/toro.service';
+import { NotificationService } from 'src/app/core/services/notification.service';
+import { FincaService } from 'src/app/core/services/finca.service';
+import { ParidaService } from 'src/app/core/services/parida.service';
 
 @Component({
   selector: 'app-toretes',
@@ -57,40 +60,30 @@ export class ToretesComponent implements OnInit, AfterViewInit {
 
   private fb = inject(FormBuilder);
   private svc = inject(RecriasMachosService);
+  private notify = inject(NotificationService);
+  private fincaService = inject(FincaService);
+  private paridaService = inject(ParidaService);
 
-  /** UI state */
   dense = false;
   loading = false;
   consultMode = false;
 
-  /** Select de Toretes */
   toretes: RecriaResumen[] = [];
   selectedId: string | null = null;
   totalToretes = 0;
   get totalCrias() {
     return this.totalToretes;
-  } // alias usado por el HTML
+  }
 
-  /** Catálogos (dummy; cambia a servicio si aplica) */
-  fincas = [
-    { id: 'F1', nombre: 'Tierra Nueva' },
-    { id: 'F2', nombre: 'La Más Nueva' },
-    { id: 'F3', nombre: 'San Antonio' },
-  ];
-  madres = [
-    { numero: '42', nombre: 'Reina' },
-    { numero: '382', nombre: 'Brisa' },
-    { numero: '309', nombre: 'Luna' },
-  ];
+  fincas: any[] = [];
+  madres: any[] = [];
 
-  /** Form principal */
   form!: FormGroup;
+  private editingId: string | null = null;
 
-  /** Tabla */
   dataSource: any = new MatTableDataSource<RecriaDetalle>([]);
   displayedColumns: string[] = [
     'idx',
-    'numero',
     'nombre',
     'fechaNac',
     'color',
@@ -103,7 +96,6 @@ export class ToretesComponent implements OnInit, AfterViewInit {
   ];
   allColumns = [
     { key: 'idx', label: '#' },
-    { key: 'numero', label: 'Nº' },
     { key: 'nombre', label: 'NOMBRE' },
     { key: 'fechaNac', label: 'F. NACIMIENTO' },
     { key: 'color', label: 'COLOR' },
@@ -127,7 +119,6 @@ export class ToretesComponent implements OnInit, AfterViewInit {
   /** ===== Ciclo de vida ===== */
   ngOnInit(): void {
     this.form = this.fb.group({
-      numero: [null, Validators.required],
       nombre: [null, Validators.required],
       fechaNac: [null as Date | null],
       pesoKg: [null],
@@ -138,19 +129,55 @@ export class ToretesComponent implements OnInit, AfterViewInit {
       detalles: [null],
       fechaDestete: [null as Date | null],
     });
-     //this.cargarToretes();
+    // Ahora que el formulario existe, cargamos datos dependientes
+    this.cargarFincas();
+    this.cargarMadres();
+    this.cargarToretes();
+  }
+
+ private cargarMadres() {
+    // El formulario usa `madreNumero` como control para seleccionar la madre
+    this.form.get('madreNumero')?.disable({ emitEvent: false });
+    this.paridaService.getAll().subscribe({
+      next: (res) => {
+        this.madres = res.map((p) => ({ id: p.id, numero: p.numero, nombre: p.nombre }));
+        if (this.form.enabled) this.form.get('madreNumero')?.enable({ emitEvent: false });
+      },
+      error: () => {
+        if (this.form.enabled) this.form.get('madreNumero')?.enable({ emitEvent: false });
+        this.notify.error('No se pudo cargar las madres', 3000);
+      },
+    });
+  }
+
+  private cargarFincas() {
+    this.form.get('fincaId')?.disable({ emitEvent: false });
+    this.fincaCtrl.disable({ emitEvent: false });
+    this.fincaService.listar().subscribe({
+      next: (res) => {
+        this.fincas = res.filter((f) => f.isActive).map((f) => ({ id: f.id, nombre: f.nombre }));
+
+        if (this.form.enabled) this.form.get('fincaId')?.enable({ emitEvent: false });
+        this.fincaCtrl.enable({ emitEvent: false });
+      },
+      error: () => {
+        if (this.form.enabled) this.form.get('fincaId')?.enable({ emitEvent: false });
+        this.fincaCtrl.enable({ emitEvent: false });
+        this.notify.error('No se pudo cargar las fincas', 3000);
+      },
+    });
   }
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
 
-    // Filtro compuesto (texto + finca)
-    this.dataSource.filterPredicate = (row: { numero: any; nombre: any; fincaId: string }, filterJson: string) => {
+    // Filtro compuesto (texto + finca) — buscar solo por nombre ahora
+    this.dataSource.filterPredicate = (row: { nombre: any; fincaId: string }, filterJson: string) => {
       const f = JSON.parse(filterJson) as { q: string; fincaId: string };
       const q = (f.q || '').toLowerCase();
       const finca = f.fincaId || '';
-      const matchTexto = String(row.numero || '').includes(q) || (row.nombre || '').toLowerCase().includes(q);
+      const matchTexto = (row.nombre || '').toLowerCase().includes(q);
       const matchFinca = !finca || row.fincaId === finca;
       return matchTexto && matchFinca;
     };
@@ -184,26 +211,34 @@ export class ToretesComponent implements OnInit, AfterViewInit {
     this.loading = true;
     try {
       const res: any = await firstValueFrom(this.svc.listarRecrias());
-      this.toretes = res.items;
-      this.totalToretes = res.total;
+
+      // soporto formato { total, items } o array directo
+      const items = Array.isArray(res) ? res : res?.items || [];
+      this.toretes = items;
+      this.totalToretes = Array.isArray(res) ? items.length : res?.total || items.length || 0;
 
       // Mapeo básico para la tabla si el listado no trae todos los campos
-      const rows: RecriaDetalle[] = res.items.map((it: any) => ({
+      const rows: RecriaDetalle[] = items.map((it: any) => ({
         id: it.id,
         numero: it.numero,
         nombre: it.nombre,
-        fechaNac: null,
-        pesoKg: null,
-        color: null,
-        propietario: null,
-        fincaId: null,
-        madreNumero: null,
-        madreNombre: null,
-        detalles: null,
-        fechaDestete: null,
+        fechaNac: it.fechaNac ?? null,
+        pesoKg: it.pesoKg ?? null,
+        color: it.color ?? null,
+        propietario: it.propietario ?? null,
+        fincaId: it.fincaId ?? null,
+        madreNumero: it.madreNumero ?? null,
+        madreNombre: it.madreNombre ?? null,
+        detalles: it.detalles ?? null,
+        fechaDestete: it.fechaDestete ?? null,
       }));
       this.dataSource.data = rows;
       this.applyFilter();
+    } catch {
+      this.toretes = [];
+      this.totalToretes = 0;
+      this.dataSource.data = [];
+      this.notify.error('No se pudo cargar los toretes');
     } finally {
       this.loading = false;
     }
@@ -217,7 +252,6 @@ export class ToretesComponent implements OnInit, AfterViewInit {
       if (!det) return;
 
       this.form.patchValue({
-        numero: det.numero,
         nombre: det.nombre,
         fechaNac: det.fechaNac ?? null,
         pesoKg: det.pesoKg ?? null,
@@ -243,6 +277,8 @@ export class ToretesComponent implements OnInit, AfterViewInit {
       this.form.get('fechaDestete')?.enable({ emitEvent: false });
 
       this.applyFilter();
+    } catch {
+      this.notify.error('No se pudo consultar');
     } finally {
       this.loading = false;
     }
@@ -269,8 +305,14 @@ export class ToretesComponent implements OnInit, AfterViewInit {
 
     this.loading = true;
     this.svc.actualizarDestete(this.selectedId, valor).subscribe({
-      next: () => (this.loading = false),
-      error: () => (this.loading = false),
+      next: () => {
+        this.loading = false;
+        this.notify.success('Destete actualizado');
+      },
+      error: () => {
+        this.loading = false;
+        this.notify.error('No se pudo actualizar destete');
+      },
     });
   }
 
@@ -297,13 +339,48 @@ export class ToretesComponent implements OnInit, AfterViewInit {
   }
 
   editar(row: RecriaDetalle) {
-    // TODO: editar
-    console.log('editar()', row);
+    if (!row?.id) return;
+    this.loading = true;
+    this.svc.obtenerRecriaPorId(row.id).subscribe({
+      next: (det) => {
+        this.editingId = det.id;
+        this.consultMode = false;
+        this.form.enable({ emitEvent: false });
+        this.form.patchValue({
+          nombre: det.nombre,
+          fechaNac: det.fechaNac ?? null,
+          pesoKg: det.pesoKg ?? null,
+          color: det.color ?? null,
+          propietario: det.propietario ?? null,
+          fincaId: det.fincaId ?? null,
+          madreNumero: det.madreNumero ?? null,
+          detalles: det.detalles ?? null,
+          fechaDestete: det.fechaDestete ?? null,
+        });
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.notify.error('No se pudo cargar para editar', 3000);
+      },
+    });
   }
 
   eliminar(row: RecriaDetalle) {
-    // TODO: eliminar
-    console.log('eliminar()', row);
+    if (!row?.id) return;
+    if (!confirm(`¿Eliminar torete ${row.nombre}?`)) return;
+    this.loading = true;
+    this.svc.eliminar(row.id).subscribe({
+      next: () => {
+        this.loading = false;
+        this.cargarToretes();
+        this.notify.success('Torete eliminado');
+      },
+      error: () => {
+        this.loading = false;
+        this.notify.error('No se pudo eliminar');
+      },
+    });
   }
 
   /** ===== Exportación PDF ===== */
@@ -378,7 +455,7 @@ export class ToretesComponent implements OnInit, AfterViewInit {
   }
 
   /** trackBy para mat-table */
-  trackById = (_: number, r: RecriaDetalle) => r?.id ?? r?.numero ?? _;
+  trackById = (_: number, r: RecriaDetalle) => r?.id ?? _;
 
   /** Submit (modo creación/edición normal) */
   submit() {
@@ -390,7 +467,6 @@ export class ToretesComponent implements OnInit, AfterViewInit {
     const toYMD = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : d || null);
 
     const payload = {
-      numero: v.numero,
       nombre: v.nombre,
       fechaNac: toYMD(v.fechaNac),
       pesoKg: v.pesoKg ?? null,
@@ -402,7 +478,25 @@ export class ToretesComponent implements OnInit, AfterViewInit {
       fechaDestete: toYMD(v.fechaDestete),
     };
 
-    // TODO: this.svc.guardarTorete(payload).subscribe(...)
-    console.log('submit()', payload);
+    this.loading = true;
+    const isEdit = !!this.editingId;
+    const req$ = isEdit
+      ? this.svc.actualizarRecria(this.editingId as string, payload)
+      : this.svc.crearRecria(payload as any);
+
+    req$.subscribe({
+      next: () => {
+        this.loading = false;
+        this.editingId = null;
+        this.form.reset();
+        this.form.enable({ emitEvent: false });
+        this.cargarToretes();
+        this.notify.success(isEdit ? 'Torete actualizado' : 'Torete creado');
+      },
+      error: () => {
+        this.loading = false;
+        this.notify.error('No se pudo guardar');
+      },
+    });
   }
 }

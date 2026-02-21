@@ -27,6 +27,8 @@ import { EscoteraService } from 'src/app/core/services/escotera.service';
 import { ProximaService, CreateProximaDto, UpdateProximaDto, ProximaDto } from 'src/app/core/services/proxima.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { NovillasVientreService, NovillaVientreDto } from 'src/app/core/services/novillas-vientre.service';
+import { FincaService, FincaDto } from 'src/app/core/services/finca.service';
+import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
 
 // Servicio (te lo paso si lo pides)
 // import { ProximasService } from './proximas.service';
@@ -73,6 +75,9 @@ interface ProximaDetalle {
     MatSortModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    // shared
+    TableFiltersComponent,
+
   ],
 })
 export class ProximasComponent implements OnInit, AfterViewInit {
@@ -137,6 +142,8 @@ export class ProximasComponent implements OnInit, AfterViewInit {
 
   // Filtros
   qCtrl = new FormControl<string>('', { nonNullable: true });
+  fincaCtrl = new FormControl<string>('', { nonNullable: true });
+  fincas: FincaDto[] = [];
 
   // Mat table hooks
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -152,6 +159,7 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     private escoteraService: EscoteraService,
     private proximaService: ProximaService,
     private novillasService: NovillasVientreService,
+    private fincaService: FincaService,
   ) {}
 
   // ====== Lifecycle
@@ -173,6 +181,7 @@ export class ProximasComponent implements OnInit, AfterViewInit {
 
     this.cargarOpciones(); // carga opciones para el tipo inicial
     this.cargarTabla(); // carga tabla (ambos tipos o el que decidas mostrar)
+    this.cargarFincas();
   }
 
   ngAfterViewInit(): void {
@@ -180,15 +189,25 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     this.dataSource.sort = this.sort;
 
     // Filtro por texto libre
+    // filterPredicate expects a JSON string with { q, finca }
     this.dataSource.filterPredicate = (row, filterText) => {
-      const q = (filterText || '').toLowerCase();
-      return (
+      let parsed: any = { q: '', finca: '' };
+      try {
+        parsed = JSON.parse(filterText || '{}');
+      } catch (e) {
+        parsed = { q: String(filterText || ''), finca: '' };
+      }
+      const q = (parsed.q || '').toString().toLowerCase();
+      const finca = (parsed.finca || '').toString();
+      const matchesQ =
         String(row.numero).toLowerCase().includes(q) ||
         (row.nombre || '').toLowerCase().includes(q) ||
-        (row.tipo || '').toLowerCase().includes(q)
-      );
+        (row.tipo || '').toLowerCase().includes(q);
+      const matchesFinca = !finca || (row.fincaId || '') === finca;
+      return matchesQ && matchesFinca;
     };
     this.qCtrl.valueChanges.subscribe(() => this.applyFilter());
+    this.fincaCtrl.valueChanges.subscribe(() => this.applyFilter());
   }
 
   // ====== Template helpers
@@ -205,7 +224,8 @@ export class ProximasComponent implements OnInit, AfterViewInit {
 
   // ====== Data
   private applyFilter() {
-    this.dataSource.filter = this.qCtrl.value || '';
+    const payload = { q: this.qCtrl.value || '', finca: this.fincaCtrl.value || '' };
+    this.dataSource.filter = JSON.stringify(payload);
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   }
 
@@ -317,6 +337,13 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  cargarFincas() {
+    this.fincaService.listar().subscribe({
+      next: (res) => (this.fincas = res),
+      error: () => this.snack.open('No se pudieron cargar las fincas', 'OK', { duration: 3000 }),
+    });
   }
 
   async onConsultar() {

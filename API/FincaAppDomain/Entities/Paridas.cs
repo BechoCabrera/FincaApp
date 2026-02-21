@@ -2,8 +2,7 @@
 namespace FincaAppDomain.Entities;
 public class Paridas : BaseEntity
 {
-    public Guid Id { get; set; }
-
+    //public Guid Id { get; set; }
     public string Nombre { get;  set; } = default!;
     public string Numero { get;  set; } = default!;
 

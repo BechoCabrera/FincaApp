@@ -62,11 +62,12 @@ namespace FincaAppApi.Controllers
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCriaMachoRequest request, CancellationToken ct)
         {
-            if (request == null || id != request.Id)
+            if (request == null)
                 return BadRequest("Datos inválidos.");
 
             try
             {
+                request.Id = id;
                 var result = await _mediator.Send(request, ct);
                 return Ok(result);
             }

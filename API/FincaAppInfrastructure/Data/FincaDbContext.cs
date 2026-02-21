@@ -23,6 +23,9 @@ public class FincaDbContext : DbContext
     public DbSet<RecriaHembra> RecriasHembras { get; set; }
     public DbSet<NovillaVientre> NovillasVientre { get; set; }
     public DbSet<CriaMacho> CriasMachos { get; set; }
+    public DbSet<RecriaMacho> RecriasMachos { get; set; }
+    public DbSet<Venta> Ventas { get; set; }
+    public DbSet<Fallecida> Fallecidas { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -91,10 +94,6 @@ public class FincaDbContext : DbContext
             b.Property(x => x.Id)
                 .ValueGeneratedNever();
 
-            b.Property(x => x.Numero)
-                .HasMaxLength(50)
-                .IsRequired();
-
             b.Property(x => x.Nombre)
                 .HasMaxLength(50)
                 .IsRequired();
@@ -106,7 +105,7 @@ public class FincaDbContext : DbContext
                 .HasPrecision(18, 2)
                 .IsRequired();
 
-            b.Property(x => x.FechaNacimiento)
+            b.Property(x => x.FechaNac)
                 .HasColumnType("datetime2(7)");             
 
             b.Property(x => x.CreatedAt)
@@ -116,8 +115,10 @@ public class FincaDbContext : DbContext
             b.Property(x => x.UpdatedAt)
                 .HasColumnType("datetime2(7)");
 
-            b.HasIndex(x => new { x.TenantId, x.Numero })
-                .IsUnique();
+            modelBuilder.Entity<Toro>()
+                .HasOne(t => t.Madre)
+                .WithMany() // Ajusta según la relación real
+                .HasForeignKey(t => t.MadreId);
         });
 
         modelBuilder.Entity<Finca>(b =>

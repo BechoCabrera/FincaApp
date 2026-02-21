@@ -103,58 +103,19 @@
   <!-- ================= TABLA ================= -->
   <section class="ui-card brand-surface mt-3">
     <div class="ui-table-wrapper">
-      <div class="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div class="flex items-center gap-3">
-          <span
-            class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
-            style="background: var(--table-head-bg); color: var(--table-ink); border: 1px solid var(--table-border)">
-            TOTAL: {{ dataSource.filteredData.length }}
-          </span>
-        </div>
-
-        <div class="flex flex-col gap-2 md:flex-row md:items-center">
-          <!-- 🔍 BUSCAR -->
-          <mat-form-field appearance="outline" class="ui-search no-ripple w-full md:w-60">
-            <mat-label>Buscar Nº / Nombre / Propietario</mat-label>
-            <input matInput [formControl]="qCtrl" />
-            <button mat-icon-button matSuffix (click)="qCtrl.setValue('')">
-              <mat-icon>search</mat-icon>
-            </button>
-          </mat-form-field>
-
-          <!-- 📑 COLUMNAS -->
-          <button mat-flat-button [matMenuTriggerFor]="colsMenu" class="ui-btn" style="background: var(--primary)">
-            <mat-icon class="mr-1">view_column</mat-icon>
-            Columnas
-          </button>
-
-          <!-- 📄 PDF -->
-          <button
-            mat-mini-fab
-            class="ui-fab-pdf"
-            style="background: var(--primary)"
-            (click)="exportPdf()"
-            matTooltip="Exportar a PDF">
-            <mat-icon>picture_as_pdf</mat-icon>
-          </button>
-
-          <mat-menu #colsMenu="matMenu" xPosition="before">
-            <button mat-menu-item>
-              <mat-checkbox [checked]="allSelected" [indeterminate]="someSelected" (change)="toggleAll($event.checked)">
-                Seleccionar todo
-              </mat-checkbox>
-            </button>
-
-            <mat-divider></mat-divider>
-
-            <button mat-menu-item *ngFor="let c of allColumns">
-              <mat-checkbox [checked]="isColumnVisible(c.key)" (change)="toggleColumn(c.key, $event.checked)">
-                {{ c.label }}
-              </mat-checkbox>
-            </button>
-          </mat-menu>
-        </div>
-      </div>
+      <app-table-filters
+        [qControl]="qCtrl"
+        [fincaControl]="fincaCtrl"
+        [fincas]="fincas"
+        [totalLabel]="'TOTAL: ' + dataSource.filteredData.length"
+        [allColumns]="allColumns"
+        [displayedColumns]="displayedColumns"
+        [allSelected]="allSelected"
+        [someSelected]="someSelected"
+        (toggleColumn)="toggleColumn($event.key, $event.checked)"
+        (toggleAll)="toggleAll($event)"
+        (exportPdf)="exportPdf()"
+      ></app-table-filters>
 
       <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z1 ui-table" [trackBy]="trackById">
         <!-- Nº -->

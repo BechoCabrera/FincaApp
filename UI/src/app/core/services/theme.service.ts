@@ -14,7 +14,7 @@ const STORAGE_KEY = 'theme';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  // Estado inicial (oscuro + base); cámbialo si quieres otro por defecto
+  // Estado inicial (oscuro + base); la preferencia real se aplica desde localStorage
   public theme = signal<AppTheme>({ mode: 'dark', color: 'base', direction: 'ltr' } as const);
 
   constructor() {

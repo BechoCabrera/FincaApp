@@ -14,6 +14,7 @@ import { ButtonComponent } from '../../../../shared/components/button/button.com
 import { AuthService } from '../../services/auth.service';
 import { SessionService } from 'src/app/core/services/session.service';
 import { LoadingService } from 'src/app/core/services/loading.service';
+import { NotificationService } from 'src/app/core/services/notification.service';
 
 @Component({
   selector: 'app-sign-in',
@@ -42,7 +43,8 @@ export class SignInComponent implements OnInit {
     private readonly authService: AuthService,
     private readonly sessionService: SessionService,
     private readonly router: Router,
-    private readonly loadingService: LoadingService
+    private readonly loadingService: LoadingService,
+    private readonly notify: NotificationService,
   ) {}
 
   ngOnInit(): void {
@@ -80,9 +82,11 @@ export class SignInComponent implements OnInit {
 
         // Redirigir al dashboard
         this.router.navigate(['/dashboard']);
+        this.notify.success('Sesion iniciada');
       },
       error: () => {
         this.error = 'Credenciales inválidas';
+        this.notify.error('Credenciales invalidas');
       },
     });
   }

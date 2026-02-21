@@ -7,6 +7,8 @@ import { EscoteraComponent } from './hembras/escotera/escotera.component';
 import { CriasHembrasComponent } from './hembras/crias-hembras/crias-hembras.component';
 import { TorosComponent } from './machos/toros/toros.component';
 import { CriasMachosComponent } from './machos/crias-machos/crias-machos.component';
+import { VendidaComponent } from './vendida/vendida.component';
+import { FallecidaComponent } from './fallecida/fallecida.component';
 
 @NgModule({
   imports: [
@@ -19,6 +21,8 @@ import { CriasMachosComponent } from './machos/crias-machos/crias-machos.compone
     CriasHembrasComponent,
     TorosComponent,
     CriasMachosComponent
+    ,VendidaComponent,
+    FallecidaComponent
   ]
 })
 export class GanaderiaModule {}
