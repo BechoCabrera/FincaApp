@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using FincaAppApplication.Requests.AuthRequest;
 using FincaAppApplication.DTOs.Login;
+using FincaAppApplication.Requests.AuthRequest;
 
 namespace FincaAppApi.Controllers;
 

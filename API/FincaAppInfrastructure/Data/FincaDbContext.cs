@@ -1,199 +1,77 @@
-﻿using System.Linq.Expressions;
-// si prefieres no depender de API, mueve la interfaz a Domain.Common
+﻿
 using FincaAppDomain.Common;
 using FincaAppDomain.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using MediatR;
 namespace FincaAppInfrastructure.Data;
 
 public class FincaDbContext : DbContext
 {
     private readonly ITenantProvider _tenant;
     public string CurrentTenantId => _tenant.TenantId;
+    private readonly IMediator _mediator;
 
-    public FincaDbContext(DbContextOptions<FincaDbContext> options, ITenantProvider tenant)
-        : base(options) => _tenant = tenant;
-    public DbSet<Escoteras> Escoteras => Set<Escoteras>();
-    public DbSet<Paridas> Paridas => Set<Paridas>();
-    public DbSet<Toro> Toros => Set<Toro>();
+    public FincaDbContext(
+        DbContextOptions<FincaDbContext> options,
+        ITenantProvider tenant,
+        IMediator mediator)
+        : base(options)
+    {
+        _mediator = mediator;
+        _tenant = tenant;
+    }
+
+    // ==========================
+    // NUEVOS DbSets
+    // ==========================
+
+    public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Finca> Fincas => Set<Finca>();
-    public DbSet<User> Users { get; set; }
-    public DbSet<UserTenant> UserTenants { get; set; }
-    public DbSet<Proxima> Proximas => Set<Proxima>();
-    public DbSet<CriaHembra> CriasHembras { get; set; }
-    public DbSet<RecriaHembra> RecriasHembras { get; set; }
-    public DbSet<NovillaVientre> NovillasVientre { get; set; }
-    public DbSet<CriaMacho> CriasMachos { get; set; }
-    public DbSet<RecriaMacho> RecriasMachos { get; set; }
-    public DbSet<Venta> Ventas { get; set; }
-    public DbSet<Fallecida> Fallecidas { get; set; }
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
+
+    public DbSet<Animal> Animales => Set<Animal>();
+    public DbSet<AnimalEstadoHistorial> AnimalEstados => Set<AnimalEstadoHistorial>();
+    public DbSet<AnimalMovimiento> AnimalMovimientos => Set<AnimalMovimiento>();
+    public DbSet<Parto> Partos => Set<Parto>();
+    public DbSet<AnimalPeso> AnimalPesos => Set<AnimalPeso>();
+    public DbSet<AnimalDestete> AnimalDestetes => Set<AnimalDestete>();
+    public DbSet<ProduccionLeche> ProduccionesLeche => Set<ProduccionLeche>();
+    public DbSet<AnimalSalida> AnimalSalidas => Set<AnimalSalida>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(FincaDbContext).Assembly);       
         base.OnModelCreating(modelBuilder);
-        // Índice único por tenant + negocio
 
-        modelBuilder.Entity<CriaHembra>(b =>
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(FincaDbContext).Assembly);
+
+        // ==========================
+        // Filtro global por Tenant
+        // ==========================
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes()
+            .Where(t => typeof(ITenantEntity).IsAssignableFrom(t.ClrType)))
         {
-            b.ToTable("CriasHembras");
+            var parameter = Expression.Parameter(entityType.ClrType, "e");
+            var tenantProperty = Expression.Property(parameter, nameof(ITenantEntity.TenantId));
+            var currentTenant = Expression.Property(
+                Expression.Constant(this),
+                nameof(CurrentTenantId));
 
-            b.HasKey(x => x.Id);
+            var body = Expression.Equal(tenantProperty, currentTenant);
+            var lambda = Expression.Lambda(body, parameter);
 
-            b.Property(x => x.Id)
-                .ValueGeneratedNever();
-
-            b.Property(x => x.Numero)
-                .HasMaxLength(50)
-                .IsRequired();
-
-            b.Property(x => x.Nombre)
-                .HasMaxLength(50)
-                .IsRequired();
-
-            b.Property(x => x.FechaNac)
-                .HasColumnType("datetime2(7)");
-
-            b.Property(x => x.Color)
-                .HasMaxLength(30);
-
-            b.Property(x => x.Propietario)
-                .HasMaxLength(50);
-
-            b.Property(x => x.PesoKg)
-                .HasPrecision(18, 2);
-
-            b.Property(x => x.FincaId);
-
-            b.Property(x => x.MadreNumero)
-                .HasMaxLength(50);
-
-            b.Property(x => x.MadreNombre)
-                .HasMaxLength(50);
-
-            b.Property(x => x.Detalles)
-                .HasMaxLength(200);
-
-            b.Property(x => x.CreatedAt)
-                .HasColumnType("datetime2(7)")
-                .IsRequired();
-
-            b.Property(x => x.UpdatedAt)
-                .HasColumnType("datetime2(7)");
-
-            // Índice único por tenant + numero
-            b.HasIndex(x => new { x.TenantId, x.Numero })
-                .IsUnique();
-        });
-
-        modelBuilder.Entity<Toro>(b =>
-        {
-            b.ToTable("Toros");
-
-            b.HasKey(x => x.Id);
-
-            b.Property(x => x.Id)
-                .ValueGeneratedNever();
-
-            b.Property(x => x.Nombre)
-                .HasMaxLength(50)
-                .IsRequired();
-
-            b.Property(x => x.FincaId)                
-                .IsRequired();
-
-            b.Property(x => x.PesoKg)
-                .HasPrecision(18, 2)
-                .IsRequired();
-
-            b.Property(x => x.FechaNac)
-                .HasColumnType("datetime2(7)");             
-
-            b.Property(x => x.CreatedAt)
-                .HasColumnType("datetime2(7)")
-                .IsRequired();
-
-            b.Property(x => x.UpdatedAt)
-                .HasColumnType("datetime2(7)");
-
-            modelBuilder.Entity<Toro>()
-                .HasOne(t => t.Madre)
-                .WithMany() // Ajusta según la relación real
-                .HasForeignKey(t => t.MadreId);
-        });
-
-        modelBuilder.Entity<Finca>(b =>
-        {
-            b.ToTable("Fincas");
-
-            b.HasKey(x => x.Id);
-
-            b.Property(x => x.Id)
-                .ValueGeneratedNever();
-
-            b.Property(x => x.Codigo)
-                .HasMaxLength(10)
-                .IsRequired();
-
-            b.Property(x => x.Nombre)
-                .HasMaxLength(50)
-                .IsRequired();
-
-            b.Property(x => x.Descripcion)
-                .HasMaxLength(200);
-
-            b.Property(x => x.IsActive)
-                .IsRequired();
-
-            b.Property(x => x.CreatedAt)
-                .HasColumnType("datetime2(7)")
-                .IsRequired();
-
-            b.Property(x => x.UpdatedAt)
-                .HasColumnType("datetime2(7)");
-
-            b.HasIndex(x => new { x.TenantId, x.Codigo })
-                .IsUnique();
-        });
-
-        modelBuilder.Entity<UserTenant>(b =>
-        {
-            b.ToTable("UserTenants");
-
-            // 🔑 Clave primaria compuesta
-            b.HasKey(x => new { x.UserId, x.TenantId });
-
-            b.HasOne(x => x.User)
-                .WithMany(u => u.UserTenants)
-                .HasForeignKey(x => x.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<Escoteras>(entity =>
-        {
-            entity.ToTable("Escoteras");
-            entity.HasKey(x => x.Id);
-        });
-
-
-
-        // Filtro global por TenantId
-        foreach (var et in modelBuilder.Model.GetEntityTypes()
-         .Where(t => typeof(ITenantEntity).IsAssignableFrom(t.ClrType)))
-        {
-            var param = Expression.Parameter(et.ClrType, "e");
-
-            var tenantProp = Expression.Property(param, nameof(ITenantEntity.TenantId));
-            var currentTenant = Expression.Property(Expression.Constant(this), nameof(CurrentTenantId));
-
-            var body = Expression.OrElse(
-                Expression.Equal(currentTenant, Expression.Constant(string.Empty)),
-                Expression.Equal(tenantProp, currentTenant)
-            );
-
-            var lambda = Expression.Lambda(body, param);
-            modelBuilder.Entity(et.ClrType).HasQueryFilter(lambda);
+            modelBuilder.Entity(entityType.ClrType)
+                .HasQueryFilter(lambda);
         }
 
+        // ==========================
+        // Índices importantes
+        // ==========================
+
+        modelBuilder.Entity<Animal>()
+            .HasIndex(a => new { a.TenantId, a.NumeroArete })
+            .IsUnique();
     }
 
     public override int SaveChanges()
@@ -202,17 +80,37 @@ public class FincaDbContext : DbContext
         SetAuditFields();
         return base.SaveChanges();
     }
-    public override Task<int> SaveChangesAsync(CancellationToken ct = default)
+
+    public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         SetTenantOnAdded();
         SetAuditFields();
-        return base.SaveChangesAsync(ct);
+
+        var domainEntities = ChangeTracker
+            .Entries<BaseEntity>()
+            .Where(x => x.Entity.DomainEvents.Any())
+            .ToList();
+
+        var domainEvents = domainEntities
+            .SelectMany(x => x.Entity.DomainEvents)
+            .ToList();
+
+        foreach (var entity in domainEntities)
+            entity.Entity.ClearDomainEvents();
+
+        var result = await base.SaveChangesAsync(ct);
+
+        foreach (var domainEvent in domainEvents)
+            await _mediator.Publish((dynamic)domainEvent, ct);
+
+        return result;
     }
+
     private void SetTenantOnAdded()
     {
         foreach (var entry in ChangeTracker.Entries()
-                     .Where(e => e.State == EntityState.Added && e.Entity is ITenantEntity)
-                     .Select(e => (ITenantEntity)e.Entity))
+            .Where(e => e.State == EntityState.Added && e.Entity is ITenantEntity)
+            .Select(e => (ITenantEntity)e.Entity))
         {
             entry.TenantId = _tenant.TenantId;
         }
@@ -224,7 +122,9 @@ public class FincaDbContext : DbContext
         {
             if (entry.State == EntityState.Added && entry.Entity.CreatedAt == default)
                 entry.Entity.CreatedAt = DateTime.UtcNow;
+
+            if (entry.State == EntityState.Modified)
+                entry.Entity.UpdatedAt = DateTime.UtcNow;
         }
     }
-
 }

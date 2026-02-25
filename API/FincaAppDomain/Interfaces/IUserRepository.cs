@@ -4,5 +4,5 @@ namespace FincaAppDomain.Interfaces;
 
 public interface IUserRepository
 {
-    Task<User?> GetByEmailAsync(string email);
+    Task<Usuario?> GetByEmailAsync(string email);
 }
