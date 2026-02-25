@@ -28,7 +28,7 @@ export interface ToreteDetalle {
 @Injectable({ providedIn: 'root' })
 export class ToretesService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/api/ganaderia/toretes`;
+  private apiUrl = `${environment.apiUrl}/api/RecriasMachos`;
 
   listarToretes(opts?: { q?: string; fincaId?: string; page?: number; pageSize?: number }):
     Observable<{ total: number; items: ToreteResumen[] }> {

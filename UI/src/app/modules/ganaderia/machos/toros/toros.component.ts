@@ -330,18 +330,32 @@ export class TorosComponent {
     this.isLoadingSourceList = true;
     this.sourceIdCtrl.disable({ emitEvent: false });
 
+    const toSourceItems = (res: any) => {
+      const items = Array.isArray(res) ? res : res?.items || [];
+      return items.map((it: any) => ({ id: String(it.id), nombre: it.nombre }));
+    };
+
     if (tipo === 'toretes') {
       this.toretesService.listarToretes().subscribe({
         next: (res) => {
-          this.sourceItems = res.items.map((it) => ({ id: it.id, nombre: it.nombre }));
+          this.sourceItems = toSourceItems(res);
           this.isLoadingSourceList = false;
           this.sourceIdCtrl.enable({ emitEvent: false });
         },
         error: () => {
-          this.sourceItems = [];
-          this.isLoadingSourceList = false;
-          this.sourceIdCtrl.enable({ emitEvent: false });
-          this.notify.error('No se pudo cargar los toretes');
+          this.recriasMachosService.listarRecrias().subscribe({
+            next: (res) => {
+              this.sourceItems = toSourceItems(res);
+              this.isLoadingSourceList = false;
+              this.sourceIdCtrl.enable({ emitEvent: false });
+            },
+            error: () => {
+              this.sourceItems = [];
+              this.isLoadingSourceList = false;
+              this.sourceIdCtrl.enable({ emitEvent: false });
+              this.notify.error('No se pudo cargar los toretes');
+            },
+          });
         },
       });
       return;
@@ -350,7 +364,7 @@ export class TorosComponent {
     if (tipo === 'recrias') {
       this.recriasMachosService.listarRecrias().subscribe({
         next: (res) => {
-          this.sourceItems = res.items.map((it) => ({ id: it.id, nombre: it.nombre }));
+          this.sourceItems = toSourceItems(res);
           this.isLoadingSourceList = false;
           this.sourceIdCtrl.enable({ emitEvent: false });
         },
@@ -404,8 +418,13 @@ export class TorosComponent {
       this.toretesService.obtenerToretePorId(id).subscribe({
         next: (det: ToreteDetalle) => applyDetail(det),
         error: () => {
-          this.isLoadingSourceDetail = false;
-          this.notify.error('No se pudo cargar el detalle');
+          this.recriasMachosService.obtenerRecriaPorId(id).subscribe({
+            next: (det) => applyDetail(det),
+            error: () => {
+              this.isLoadingSourceDetail = false;
+              this.notify.error('No se pudo cargar el detalle');
+            },
+          });
         },
       });
       return;

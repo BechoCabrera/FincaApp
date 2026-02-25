@@ -47,7 +47,7 @@
 
       <!-- fila 4 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Seleccione la finca</mat-label>
+        <mat-label>Finca</mat-label>
         <mat-select formControlName="fincaId">
           <mat-option *ngFor="let f of fincas" [value]="f.id">{{ f.nombre }}</mat-option>
         </mat-select>
@@ -55,7 +55,7 @@
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
-        <mat-label>Seleccione la vaca (madre)</mat-label>
+        <mat-label>Vaca (madre)</mat-label>
         <mat-select formControlName="madreNumero">
           <mat-option *ngFor="let m of madres" [value]="m.numero"> {{ m.numero }} — {{ m.nombre }} </mat-option>
         </mat-select>

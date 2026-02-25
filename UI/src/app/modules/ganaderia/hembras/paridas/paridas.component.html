@@ -100,6 +100,17 @@
     </form>
   </section>
 
+  <app-parida-cria-form
+    *ngIf="lastSavedParida"
+    [generoCria]="lastSavedParida.generoCria"
+    [madreId]="lastSavedParida.madreId"
+    [madreNumero]="lastSavedParida.madreNumero"
+    [madreNombre]="lastSavedParida.madreNombre"
+    [fincaId]="lastSavedParida.fincaId"
+    [fincas]="fincas"
+    (saved)="onCriaGuardada()">
+  </app-parida-cria-form>
+
   <!-- ================= TABLA ================= -->
   <section class="ui-card brand-surface mt-3">
     <div class="ui-table-wrapper">

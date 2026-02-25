@@ -25,6 +25,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { FincaDto, FincaService } from 'src/app/core/services/finca.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
+import { ParidaCriaFormComponent } from 'src/app/modules/ganaderia/hembras/paridas/parida-cria-form/parida-cria-form.component';
 type Genero = 'Hembra' | 'Macho';
 type TipoLeche = 'Buena' | 'Regular' | 'Mala';
 interface ParidaForm {
@@ -71,6 +72,7 @@ interface ParidaForm {
     MatCheckboxModule,
     // shared
     TableFiltersComponent,
+    ParidaCriaFormComponent,
   ],
   templateUrl: './paridas.component.html',
   styleUrls: ['./paridas.component.css'],
@@ -168,6 +170,13 @@ export class ParidasComponent {
     }
   }
   editingId: string | null = null;
+  lastSavedParida: {
+    madreId: string | null;
+    madreNumero: string;
+    madreNombre: string;
+    generoCria: Genero;
+    fincaId: string | null;
+  } | null = null;
 
   dataSource = new MatTableDataSource<ParidaDto>([]);
 
@@ -305,6 +314,13 @@ export class ParidasComponent {
     if (this.editingId) {
       this.paridaService.update(this.editingId, payload).subscribe({
         next: () => {
+          this.lastSavedParida = {
+            madreId: this.editingId,
+            madreNumero: payload.numero,
+            madreNombre: payload.nombre,
+            generoCria: payload.generoCria,
+            fincaId: payload.fincaId,
+          };
           this.form.reset();
           this.editingId = null;
           this.loadParidas();
@@ -314,7 +330,14 @@ export class ParidasComponent {
       });
     } else {
       this.paridaService.create(payload).subscribe({
-        next: () => {
+        next: (res) => {
+          this.lastSavedParida = {
+            madreId: res?.id ?? null,
+            madreNumero: payload.numero,
+            madreNombre: payload.nombre,
+            generoCria: payload.generoCria,
+            fincaId: payload.fincaId,
+          };
           this.form.reset();
           this.loadParidas();
           this.notify.success('Registro guardado');
@@ -322,6 +345,10 @@ export class ParidasComponent {
         error: (err) => this.notify.error(err.error?.message ?? 'No se pudo guardar'),
       });
     }
+  }
+
+  onCriaGuardada() {
+    this.notify.success('Cría guardada correctamente');
   }
 
   loadParidas() {

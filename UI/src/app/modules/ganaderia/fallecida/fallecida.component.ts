@@ -13,6 +13,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
+import { forkJoin } from 'rxjs';
 // PDF
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -27,6 +28,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { ParidaService } from 'src/app/core/services/parida.service';
 import { EscoteraService } from 'src/app/core/services/escotera.service';
 import { ProximaService } from 'src/app/core/services/proxima.service';
+import { CriaHembrasService } from 'src/app/core/services/cria-hembras.service';
 import { RecriaHembrasService } from 'src/app/core/services/recrias-hembras.service';
 import { NovillasVientreService } from 'src/app/core/services/novillas-vientre.service';
 import { CriaMachosService } from 'src/app/core/services/cria-machos.service';
@@ -66,6 +68,7 @@ export class FallecidaComponent implements AfterViewInit, OnInit {
   private paridaSvc = inject(ParidaService);
   private escoteraSvc = inject(EscoteraService);
   private proximaSvc = inject(ProximaService);
+  private criaHembraSvc = inject(CriaHembrasService);
   private recriaHembraSvc = inject(RecriaHembrasService);
   private novillaSvc = inject(NovillasVientreService);
   private criaMachoSvc = inject(CriaMachosService);
@@ -100,6 +103,7 @@ export class FallecidaComponent implements AfterViewInit, OnInit {
   @ViewChild(MatSort) sort!: MatSort;
 
   categories = [
+    { key: 'todos', label: 'Todos' },
     { key: 'paridas', label: 'Vacas Paridas' },
     { key: 'escotera', label: 'Escotera' },
     { key: 'proximas', label: 'Próximas' },
@@ -164,44 +168,83 @@ export class FallecidaComponent implements AfterViewInit, OnInit {
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   }
 
-  private searchAnimals(query: string, key: string): Observable<Item[]> {
+  private categoryLabel(key: string) {
+    return this.categories.find((c) => c.key === key)?.label ?? key;
+  }
+
+  private encodeAnimalId(categoria: string, id: string) {
+    return `${categoria}::${id}`;
+  }
+
+  private decodeAnimalId(value: string): { categoria: string; id: string } | null {
+    if (!value || !value.includes('::')) return null;
+    const [categoria, ...rest] = value.split('::');
+    const id = rest.join('::');
+    if (!categoria || !id) return null;
+    return { categoria, id };
+  }
+
+  private fetchAnimalsByCategory(key: string, query = ''): Observable<Item[]> {
     const q = (query || '').trim().toLowerCase();
     const finishMap = (arr: any[], mapper: (r: any) => Item) => {
       const items = arr.map(mapper);
-      return of(q ? items.filter((it) => it.label.toLowerCase().includes(q)) : items);
+      return q ? items.filter((it) => it.label.toLowerCase().includes(q)) : items;
     };
 
     switch (key) {
       case 'paridas':
-        if ((this.paridaSvc as any).search) return (this.paridaSvc as any).search(q).pipe(map((res: any[]) => res.map((r: any) => ({ id: r.id, label: `${r.numero} — ${r.nombre}` }))));
-        return this.paridaSvc.getAll().pipe(switchMap((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: `${r.numero} — ${r.nombre}` }))));
+        if ((this.paridaSvc as any).search) {
+          return (this.paridaSvc as any).search(q).pipe(map((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: `${r.numero} — ${r.nombre}` }))));
+        }
+        return this.paridaSvc.getAll().pipe(map((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: `${r.numero} — ${r.nombre}` }))));
       case 'escotera':
-        if ((this.escoteraSvc as any).search) return (this.escoteraSvc as any).search(q).pipe(map((res: any[]) => res.map((r: any) => ({ id: r.id, label: `${r.numero} — ${r.nombre}` }))));
-        return this.escoteraSvc.getAll().pipe(switchMap((res: any[]) => finishMap(res, (r: any) => ({ id: r.id as string, label: `${r.numero} — ${r.nombre}` }))));
+        if ((this.escoteraSvc as any).search) {
+          return (this.escoteraSvc as any).search(q).pipe(map((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: `${r.numero} — ${r.nombre}` }))));
+        }
+        return this.escoteraSvc.getAll().pipe(map((res: any[]) => finishMap(res, (r: any) => ({ id: r.id as string, label: `${r.numero} — ${r.nombre}` }))));
       case 'proximas':
-        return (this.proximaSvc as any).search(q).pipe(map((res: any[]) => res.map((r: any) => ({ id: r.id, label: `${r.numero} — ${r.nombre}` }))));
+        return (this.proximaSvc as any).search(q).pipe(map((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: `${r.numero} — ${r.nombre}` }))));
       case 'crias-hembra':
+        return this.criaHembraSvc.getAll().pipe(map((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: `${(r as any).numero ?? ''} — ${r.nombre}` }))));
       case 'recrias-hembra':
-        return this.recriaHembraSvc.getAll().pipe(switchMap((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: `${(r as any).numero ?? ''} — ${r.nombre}` }))));
+        return this.recriaHembraSvc.getAll().pipe(map((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: `${(r as any).numero ?? ''} — ${r.nombre}` }))));
       case 'novillas-vientre':
-        return this.novillaSvc.getAll().pipe(switchMap((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: `${(r as any).numero ?? ''} — ${r.nombre}` }))));
+        return this.novillaSvc.getAll().pipe(map((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: `${(r as any).numero ?? ''} — ${r.nombre}` }))));
       case 'crias-macho':
-        return this.criaMachoSvc.getAll().pipe(switchMap((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: `${(r as any).numero ?? ''} — ${r.nombre}` }))));
+        return this.criaMachoSvc.getAll().pipe(map((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: `${(r as any).numero ?? ''} — ${r.nombre}` }))));
       case 'recrias-macho':
         return this.recriaMachoSvc.listarRecrias().pipe(map((res: any) => {
           const items = Array.isArray(res) ? res : res?.items || [];
-          return items.map((r: any) => ({ id: r.id, label: `${(r.numero ?? '')} — ${r.nombre}` }));
+          return finishMap(items, (r: any) => ({ id: r.id, label: `${(r.numero ?? '')} — ${r.nombre}` }));
         }));
       case 'toros':
-        return this.toroSvc.getToros().pipe(switchMap((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: r.nombre }))));
+        return this.toroSvc.getToros().pipe(map((res: any[]) => finishMap(res, (r: any) => ({ id: r.id, label: r.nombre }))));
       case 'toretes':
         return this.toreteSvc.listarToretes().pipe(map((res: any) => {
           const items = Array.isArray(res) ? res : res?.items || [];
-          return items.map((r: any) => ({ id: r.id, label: `${(r.numero ?? '')} — ${r.nombre}` }));
+          return finishMap(items, (r: any) => ({ id: r.id, label: `${(r.numero ?? '')} — ${r.nombre}` }));
         }));
       default:
         return of([]);
     }
+  }
+
+  private searchAnimals(query: string, key: string): Observable<Item[]> {
+    if (key !== 'todos') return this.fetchAnimalsByCategory(key, query);
+
+    const keys = this.categories.map((c) => c.key).filter((k) => k !== 'todos');
+    return forkJoin(keys.map((k) => this.fetchAnimalsByCategory(k, query).pipe(catchError(() => of([]))))).pipe(
+      map((groups) =>
+        groups.flatMap((items, idx) => {
+          const categoria = keys[idx];
+          const catLabel = this.categoryLabel(categoria);
+          return items.map((it) => ({
+            id: this.encodeAnimalId(categoria, it.id),
+            label: `[${catLabel}] ${it.label}`,
+          }));
+        }),
+      ),
+    );
   }
 
   private onCategoryChange(key: string | null) {
@@ -215,47 +258,7 @@ export class FallecidaComponent implements AfterViewInit, OnInit {
       this.loadingAnimals = false;
     };
 
-    switch (key) {
-      case 'paridas':
-        this.paridaSvc.getAll().subscribe((res) => finish(res.map((r) => ({ id: r.id, label: `${r.numero} — ${r.nombre}` }))));
-        break;
-      case 'escotera':
-        this.escoteraSvc.getAll().subscribe((res) => finish(res.map((r) => ({ id: r.id as string, label: `${r.numero} — ${r.nombre}` }))));
-        break;
-      case 'proximas':
-        this.proximaSvc.search().subscribe((res) => finish(res.map((r) => ({ id: r.id, label: `${r.numero} — ${r.nombre}` }))));
-        break;
-      case 'crias-hembra':
-        this.recriaHembraSvc.getAll().subscribe((res) => finish(res.map((r) => ({ id: r.id, label: `${(r as any).numero ?? ''} — ${r.nombre}` }))));
-        break;
-      case 'recrias-hembra':
-        this.recriaHembraSvc.getAll().subscribe((res) => finish(res.map((r) => ({ id: r.id, label: `${(r as any).numero ?? ''} — ${r.nombre}` }))));
-        break;
-      case 'novillas-vientre':
-        this.novillaSvc.getAll().subscribe((res) => finish(res.map((r) => ({ id: r.id, label: `${(r as any).numero ?? ''} — ${r.nombre}` }))));
-        break;
-      case 'crias-macho':
-        this.criaMachoSvc.getAll().subscribe((res) => finish(res.map((r) => ({ id: r.id, label: `${(r as any).numero ?? ''} — ${r.nombre}` }))));
-        break;
-      case 'recrias-macho':
-        this.recriaMachoSvc.listarRecrias().subscribe((res) => {
-          const items = Array.isArray(res) ? res : res?.items || [];
-          finish(items.map((r: any) => ({ id: r.id, label: `${(r.numero ?? '')} — ${r.nombre}` })));
-        });
-        break;
-      case 'toros':
-        this.toroSvc.getToros().subscribe((res) => finish(res.map((r) => ({ id: r.id, label: r.nombre }))));
-        break;
-      case 'toretes':
-        this.toreteSvc.listarToretes().subscribe((res) => {
-          const items = Array.isArray(res) ? res : res?.items || [];
-          finish(items.map((r: any) => ({ id: r.id, label: `${(r.numero ?? '')} — ${r.nombre}` })));
-        });
-        break;
-      default:
-        this.loadingAnimals = false;
-        break;
-    }
+    this.searchAnimals('', key).pipe(catchError(() => of([]))).subscribe((items) => finish(items));
   }
 
   submitFallecimiento() {
@@ -263,9 +266,22 @@ export class FallecidaComponent implements AfterViewInit, OnInit {
       this.form.markAllAsTouched();
       return;
     }
+    let categoria = this.form.value.categoria || '';
+    let animalId = this.form.value.animalId || '';
+
+    if (categoria === 'todos') {
+      const decoded = this.decodeAnimalId(animalId);
+      if (!decoded) {
+        this.notify.error('Seleccione un animal válido de la lista', 3000);
+        return;
+      }
+      categoria = decoded.categoria;
+      animalId = decoded.id;
+    }
+
     const dto: CreateFallecimientoDto = {
-      categoria: this.form.value.categoria || '',
-      animalId: this.form.value.animalId || '',
+      categoria,
+      animalId,
       fechaFallecimiento: this.toIso(this.form.value.fechaFallecimiento),
       causa: this.form.value.causa || null,
       notas: this.form.value.notas || null,
