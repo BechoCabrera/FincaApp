@@ -17,5 +17,6 @@ public class AnimalEstadoHistorialRepository
     public async Task AddAsync(AnimalEstadoHistorial historial)
     {
         await _context.AnimalEstados.AddAsync(historial);
+        await _context.SaveChangesAsync();
     }
 }

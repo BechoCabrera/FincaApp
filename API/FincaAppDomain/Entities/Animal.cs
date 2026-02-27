@@ -129,4 +129,12 @@ public class Animal : BaseEntity
     {
         Activo = false;
     }
+
+    public void CambiarProposito(PropositoAnimal nuevoProposito)
+    {
+        if (Proposito == nuevoProposito)
+            return;
+
+        Proposito = nuevoProposito;
+    }
 }

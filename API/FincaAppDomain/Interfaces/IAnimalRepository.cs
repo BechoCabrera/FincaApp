@@ -1,4 +1,5 @@
 ﻿using FincaAppDomain.Entities;
+using FincaAppDomain.Enums;
 
 namespace FincaAppDomain.Interfaces;
 
@@ -13,4 +14,11 @@ public interface IAnimalRepository
     Task UpdateAsync(Animal animal);
 
     Task<bool> ExistsNumeroAreteAsync(string numeroArete);
+
+    Task<List<Animal>> GetAllAsync(
+        TipoAnimal? tipo = null,
+        PropositoAnimal? proposito = null,
+        string? estado = null,
+        int page = 1,
+        int pageSize = 20);
 }
