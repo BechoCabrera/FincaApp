@@ -22,7 +22,8 @@ public class AnimalEstadoCambiadoEventHandler
             AnimalId = notification.AnimalId,
             EstadoAnterior = notification.EstadoAnterior,
             EstadoNuevo = notification.EstadoNuevo,
-            FechaCambio = DateTime.UtcNow
+            FechaCambio = DateTime.UtcNow,
+            UsuarioId = notification.UsuarioId ?? Guid.Empty
         };
 
         await _repository.AddAsync(historial);

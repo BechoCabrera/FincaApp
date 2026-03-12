@@ -1,5 +1,4 @@
-﻿
-using FincaAppDomain.Common;
+﻿using FincaAppDomain.Common;
 using FincaAppDomain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -43,7 +42,8 @@ public class FincaDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(FincaDbContext).Assembly);
+        // Prevent EF Core from trying to map domain event types as entities
+        modelBuilder.Ignore<DomainEvent>();
 
         // ==========================
         // Filtro global por Tenant

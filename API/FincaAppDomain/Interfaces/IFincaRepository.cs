@@ -8,4 +8,5 @@ public interface IFincaRepository
     Task<List<Finca>> GetAllAsync();
 
     Task AddAsync(Finca finca);
+    Task UpdateAsync(Finca finca);
 }

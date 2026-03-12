@@ -1,0 +1,7 @@
+.ui-search { margin-right: .5rem; }
+.ui-fab-pdf { margin-left: .5rem; }
+.ui-btn { margin-left: .5rem; }
+
+@media (max-width: 900px) {
+  .ui-search { margin-right: 0; }
+}

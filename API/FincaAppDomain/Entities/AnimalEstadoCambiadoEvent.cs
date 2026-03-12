@@ -7,14 +7,17 @@ public class AnimalEstadoCambiadoEvent : DomainEvent
     public Guid AnimalId { get; }
     public string EstadoAnterior { get; }
     public string EstadoNuevo { get; }
+    public Guid? UsuarioId { get; }
 
     public AnimalEstadoCambiadoEvent(
         Guid animalId,
         string estadoAnterior,
-        string estadoNuevo)
+        string estadoNuevo,
+        Guid? usuarioId = null)
     {
         AnimalId = animalId;
         EstadoAnterior = estadoAnterior;
         EstadoNuevo = estadoNuevo;
+        UsuarioId = usuarioId;
     }
 }

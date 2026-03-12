@@ -6,6 +6,8 @@ using FincaAppDomain.Entities;
 using FincaAppDomain.Enums;
 using FincaAppDomain.Interfaces;
 using FincaAppApplication.Common;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace FincaAppApplication.Features.Animals.Commands
 {
@@ -19,10 +21,12 @@ namespace FincaAppApplication.Features.Animals.Commands
     public class ChangeAnimalStateCommandHandler : IRequestHandler<ChangeAnimalStateCommand, Unit>
     {
         private readonly IAnimalRepository _repository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ChangeAnimalStateCommandHandler(IAnimalRepository repository)
+        public ChangeAnimalStateCommandHandler(IAnimalRepository repository, IHttpContextAccessor httpContextAccessor)
         {
             _repository = repository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<Unit> Handle(ChangeAnimalStateCommand request, CancellationToken cancellationToken)
@@ -34,6 +38,18 @@ namespace FincaAppApplication.Features.Animals.Commands
             if (request.NuevoEstadoHembra.HasValue && request.NuevoEstadoMacho.HasValue)
                 throw new BadRequestException("Solo se debe enviar un estado para un género.");
 
+            // extract user id from claims if available
+            Guid? usuarioId = null;
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext != null && httpContext.User.Identity != null && httpContext.User.Identity.IsAuthenticated)
+            {
+                var sub = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                    ?? httpContext.User.FindFirst("sub")?.Value;
+
+                if (Guid.TryParse(sub, out var parsed))
+                    usuarioId = parsed;
+            }
+
             try
             {
                 if (request.NuevoEstadoHembra.HasValue)
@@ -41,7 +57,7 @@ namespace FincaAppApplication.Features.Animals.Commands
                     if (animal.Tipo != TipoAnimal.Hembra)
                         throw new BadRequestException("El animal no es hembra.");
 
-                    animal.CambiarEstadoHembra(request.NuevoEstadoHembra.Value);
+                    animal.CambiarEstadoHembra(request.NuevoEstadoHembra.Value, usuarioId);
                 }
 
                 if (request.NuevoEstadoMacho.HasValue)
@@ -49,7 +65,7 @@ namespace FincaAppApplication.Features.Animals.Commands
                     if (animal.Tipo != TipoAnimal.Macho)
                         throw new BadRequestException("El animal no es macho.");
 
-                    animal.CambiarEstadoMacho(request.NuevoEstadoMacho.Value);
+                    animal.CambiarEstadoMacho(request.NuevoEstadoMacho.Value, usuarioId);
                 }
             }
             catch (InvalidOperationException ex)

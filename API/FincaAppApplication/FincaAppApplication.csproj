@@ -4,6 +4,8 @@
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="MediatR" Version="12.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -11,9 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTOs\Auth\" />
-    <Folder Include="Features\Fincas\" />
-    <Folder Include="Features\Auth\" />
+    <Folder Include="DTOs/Auth\" />
+    <Folder Include="Features/Auth\" />
+    <Folder Include="Features\Salidas\Handlers\" />
   </ItemGroup>
 
   <PropertyGroup>

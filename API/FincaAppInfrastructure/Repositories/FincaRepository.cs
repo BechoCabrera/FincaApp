@@ -25,4 +25,10 @@ public class FincaRepository : IFincaRepository
         await _context.Fincas.AddAsync(finca);
         await _context.SaveChangesAsync();
     }
+
+    public async Task UpdateAsync(Finca finca)
+    {
+        _context.Fincas.Update(finca);
+        await _context.SaveChangesAsync();
+    }
 }

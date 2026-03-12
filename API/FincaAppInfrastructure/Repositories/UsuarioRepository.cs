@@ -18,6 +18,8 @@ public class UsuarioRepository : IUsuarioRepository
         => await _context.Usuarios.FirstOrDefaultAsync(x => x.Id == id);
 
     public async Task<Usuario?> GetByEmailAsync(string email)
+        // Ignore global tenant filter so auth endpoint (no tenant header) can find the user
         => await _context.Usuarios
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(x => x.Email == email);
 }

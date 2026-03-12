@@ -1,0 +1,35 @@
+<div class="flex h-screen w-screen">
+  <div class="auth-bg bg-primary hidden flex-1 items-center justify-center bg-cover lg:flex">
+    <div class="max-w-2xl space-y-4 p-8 text-center text-white">
+      <img src="./assets/images/finca.jpg" alt="dashboard widget" />
+      <h1 class="text-4xl font-bold">Gestión inteligente para tu finca</h1>
+      <p class="text-xs font-light">
+        Finca App es una plataforma diseñada para ayudarte a administrar de forma
+        <span class="cursor-pointer font-medium text-yellow-400">eficiente</span>
+        tus fincas, el control del ganado y la información clave de tu operación diaria.
+        <br /><br />
+        Lleva el seguimiento de animales, rotación entre fincas, registros productivos y decisiones estratégicas en un
+        solo lugar, optimizando tiempo y recursos.
+        <br /><br />
+        Nuestro objetivo es brindarte una herramienta
+        <span class="cursor-pointer font-medium text-yellow-400">simple</span>,
+        <span class="cursor-pointer font-medium text-yellow-400">segura</span> y
+        <span class="cursor-pointer font-medium text-yellow-400">productiva</span>
+        para el crecimiento de tu negocio ganadero.
+      </p>
+    </div>
+  </div>
+  <div class="bg-background flex flex-1 items-center justify-center">
+    <div class="max-w-md overflow-y-auto px-4 sm:w-[500px]">
+      <!-- logo -->
+      <div class="flex items-center justify-center gap-3">
+        <a class="bg-primary rounded-sm p-2">
+          <svg-icon src="assets/icons/logo.svg" [svgClass]="'h-5 w-5'"> </svg-icon>
+        </a>
+        <b class="text-md text-foreground font-bold"> Finca App </b>
+      </div>
+      <!-- Route -->
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

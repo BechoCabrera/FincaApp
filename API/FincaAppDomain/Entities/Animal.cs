@@ -47,7 +47,7 @@ public class Animal : BaseEntity
             EstadoActualMacho = EstadoMacho.Cria;
     }
 
-    public void CambiarEstadoHembra(EstadoHembra nuevoEstado)
+    public void CambiarEstadoHembra(EstadoHembra nuevoEstado, Guid? usuarioId = null)
     {
         if (Tipo != TipoAnimal.Hembra)
             throw new InvalidOperationException("El animal no es hembra.");
@@ -65,7 +65,8 @@ public class Animal : BaseEntity
         AddDomainEvent(new AnimalEstadoCambiadoEvent(
             Id,
             estadoAnterior.ToString(),
-            nuevoEstado.ToString()
+            nuevoEstado.ToString(),
+            usuarioId
         ));
     }
 
@@ -85,7 +86,7 @@ public class Animal : BaseEntity
         };
     }
 
-    public void CambiarEstadoMacho(EstadoMacho nuevoEstado)
+    public void CambiarEstadoMacho(EstadoMacho nuevoEstado, Guid? usuarioId = null)
     {
         if (Tipo != TipoAnimal.Macho)
             throw new InvalidOperationException("El animal no es macho.");
@@ -103,7 +104,8 @@ public class Animal : BaseEntity
         AddDomainEvent(new AnimalEstadoCambiadoEvent(
             Id,
             estadoAnterior.ToString(),
-            nuevoEstado.ToString()
+            nuevoEstado.ToString(),
+            usuarioId
         ));
     }
 
