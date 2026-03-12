@@ -30,6 +30,7 @@ builder.Services.AddAutoMapper(typeof(FincaAppApplication.DTOs.Animal.AnimalDto)
 builder.Services.AddAutoMapper(typeof(FincaAppApplication.Mappings.AnimalProfile));
 builder.Services.AddAutoMapper(typeof(FincaAppApplication.Mappings.FincaProfile));
 builder.Services.AddAutoMapper(typeof(FincaAppApplication.DTOs.Salida.VentaDto));
+builder.Services.AddAutoMapper(typeof(FincaAppApplication.Mappings.PartoProfile));
 
 // ===============================
 // MediatR
@@ -46,6 +47,12 @@ builder.Services.AddScoped<IAnimalRepository, AnimalRepository>();
 builder.Services.AddScoped<IFincaRepository, FincaRepository>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IAnimalEstadoHistorialRepository, AnimalEstadoHistorialRepository>();
+builder.Services.AddScoped<IPartoRepository, PartoRepository>();
+
+// Unit of work
+builder.Services.AddScoped<FincaAppDomain.Interfaces.IUnitOfWork, FincaAppInfrastructure.UnitOfWork.EfUnitOfWork>();
+
+// MediatR handlers (assembly scanning already configured)
 
 // ===============================
 // Seguridad - JWT

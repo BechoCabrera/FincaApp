@@ -101,14 +101,14 @@
   </section>
 
   <app-parida-cria-form
-    *ngIf="lastSavedParida"
-    [generoCria]="lastSavedParida.generoCria"
-    [madreId]="lastSavedParida.madreId"
-    [madreNumero]="lastSavedParida.madreNumero"
-    [madreNombre]="lastSavedParida.madreNombre"
-    [fincaId]="lastSavedParida.fincaId"
+    *ngIf="showCriaForm"
+    [generoCria]="form.controls.generoCria.value ?? 'Hembra'"
+    [madreId]="null"
+    [madreNumero]="form.controls.numero.value ?? ''"
+    [madreNombre]="form.controls.nombre.value ?? ''"
+    [fincaId]="form.controls.fincaId.value ?? null"
     [fincas]="fincas"
-    (saved)="onCriaGuardada()">
+    (saved)="onCriaGuardada($event)">
   </app-parida-cria-form>
 
   <!-- ================= TABLA ================= -->

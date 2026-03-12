@@ -24,8 +24,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { debounceTime, startWith } from 'rxjs';
 import { CriaHembrasService, CreateCriaHembraDto } from 'src/app/core/services/cria-hembras.service';
+import { AnimalDto } from 'src/app/core/services/animal.service';
 import { FincaService } from 'src/app/core/services/finca.service';
 import { ParidaService } from 'src/app/core/services/parida.service';
+import { CriaView } from 'src/app/core/models/animal-view.models';
 
 export interface CriaHembra {
   id?: string;
@@ -37,7 +39,7 @@ export interface CriaHembra {
   pesoKg?: number | null;
 
   // relaciones
-  fincaId: string | null;
+  fincaId?: string | null;
   madreNumero?: string | null;
   madreNombre?: string | null;
 
@@ -56,7 +58,7 @@ export interface CriaHembra {
     MatMenuModule, MatCheckboxModule,
     // shared
     TableFiltersComponent,
-],
+  ],
   providers: [DatePipe],
   templateUrl: './crias-hembras.component.html',
   styleUrls: ['./crias-hembras.component.css'],
@@ -69,21 +71,13 @@ export class CriasHembrasComponent {
     private fincaService: FincaService,
     private paridaService: ParidaService,
     private snack: MatSnackBar
-  ) {}
+  ) { }
 
   // ===== fincas desde API =====
-  fincas = [
-    { id: 'F1', nombre: 'Tierra Nueva' },
-    { id: 'F2', nombre: 'La Más Nueva' },
-    { id: 'F3', nombre: 'San Antonio' },
-  ];
+  fincas: Array<{ id: string; nombre: string }> = [];
 
   // catálogo de madres (solo de ejemplo)
-  madres = [
-    { numero: '101', nombre: 'Estrella' },
-    { numero: '205', nombre: 'Canela' },
-    { numero: '309', nombre: 'Luna' },
-  ];
+  madres: CriaView[] = [];
 
   // ===== formulario =====
   form = this.fb.group({
@@ -254,11 +248,11 @@ export class CriasHembrasComponent {
     return d instanceof Date ? d.toISOString().slice(0, 10) : d || null;
   }
 
-  private mapDtoToModel(dto: CriaHembraDto): CriaHembra {
+  private mapDtoToModel(dto: CriaView): CriaHembra {
     return {
       id: dto.id,
-      numero: dto.numero,
-      nombre: dto.nombre,
+      numero: dto.numero ?? '',
+      nombre: dto.nombre ?? '',
       fechaNac: dto.fechaNac ? new Date(dto.fechaNac) : null,
       color: dto.color ?? null,
       propietario: dto.propietario ?? null,
@@ -270,23 +264,27 @@ export class CriasHembrasComponent {
     };
   }
 
+  private mapAnimalDtoToModel(dto: AnimalDto): CriaHembra {
+    return {
+      id: dto.id,
+      numero: dto.numeroArete ?? '',
+      nombre: dto.nombre ?? '',
+      fechaNac: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
+      color: dto.color ?? null,
+      propietario: dto.propietario ?? null,
+      pesoKg: dto.pesoKg ?? null,
+      fincaId: dto.fincaActualId ?? dto.fincaId ?? null,
+      madreNumero: dto.madreNumero ?? null,
+      madreNombre: dto.madreNombre ?? null,
+      detalles: dto.detalles ?? dto.observaciones ?? null,
+    };
+  }
+
   cargarCrias() {
     // Usar la vista adaptada si está disponible para evitar mapeos manuales desde AnimalDto
     this.criaService.getAllAsView().subscribe({
-      next: (res: any[]) => {
-        const rows: CriaHembra[] = (res || []).map((v: any) => ({
-          id: v.id,
-          numero: v.numero ?? '',
-          nombre: v.nombre ?? '',
-          fechaNac: v.fechaNac ? new Date(v.fechaNac) : null,
-          color: v.color ?? null,
-          propietario: v.propietario ?? null,
-          pesoKg: v.pesoKg ?? null,
-          fincaId: v.fincaId ?? null,
-          madreNumero: v.madreNumero ?? null,
-          madreNombre: v.madreNombre ?? null,
-          detalles: v.detalles ?? null,
-        }));
+      next: (res: CriaView[]) => {
+        const rows: CriaHembra[] = (res || []).map((v: CriaView) => this.mapDtoToModel(v));
         this.setData(rows);
       },
       error: () => {
@@ -310,7 +308,7 @@ export class CriasHembrasComponent {
   private cargarMadres() {
     this.paridaService.getAll().subscribe({
       next: (res) => {
-        this.madres = res.map((p) => ({ numero: p.numero, nombre: p.nombre }));
+        this.madres = res;
       },
       error: () => {
         // Mantiene las madres por defecto si falla
@@ -320,7 +318,7 @@ export class CriasHembrasComponent {
 
   private buscarCrias(opts: { q?: string; fincaId?: string }) {
     this.criaService.search(opts).subscribe({
-      next: (res) => this.setData(res.map((r) => this.mapDtoToModel(r as any))),
+      next: (res: AnimalDto[]) => this.setData(res.map((r: AnimalDto) => this.mapAnimalDtoToModel(r))),
       error: () => {
         this.snack.open('No se pudo filtrar en el servidor', 'OK', { duration: 2500 });
         // Si el backend no soporta search, mantenemos el filtrado local
@@ -426,57 +424,57 @@ export class CriasHembrasComponent {
     item.id ?? `${item.numero}-${item.nombre}`;
 
   exportPdf() {
-  // Ajusta aquí qué columnas NO quieres exportar
-  const visibleKeys = this.displayedColumns.filter(
-    k => k !== 'acciones' && k !== 'idx' && k !== 'eliminar'
-  );
+    // Ajusta aquí qué columnas NO quieres exportar
+    const visibleKeys = this.displayedColumns.filter(
+      k => k !== 'acciones' && k !== 'idx' && k !== 'eliminar'
+    );
 
-  // Cabecera (labels)
-  const head = [visibleKeys.map(k => this.colLabel(k).toUpperCase())];
+    // Cabecera (labels)
+    const head = [visibleKeys.map(k => this.colLabel(k).toUpperCase())];
 
-  // Filas: usa los datos FILTRADOS (lo que el usuario está viendo)
-  const rows = this.dataSource.filteredData.map(row =>
-    visibleKeys.map(key => {
-      const v: any = (row as any)[key];
-      // Formatea fechas
-      if (key === 'fechaNac') {
-        return v ? this.date.transform(v, 'yyyy-MM-dd') : '';
-      }
-      return v ?? '';
-    })
-  );
+    // Filas: usa los datos FILTRADOS (lo que el usuario está viendo)
+    const rows = this.dataSource.filteredData.map(row =>
+      visibleKeys.map(key => {
+        const v: any = (row as any)[key];
+        // Formatea fechas
+        if (key === 'fechaNac') {
+          return v ? this.date.transform(v, 'yyyy-MM-dd') : '';
+        }
+        return v ?? '';
+      })
+    );
 
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'A4' });
-  const marginX = 36;
-  const startY = 64;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'A4' });
+    const marginX = 36;
+    const startY = 64;
 
-  // Título y fecha
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text('Crías Hembra', marginX, 32);
+    // Título y fecha
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('Crías Hembra', marginX, 32);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.text(`Generado: ${this.date.transform(new Date(), 'yyyy-MM-dd HH:mm')}`, marginX, 46);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text(`Generado: ${this.date.transform(new Date(), 'yyyy-MM-dd HH:mm')}`, marginX, 46);
 
-  // Tabla
-  autoTable(doc, {
-    head,
-    body: rows,
-    startY,
-    theme: 'grid',
-    styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak' },
-    headStyles: { fillColor: [250, 204, 21], textColor: 20 }, // FACC15 aprox
-    margin: { left: marginX, right: marginX },
-    didDrawPage: () => {
-      const pageSize = doc.internal.pageSize;
-      const pageNum = doc.getNumberOfPages();
-      doc.setFontSize(8);
-      doc.text(`Página ${pageNum}`, pageSize.getWidth() - marginX, pageSize.getHeight() - 12, { align: 'right' });
-    },
-  });
+    // Tabla
+    autoTable(doc, {
+      head,
+      body: rows,
+      startY,
+      theme: 'grid',
+      styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak' },
+      headStyles: { fillColor: [250, 204, 21], textColor: 20 }, // FACC15 aprox
+      margin: { left: marginX, right: marginX },
+      didDrawPage: () => {
+        const pageSize = doc.internal.pageSize;
+        const pageNum = doc.getNumberOfPages();
+        doc.setFontSize(8);
+        doc.text(`Página ${pageNum}`, pageSize.getWidth() - marginX, pageSize.getHeight() - 12, { align: 'right' });
+      },
+    });
 
-  const file = `crias-hembra_${this.date.transform(new Date(), 'yyyy-MM-dd')}.pdf`;
-  doc.save(file);
-}
+    const file = `crias-hembra_${this.date.transform(new Date(), 'yyyy-MM-dd')}.pdf`;
+    doc.save(file);
+  }
 }

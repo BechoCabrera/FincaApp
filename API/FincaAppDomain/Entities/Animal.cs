@@ -9,6 +9,9 @@ public class Animal : BaseEntity
 
     public string NumeroArete { get; private set; } = string.Empty;
 
+    // new Nombre (name) field
+    public string Nombre { get; private set; } = string.Empty;
+
     public TipoAnimal Tipo { get; private set; }
     public PropositoAnimal Proposito { get; private set; }
 
@@ -22,6 +25,15 @@ public class Animal : BaseEntity
     public EstadoHembra? EstadoActualHembra { get; private set; }
     public EstadoMacho? EstadoActualMacho { get; private set; }
 
+    // New fields: color and tipo de leche
+    public string? Color { get; private set; }
+    public string? TipoLeche { get; private set; }
+
+    // New fields: propietario, pesoKg y detalles
+    public string? Propietario { get; private set; }
+    public decimal? PesoKg { get; private set; }
+    public string? Detalles { get; private set; }
+
     private Animal() { }
 
     public Animal(
@@ -30,6 +42,7 @@ public class Animal : BaseEntity
         PropositoAnimal proposito,
         DateTime fechaNacimiento,
         Guid fincaId,
+        string nombre = "",
         Guid? madreId = null,
         Guid? padreId = null)
     {
@@ -40,11 +53,50 @@ public class Animal : BaseEntity
         FincaActualId = fincaId;
         MadreId = madreId;
         PadreId = padreId;
+        Nombre = nombre ?? string.Empty;
 
         if (tipo == TipoAnimal.Hembra)
             EstadoActualHembra = EstadoHembra.Cria;
         else
             EstadoActualMacho = EstadoMacho.Cria;
+    }
+
+    public void SetNombre(string nombre)
+    {
+        Nombre = nombre ?? string.Empty;
+    }
+
+    // New setters for color and tipoLeche
+    public void SetColor(string? color)
+    {
+        Color = string.IsNullOrWhiteSpace(color) ? null : color;
+    }
+
+    public void SetTipoLeche(string? tipoLeche)
+    {
+        TipoLeche = string.IsNullOrWhiteSpace(tipoLeche) ? null : tipoLeche;
+    }
+
+    // New setters for propietario, peso y detalles
+    public void SetPropietario(string? propietario)
+    {
+        Propietario = string.IsNullOrWhiteSpace(propietario) ? null : propietario;
+    }
+
+    public void SetPesoKg(decimal? peso)
+    {
+        if (peso.HasValue && peso.Value <= 0)
+        {
+            PesoKg = null;
+            return;
+        }
+
+        PesoKg = peso;
+    }
+
+    public void SetDetalles(string? detalles)
+    {
+        Detalles = string.IsNullOrWhiteSpace(detalles) ? null : detalles;
     }
 
     public void CambiarEstadoHembra(EstadoHembra nuevoEstado, Guid? usuarioId = null)

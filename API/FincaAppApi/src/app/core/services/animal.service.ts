@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 
 export interface CreateAnimalDto {
   numeroArete: string;
+  nombre?: string | null; // optional name field
   tipo: number;
   proposito: number;
   fechaNacimiento: string;
@@ -16,6 +17,8 @@ export interface CreateAnimalDto {
 export interface AnimalDto {
   id: string;
   numeroArete: string;
+  numero?: string | null;
+  nombre?: string | null; // optional name field
   tipo: number;
   proposito: number;
   fechaNacimiento: string;
@@ -23,6 +26,25 @@ export interface AnimalDto {
   estadoActualHembra?: number | null;
   estadoActualMacho?: number | null;
   activo: boolean;
+
+  // optional/extended properties used by the frontend
+  fechaNac?: string | null;
+  pesoKg?: number | null;
+  color?: string | null;
+  propietario?: string | null;
+  fincaId?: string | null;
+  madreId?: string | null;
+  madreNumero?: string | null;
+  madreNombre?: string | null;
+  detalles?: string | null;
+  observaciones?: string | null;
+  fechaDestete?: string | null;
+  fechaParida?: string | null;
+  fechaPalpacion?: string | null;
+  tipoLeche?: string | null;
+  procedencia?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -58,6 +80,6 @@ export class AnimalService {
   }
 
   deactivate(id: string) {
-    return this.http.delete(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

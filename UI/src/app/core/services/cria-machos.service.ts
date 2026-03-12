@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AnimalService, AnimalDto } from './animal.service';
@@ -95,3 +95,5 @@ export class CriaMachosService {
     return this.getById(id).pipe(map((a: AnimalDto) => this.mapAnimalToView(a)));
   }
 }
+export { AnimalDto };
+

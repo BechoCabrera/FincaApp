@@ -243,7 +243,7 @@ export class CriasMachosComponent {
           pesoKg: v.pesoKg ?? null,
           fincaId: v.fincaId ?? null,
           madreId: v.madreId ?? null,
-          madreNumero: v.madreNumber ?? v.madreNumero ?? null,
+          madreNumero: v.madreNumero ?? v.madreNumero ?? null,
           madreNombre: v.madreNombre ?? null,
           detalles: v.detalles ?? null,
         } as CriaMacho));

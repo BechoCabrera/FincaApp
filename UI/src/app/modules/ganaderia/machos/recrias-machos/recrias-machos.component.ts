@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, FormControl } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { RecriasMachosService, RecriaResumen, RecriaDetalle, RecriaCreate } from 'src/app/core/services/recrias-machos.service';
-import { CriaMachosService, CriaMachoDto } from 'src/app/core/services/cria-machos.service';
+import { RecriasMachosService} from 'src/app/core/services/recrias-machos.service';
+import { CriaMachosService} from 'src/app/core/services/cria-machos.service';
+import { AnimalDto } from 'src/app/core/services/animal.service';
 import { FincaService } from 'src/app/core/services/finca.service';
 import { ParidaService } from 'src/app/core/services/parida.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
@@ -29,6 +30,12 @@ import { TableFiltersComponent } from 'src/app/shared/components/table-filters/t
 // PDF
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+
+type AnimalTableRow = Partial<AnimalDto> & {
+  id: string;
+  fechaNac?: string | Date | null;
+  fechaDestete?: string | Date | null;
+};
 
 @Component({
   selector: 'app-recrias-machos',
@@ -73,7 +80,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   isLoadingFincas = false;
   isLoadingMadres = false;
 
-  crias: CriaMachoDto[] = [];
+  crias: AnimalDto[] = [];
   selectedIdCtrl = new FormControl<string | null>(null, { nonNullable: false });
   get selectedId() {
     return this.selectedIdCtrl.value;
@@ -86,13 +93,13 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     return this.totalCrias;
   }
 
-  fincas: any[] = [];
-  madres: any[] = [];
+  fincas: Array<{ id: string; nombre: string }> = [];
+  madres: Array<{ id: string; numero: string | null; nombre: string | null }> = [];
 
   form!: FormGroup;
   private editingId: string | null = null;
 
-  dataSource: any = new MatTableDataSource<RecriaDetalle>([]);
+  dataSource = new MatTableDataSource<AnimalTableRow>([]);
   displayedColumns: string[] = [
     'idx',
     'nombre',
@@ -155,12 +162,12 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
 
-    this.dataSource.filterPredicate = (row: { nombre: any; fincaId: string; propietario?: any; madreNumero?: any }, filterJson: string) => {
+    this.dataSource.filterPredicate = (row: AnimalTableRow, filterJson: string) => {
       const f = JSON.parse(filterJson) as { q: string; fincaId: string };
       const q = (f.q || '').toLowerCase();
       const finca = f.fincaId || '';
       const matchTexto = (row.nombre || '').toLowerCase().includes(q) || (row.propietario || '').toLowerCase().includes(q) || String(row.madreNumero || '').includes(q);
-      const matchFinca = !finca || row.fincaId === finca;
+      const matchFinca = !finca || (row.fincaId ?? row.fincaActualId) === finca;
       return matchTexto && matchFinca;
     };
 
@@ -211,21 +218,21 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   private cargarRecrias() {
     this.isLoadingRecrias = true;
     this.svc.listarRecrias().subscribe({
-      next: (res: any) => {
+      next: (res: AnimalDto[] | { items?: AnimalDto[]; total?: number }) => {
         console.debug('[RecriasMachos] listarRecrias result:', res);
 
         // Soporta dos formatos: { total, items } o un array directo
         const items = Array.isArray(res) ? res : res?.items || [];
         this.totalCrias = Array.isArray(res) ? items.length : res?.total || items.length || 0;
 
-        const rows: RecriaDetalle[] = items.map((it: any) => ({
+        const rows: AnimalTableRow[] = items.map((it: AnimalDto) => ({
           id: it.id,
           nombre: it.nombre,
-          fechaNac: it.fechaNac ?? null,
+          fechaNac: it.fechaNac ?? it.fechaNacimiento ?? null,
           pesoKg: it.pesoKg ?? null,
           color: it.color ?? null,
           propietario: it.propietario ?? null,
-          fincaId: it.fincaId ?? null,
+          fincaId: it.fincaId ?? it.fincaActualId ?? null,
           madreNumero: it.madreNumero ?? null,
           madreNombre: it.madreNombre ?? null,
           detalles: it.detalles ?? null,
@@ -236,7 +243,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
         this.applyFilter();
         this.isLoadingRecrias = false;
       },
-      error: (err: any) => {
+      error: (err: unknown) => {
         console.error('[RecriasMachos] listarRecrias error:', err);
         this.dataSource.data = [];
         this.totalCrias = 0;
@@ -367,7 +374,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     this.displayedColumns = this.allColumns.map((c) => c.key).filter((k) => this.visible.has(k));
   }
 
-  editar(row: RecriaDetalle) {
+  editar(row: AnimalTableRow) {
     if (!row?.id) return;
     this.loading = true;
     this.svc.obtenerRecriaPorId(row.id).subscribe({
@@ -395,7 +402,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     });
   }
 
-  eliminar(row: RecriaDetalle) {
+  eliminar(row: AnimalTableRow) {
     if (!row?.id) return;
     if (!confirm(`¿Eliminar recría ${row.nombre}?`)) return;
     this.loading = true;
@@ -418,7 +425,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     const headers = exportKeys.map((k) => this.allColumns.find((c) => c.key === k)?.label ?? k.toUpperCase());
     const data = this.dataSource.filteredData?.length ? this.dataSource.filteredData : this.dataSource.data;
 
-    const rows = data.map((r: any, idx: any) =>
+    const rows = data.map((r: AnimalTableRow, idx: number) =>
       exportKeys.map((k) => {
         switch (k) {
           case 'idx':
@@ -484,7 +491,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   }
 
   /** trackBy para mat-table */
-  trackById = (_: number, r: RecriaDetalle) => r?.id ?? _;
+  trackById = (_: number, r: AnimalTableRow) => r?.id ?? _;
 
   /** Submit (modo creación/edición normal) */
   submit() {
@@ -496,7 +503,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     const toYMD = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : d || null);
     const m = this.madres.find((x) => x.id === v.madreId);
 
-    const payload: RecriaCreate = {
+    const payload: Partial<AnimalDto> & { fechaNac?: string | null; fechaDestete?: string | null } = {
       nombre: v.nombre,
       fechaNac: toYMD(v.fechaNac),
       pesoKg: v.pesoKg ?? null,

@@ -55,23 +55,21 @@ export class RecriasMachosService {
 
   // view adapters
   private mapAnimalToView(a: AnimalDto): CriaView {
-    const asAny = a as any;
     return {
       id: a.id,
-      numero: asAny.numeroArete ?? null,
-      nombre: asAny.nombre ?? null,
-      fechaNac: asAny.fechaNacimiento ?? null,
-      color: asAny.color ?? null,
-      propietario: asAny.propietario ?? null,
-      pesoKg: asAny.pesoKg ?? null,
+      numero: a.numeroArete ?? null,
+      nombre: a.nombre ?? null,
+      fechaNac: a.fechaNacimiento ?? null,
+      color: a.color ?? null,
+      propietario: a.propietario ?? null,
+      pesoKg: a.pesoKg ?? null,
       fincaId: a.fincaActualId ?? null,
-      madreId: asAny.madreId ?? null,
-      madreNumero: asAny.madreNumero ?? null,
-      madreName: asAny.madreNombre ?? null,
-      madreNombre: asAny.madreNombre ?? null,
-      detalles: asAny.detalles ?? asAny.observaciones ?? null,
-      fechaDestete: asAny.fechaDestete ?? null,
-    } as any;
+      madreId: a.madreId ?? null,
+      madreNumero: a.madreNumero ?? null,
+      madreNombre: a.madreNombre ?? null,
+      detalles: a.detalles ?? a.observaciones ?? null,
+      fechaDestete: a.fechaDestete ?? null,
+    };
   }
 
   getAllAsView(opts?: { q?: string; fincaId?: string; page?: number; pageSize?: number }): Observable<CriaView[]> {

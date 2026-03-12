@@ -98,7 +98,7 @@ export class TorosComponent {
     { key: 'recrias', label: 'Recrias Macho' },
     { key: 'crias', label: 'Crias Macho' },
   ];
-  sourceItems: Array<{ id: string; nombre: string }> = [];
+  sourceItems: Array<any> = [];
   isLoadingSourceList = false;
   isLoadingSourceDetail = false;
 

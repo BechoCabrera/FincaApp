@@ -35,6 +35,14 @@ public class CreateOrUpdateAnimalCommandHandler : IRequestHandler<CreateOrUpdate
         {
             // update finca and other mutable properties if any
             existing.MoverAFinca(dto.FincaId);
+            // update nombre if provided
+            if (!string.IsNullOrWhiteSpace(dto.Nombre))
+            {
+                // using reflection-like setter via internal method if needed; here class has private setter, so
+                // add a helper method to set Nombre (we will add it to domain entity)
+                existing.SetNombre(dto.Nombre);
+            }
+
             // optionally update proposito
             existing.CambiarProposito(dto.Proposito);
             await _repository.UpdateAsync(existing);
@@ -48,6 +56,7 @@ public class CreateOrUpdateAnimalCommandHandler : IRequestHandler<CreateOrUpdate
             dto.Proposito,
             dto.FechaNacimiento,
             dto.FincaId,
+            dto.Nombre,
             dto.MadreId,
             dto.PadreId
         );

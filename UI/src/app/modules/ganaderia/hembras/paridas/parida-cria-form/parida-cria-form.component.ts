@@ -7,12 +7,22 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { CriaHembrasService, CreateCriaHembraDto } from 'src/app/core/services/cria-hembras.service';
-import { CriaMachosService, CreateCriaMachoDto } from 'src/app/core/services/cria-machos.service';
 import { FincaDto } from 'src/app/core/services/finca.service';
-import { NotificationService } from 'src/app/core/services/notification.service';
 
 type Genero = 'Hembra' | 'Macho';
+
+export interface CriaDraftDto {
+  numero: string | null;
+  nombre: string | null;
+  fechaNac: string | null;
+  color: string | null;
+  propietario: string | null;
+  pesoKg: number | null;
+  fincaId: string | null;
+  madreNumero: string | null;
+  madreNombre: string | null;
+  detalles: string | null;
+}
 
 @Component({
   selector: 'app-parida-cria-form',
@@ -38,12 +48,9 @@ export class ParidaCriaFormComponent implements OnChanges {
   @Input() fincaId: string | null = null;
   @Input() fincas: FincaDto[] = [];
 
-  @Output() saved = new EventEmitter<void>();
+  @Output() saved = new EventEmitter<CriaDraftDto>();
 
   private fb = inject(FormBuilder);
-  private criaHembrasService = inject(CriaHembrasService);
-  private criaMachosService = inject(CriaMachosService);
-  private notify = inject(NotificationService);
 
   isSaving = false;
 
@@ -94,57 +101,22 @@ export class ParidaCriaFormComponent implements OnChanges {
     const values = this.form.getRawValue();
     this.isSaving = true;
 
-    if (this.generoCria === 'Hembra') {
-      const payload: CreateCriaHembraDto = {
-        numero: String(values.numero ?? ''),
-        nombre: String(values.nombre ?? ''),
-        fechaNac: this.toYmd(values.fechaNac),
-        color: values.color ?? null,
-        propietario: values.propietario ?? null,
-        pesoKg: values.pesoKg ?? null,
-        fincaId: values.fincaId ?? null,
-        madreNumero: this.madreNumero ?? null,
-        madreNombre: this.madreNombre ?? null,
-        detalles: values.detalles ?? null,
-      };
-
-      this.criaHembrasService.create(payload).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.form.reset({ fincaId: this.fincaId ?? null, numero: '', nombre: '', pesoKg: null, fechaNac: null, color: '', propietario: '', detalles: '' });
-          this.saved.emit();
-        },
-        error: (err) => {
-          this.isSaving = false;
-          this.notify.error(err?.error?.message ?? 'No se pudo guardar la cría hembra');
-        },
-      });
-      return;
-    }
-
-    const payload: CreateCriaMachoDto = {
-      nombre: String(values.nombre ?? ''),
+    // Emit cria data to parent instead of saving separately
+    const criaData: CriaDraftDto = {
+      numero: values.numero ?? null,
+      nombre: values.nombre ?? null,
       fechaNac: this.toYmd(values.fechaNac),
       color: values.color ?? null,
       propietario: values.propietario ?? null,
       pesoKg: values.pesoKg ?? null,
       fincaId: values.fincaId ?? null,
-      madreId: this.madreId ?? null,
       madreNumero: this.madreNumero ?? null,
       madreNombre: this.madreNombre ?? null,
       detalles: values.detalles ?? null,
     };
 
-    this.criaMachosService.create(payload).subscribe({
-      next: () => {
-        this.isSaving = false;
-        this.form.reset({ fincaId: this.fincaId ?? null, numero: '', nombre: '', pesoKg: null, fechaNac: null, color: '', propietario: '', detalles: '' });
-        this.saved.emit();
-      },
-      error: (err) => {
-        this.isSaving = false;
-        this.notify.error(err?.error?.message ?? 'No se pudo guardar la cría macho');
-      },
-    });
+    this.isSaving = false;
+    this.form.reset({ fincaId: this.fincaId ?? null, numero: '', nombre: '', pesoKg: null, fechaNac: null, color: '', propietario: '', detalles: '' });
+    this.saved.emit(criaData);
   }
 }

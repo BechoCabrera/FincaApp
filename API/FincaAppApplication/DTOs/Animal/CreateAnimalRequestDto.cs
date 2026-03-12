@@ -5,6 +5,7 @@ namespace FincaAppApplication.DTOs.Animal;
 public class CreateAnimalRequestDto
 {
     public string NumeroArete { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
     public TipoAnimal Tipo { get; set; }
     public PropositoAnimal Proposito { get; set; }
     public DateTime FechaNacimiento { get; set; }

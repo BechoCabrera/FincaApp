@@ -26,7 +26,7 @@ import autoTable from 'jspdf-autotable';
 import { EscoteraService } from 'src/app/core/services/escotera.service';
 import { ProximaService, CreateProximaDto, UpdateProximaDto, ProximaDto } from 'src/app/core/services/proxima.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { NovillasVientreService, NovillaVientreDto } from 'src/app/core/services/novillas-vientre.service';
+import { NovillasVientreService} from 'src/app/core/services/novillas-vientre.service';
 import { FincaService, FincaDto } from 'src/app/core/services/finca.service';
 import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
 

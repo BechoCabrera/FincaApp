@@ -8,6 +8,7 @@ public class AnimalProfile : Profile
 {
     public AnimalProfile()
     {
-        CreateMap<Animal, AnimalDto>();
+        CreateMap<Animal, AnimalDto>()
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre));
     }
 }

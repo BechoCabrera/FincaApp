@@ -36,8 +36,8 @@ export interface EscoteraView {
 
 export interface CriaView {
   id: string;
-  numero?: string | null;
-  nombre?: string | null;
+  numero: string | null;
+  nombre: string | null;
   fechaNac?: string | null;
   pesoKg?: number | null;
   color?: string | null;
@@ -48,6 +48,7 @@ export interface CriaView {
   madreNombre?: string | null;
   detalles?: string | null;
   fechaDestete?: string | null;
+  procedencia?: string | null;
 }
 
 export type AnimalView = ParidaView | EscoteraView | CriaView;

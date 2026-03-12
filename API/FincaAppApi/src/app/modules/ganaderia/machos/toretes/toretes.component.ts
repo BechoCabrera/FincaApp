@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, FormControl } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { RecriasMachosService, RecriaResumen, RecriaDetalle } from 'src/app/core/services/recrias-machos.service';
+import { RecriasMachosService } from 'src/app/core/services/recrias-machos.service';
+import { AnimalDto } from 'src/app/core/services/animal.service';
 
 // Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -28,6 +29,12 @@ import { ToroService } from 'src/app/core/services/toro.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { FincaService } from 'src/app/core/services/finca.service';
 import { ParidaService } from 'src/app/core/services/parida.service';
+
+type AnimalTableRow = Partial<AnimalDto> & {
+  id: string;
+  fechaNac?: string | Date | null;
+  fechaDestete?: string | Date | null;
+};
 
 @Component({
   selector: 'app-toretes',
@@ -68,20 +75,20 @@ export class ToretesComponent implements OnInit, AfterViewInit {
   loading = false;
   consultMode = false;
 
-  toretes: RecriaResumen[] = [];
+  toretes: AnimalDto[] = [];
   selectedId: string | null = null;
   totalToretes = 0;
   get totalCrias() {
     return this.totalToretes;
   }
 
-  fincas: any[] = [];
-  madres: any[] = [];
+  fincas: Array<{ id: string; nombre: string }> = [];
+  madres: Array<{ id: string; numero: string | null; nombre: string | null }> = [];
 
   form!: FormGroup;
   private editingId: string | null = null;
 
-  dataSource: any = new MatTableDataSource<RecriaDetalle>([]);
+  dataSource = new MatTableDataSource<AnimalTableRow>([]);
   displayedColumns: string[] = [
     'idx',
     'nombre',
@@ -173,12 +180,12 @@ export class ToretesComponent implements OnInit, AfterViewInit {
     this.dataSource.sort = this.sort;
 
     // Filtro compuesto (texto + finca) — buscar solo por nombre ahora
-    this.dataSource.filterPredicate = (row: { nombre: any; fincaId: string }, filterJson: string) => {
+    this.dataSource.filterPredicate = (row: AnimalTableRow, filterJson: string) => {
       const f = JSON.parse(filterJson) as { q: string; fincaId: string };
       const q = (f.q || '').toLowerCase();
       const finca = f.fincaId || '';
       const matchTexto = (row.nombre || '').toLowerCase().includes(q);
-      const matchFinca = !finca || row.fincaId === finca;
+      const matchFinca = !finca || (row.fincaId ?? row.fincaActualId) === finca;
       return matchTexto && matchFinca;
     };
 
@@ -210,23 +217,23 @@ export class ToretesComponent implements OnInit, AfterViewInit {
   async cargarToretes() {
     this.loading = true;
     try {
-      const res: any = await firstValueFrom(this.svc.listarRecrias());
+      const res = await firstValueFrom(this.svc.listarRecrias());
 
       // soporto formato { total, items } o array directo
-      const items = Array.isArray(res) ? res : res?.items || [];
+      const items = Array.isArray(res) ? res : [];
       this.toretes = items;
-      this.totalToretes = Array.isArray(res) ? items.length : res?.total || items.length || 0;
+      this.totalToretes = items.length;
 
       // Mapeo básico para la tabla si el listado no trae todos los campos
-      const rows: RecriaDetalle[] = items.map((it: any) => ({
+      const rows: AnimalTableRow[] = items.map((it: AnimalDto) => ({
         id: it.id,
-        numero: it.numero,
+        numeroArete: it.numeroArete,
         nombre: it.nombre,
-        fechaNac: it.fechaNac ?? null,
+        fechaNac: it.fechaNac ?? it.fechaNacimiento ?? null,
         pesoKg: it.pesoKg ?? null,
         color: it.color ?? null,
         propietario: it.propietario ?? null,
-        fincaId: it.fincaId ?? null,
+        fincaId: it.fincaId ?? it.fincaActualId ?? null,
         madreNumero: it.madreNumero ?? null,
         madreNombre: it.madreNombre ?? null,
         detalles: it.detalles ?? null,
@@ -248,7 +255,7 @@ export class ToretesComponent implements OnInit, AfterViewInit {
     if (!this.selectedId) return;
     this.loading = true;
     try {
-      const det: any = await firstValueFrom(this.svc.obtenerRecriaPorId(this.selectedId));
+      const det = await firstValueFrom(this.svc.obtenerRecriaPorId(this.selectedId));
       if (!det) return;
 
       this.form.patchValue({
@@ -338,7 +345,7 @@ export class ToretesComponent implements OnInit, AfterViewInit {
     this.displayedColumns = this.allColumns.map((c) => c.key).filter((k) => this.visible.has(k));
   }
 
-  editar(row: RecriaDetalle) {
+  editar(row: any) {
     if (!row?.id) return;
     this.loading = true;
     this.svc.obtenerRecriaPorId(row.id).subscribe({
@@ -366,7 +373,7 @@ export class ToretesComponent implements OnInit, AfterViewInit {
     });
   }
 
-  eliminar(row: RecriaDetalle) {
+  eliminar(row: any) {
     if (!row?.id) return;
     if (!confirm(`¿Eliminar torete ${row.nombre}?`)) return;
     this.loading = true;
@@ -389,7 +396,7 @@ export class ToretesComponent implements OnInit, AfterViewInit {
     const headers = exportKeys.map((k) => this.allColumns.find((c) => c.key === k)?.label ?? k.toUpperCase());
     const data = this.dataSource.filteredData?.length ? this.dataSource.filteredData : this.dataSource.data;
 
-    const rows = data.map((r: any, idx: any) =>
+    const rows = data.map((r: AnimalTableRow, idx: number) =>
       exportKeys.map((k) => {
         switch (k) {
           case 'idx':
@@ -455,7 +462,7 @@ export class ToretesComponent implements OnInit, AfterViewInit {
   }
 
   /** trackBy para mat-table */
-  trackById = (_: number, r: RecriaDetalle) => r?.id ?? _;
+  trackById = (_: number, r: AnimalTableRow) => r?.id ?? _;
 
   /** Submit (modo creación/edición normal) */
   submit() {
@@ -482,7 +489,7 @@ export class ToretesComponent implements OnInit, AfterViewInit {
     const isEdit = !!this.editingId;
     const req$ = isEdit
       ? this.svc.actualizarRecria(this.editingId as string, payload)
-      : this.svc.crearRecria(payload as any);
+      : this.svc.crearRecria(payload);
 
     req$.subscribe({
       next: () => {

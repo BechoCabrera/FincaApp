@@ -26,7 +26,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { FincaDto, FincaService } from 'src/app/core/services/finca.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
-import { ParidaCriaFormComponent } from 'src/app/modules/ganaderia/hembras/paridas/parida-cria-form/parida-cria-form.component';
+import { CriaDraftDto, ParidaCriaFormComponent } from 'src/app/modules/ganaderia/hembras/paridas/parida-cria-form/parida-cria-form.component';
 type Genero = 'Hembra' | 'Macho';
 type TipoLeche = 'Buena' | 'Regular' | 'Mala';
 interface ParidaForm {
@@ -114,6 +114,22 @@ export class ParidasComponent {
   isSaving = signal(false);
   canSubmit = computed(() => this.form.valid && !this.isSaving());
 
+  // show cria form when user selects genero or explicitly
+  showCriaForm = false;
+
+  ngOnInit() {
+    this.loadParidas();
+    this.cargarFincas();
+
+    // auto-open cria form when generoCria changes
+    this.form.get('generoCria')?.valueChanges.subscribe(() => {
+      // only open if basic mother info provided (numero and finca)
+      const numero = this.form.get('numero')?.value;
+      const fincaId = this.form.get('fincaId')?.value;
+      if (numero && fincaId) this.showCriaForm = true;
+    });
+  }
+
   has(ctrl: string, err: string) {
     const c = this.form.get(ctrl);
     return !!(c && c.touched && c.hasError(err));
@@ -177,6 +193,18 @@ export class ParidasComponent {
     madreNombre: string;
     generoCria: Genero;
     fincaId: string | null;
+  } | null = null;
+  lastSavedCria: {
+    numero: string | null;
+    nombre: string | null;
+    fechaNac: string | null;
+    color: string | null;
+    propietario: string | null;
+    pesoKg: number | null;
+    fincaId: string | null;
+    madreNumero: string | null;
+    madreNombre: string | null;
+    detalles: string | null;
   } | null = null;
 
   dataSource = new MatTableDataSource<ParidaView>([]);
@@ -274,11 +302,6 @@ export class ParidasComponent {
     this.generoCtrl.valueChanges.pipe(startWith(this.generoCtrl.value)).subscribe(() => pushFilter());
   }
 
-  ngOnInit() {
-    this.loadParidas();
-    this.cargarFincas();
-  }
-
   get totalVacas(): number {
     return this.dataSource.data.length;
   }
@@ -311,7 +334,18 @@ export class ParidasComponent {
 
       propietario: raw.propietario ?? null,
       observaciones: raw.observaciones ?? null,
+      // include cria data if available (from nested component)
+      numeroCria: this.lastSavedCria?.numero ?? null,
+      criaNombre: this.lastSavedCria?.nombre ?? null,
+      criaColor: this.lastSavedCria?.color ?? null,
+      criaPropietario: this.lastSavedCria?.propietario ?? null,
+      criaPesoKg: this.lastSavedCria?.pesoKg ?? null,
+      criaDetalles: this.lastSavedCria?.detalles ?? null,
     };
+
+    // reset showCriaForm when saving
+    this.showCriaForm = false;
+
     if (this.editingId) {
       this.paridaService.update(this.editingId, payload).subscribe({
         next: () => {
@@ -333,12 +367,14 @@ export class ParidasComponent {
       this.paridaService.create(payload).subscribe({
         next: (res) => {
           this.lastSavedParida = {
-            madreId: res?.id ?? null,
+            madreId: res?.madreId ?? null,
             madreNumero: payload.numero,
             madreNombre: payload.nombre,
             generoCria: payload.generoCria,
             fincaId: payload.fincaId,
           };
+          // clear temporary cria after successful save
+          this.lastSavedCria = null;
           this.form.reset();
           this.loadParidas();
           this.notify.success('Registro guardado');
@@ -348,8 +384,11 @@ export class ParidasComponent {
     }
   }
 
-  onCriaGuardada() {
-    this.notify.success('Cría guardada correctamente');
+  onCriaGuardada(cria: CriaDraftDto) {
+    // child emits saved with cria data
+    this.lastSavedCria = cria;
+    this.showCriaForm = false;
+    this.notify.success('Cría añadida, ahora guarda la parida para persistir todo');
   }
 
   loadParidas() {

@@ -7,6 +7,9 @@ public class AnimalDto
     public Guid Id { get; set; }
     public string NumeroArete { get; set; } = string.Empty;
 
+    // Nombre
+    public string Nombre { get; set; } = string.Empty;
+
     public TipoAnimal Tipo { get; set; }
     public PropositoAnimal Proposito { get; set; }
 

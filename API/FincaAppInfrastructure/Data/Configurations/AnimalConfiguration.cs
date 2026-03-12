@@ -16,6 +16,9 @@ public class AnimalConfiguration : IEntityTypeConfiguration<Animal>
             .HasMaxLength(50)
             .IsRequired();
 
+        builder.Property(a => a.Nombre)
+            .HasMaxLength(200);
+
         builder.Property(a => a.Tipo)
             .IsRequired();
 

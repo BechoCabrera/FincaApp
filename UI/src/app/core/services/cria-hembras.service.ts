@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Observable } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AnimalService, AnimalDto } from './animal.service';
 import { CriaView } from '../models/animal-view.models';
+import { Observable } from 'rxjs';
 
 export interface CreateCriaHembraDto {
   numero: string;
