@@ -4,6 +4,7 @@ import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AnimalService, AnimalDto } from './animal.service';
 import { EscoteraView } from '../models/animal-view.models';
+import { EstadoHembra, PropositoAnimal, TipoAnimal } from '../models/animal.enums';
 
 export interface CreateEscoteraDto {
   numero: number;
@@ -32,8 +33,9 @@ export class EscoteraService {
   create(dto: CreateEscoteraDto): Observable<AnimalDto> {
     const payload: any = {
       numeroArete: String(dto.numero),
-      tipo: 1, // Hembra
-      proposito: 1,
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estadoActualHembra: EstadoHembra.Escotera,
       fechaNacimiento: dto.fechaNacida ?? null,
       fincaId: dto.fincaId ?? null,
     };
@@ -43,7 +45,7 @@ export class EscoteraService {
 
   /** LIST */
   getAll(): Observable<AnimalDto[]> {
-    const params: any = { tipo: 1 };
+    const params: any = { tipo: TipoAnimal.Hembra, proposito: PropositoAnimal.Carne, estado: EstadoHembra.Escotera };
     return this.animalService.list(params);
   }
 
@@ -57,8 +59,9 @@ export class EscoteraService {
     const payload: any = {
       id: id,
       numeroArete: String(dto.numero),
-      tipo: 1,
-      proposito: 1,
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estadoActualHembra: EstadoHembra.Escotera,
       fechaNacimiento: dto.fechaNacida ?? null,
       fincaId: dto.fincaId ?? null,
     };

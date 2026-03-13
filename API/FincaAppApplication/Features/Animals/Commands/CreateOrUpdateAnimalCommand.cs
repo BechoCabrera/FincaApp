@@ -9,7 +9,7 @@ using FincaAppDomain.Interfaces;
 
 namespace FincaAppApplication.Features.Animals.Commands;
 
-public class CreateOrUpdateAnimalCommand : IRequest<AnimalDto>
+public class    CreateOrUpdateAnimalCommand : IRequest<AnimalDto>
 {
     public CreateAnimalRequestDto Request { get; set; } = default!;
 }

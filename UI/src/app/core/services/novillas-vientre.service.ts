@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AnimalService, AnimalDto } from './animal.service';
 import { CriaView } from '../models/animal-view.models';
+import { EstadoHembra, PropositoAnimal, TipoAnimal } from '../models/animal.enums';
 
 export interface CreateNovillaVientreDto {
   numero: string;
@@ -30,8 +31,9 @@ export class NovillasVientreService {
   create(dto: CreateNovillaVientreDto): Observable<AnimalDto> {
     const payload: any = {
       numeroArete: dto.numero,
-      tipo: 1,
-      proposito: 1,
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estadoActualHembra: EstadoHembra.Novilla,
       fechaNacimiento: dto.fechaNac ?? null,
       fincaId: dto.fincaId ?? null,
     };
@@ -40,7 +42,7 @@ export class NovillasVientreService {
   }
 
   getAll(): Observable<AnimalDto[]> {
-    return this.animalService.list({ tipo: 1 });
+    return this.animalService.list({ tipo: TipoAnimal.Hembra, proposito: PropositoAnimal.Carne, estado: EstadoHembra.Novilla });
   }
 
   getById(id: string): Observable<AnimalDto> {
@@ -51,8 +53,9 @@ export class NovillasVientreService {
     const payload: any = {
       id,
       numeroArete: dto.numero,
-      tipo: 1,
-      proposito: 1,
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estadoActualHembra: EstadoHembra.Novilla,
       fechaNacimiento: dto.fechaNac ?? null,
       fincaId: dto.fincaId ?? null,
     };
@@ -65,7 +68,13 @@ export class NovillasVientreService {
   }
 
   search(opts?: { q?: string; fincaId?: string }): Observable<AnimalDto[]> {
-    return this.animalService.list({ tipo: 1, q: opts?.q, fincaId: opts?.fincaId });
+    return this.animalService.list({
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estado: EstadoHembra.Novilla,
+      q: opts?.q,
+      fincaId: opts?.fincaId,
+    });
   }
 
   private mapAnimalToView(a: AnimalDto): CriaView {

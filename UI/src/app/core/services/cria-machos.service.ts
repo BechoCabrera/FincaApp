@@ -4,6 +4,7 @@ import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AnimalService, AnimalDto } from './animal.service';
 import { CriaView } from '../models/animal-view.models';
+import { EstadoMacho, PropositoAnimal, TipoAnimal } from '../models/animal.enums';
 
 export interface CreateCriaMachoDto {
   nombre: string;
@@ -27,8 +28,9 @@ export class CriaMachosService {
   create(dto: CreateCriaMachoDto): Observable<AnimalDto> {
     const payload: any = {
       numeroArete: dto.madreNumero ?? dto.nombre,
-      tipo: 2, // Macho
-      proposito: 1,
+      tipo: TipoAnimal.Macho,
+      proposito: PropositoAnimal.Carne,
+      estadoActualMacho: EstadoMacho.Cria,
       fechaNacimiento: dto.fechaNac ?? null,
       fincaId: dto.fincaId ?? null,
       madreId: dto.madreId ?? null,
@@ -38,7 +40,7 @@ export class CriaMachosService {
   }
 
   getAll(): Observable<AnimalDto[]> {
-    return this.animalService.list({ tipo: 2 });
+    return this.animalService.list({ tipo: TipoAnimal.Macho, proposito: PropositoAnimal.Carne, estado: EstadoMacho.Cria });
   }
 
   getById(id: string): Observable<AnimalDto> {
@@ -49,8 +51,9 @@ export class CriaMachosService {
     const payload: any = {
       id,
       numeroArete: dto.madreNumero ?? dto.nombre,
-      tipo: 2,
-      proposito: 1,
+      tipo: TipoAnimal.Macho,
+      proposito: PropositoAnimal.Carne,
+      estadoActualMacho: EstadoMacho.Cria,
       fechaNacimiento: dto.fechaNac ?? null,
       fincaId: dto.fincaId ?? null,
       madreId: dto.madreId ?? null,
@@ -64,7 +67,13 @@ export class CriaMachosService {
   }
 
   search(opts?: { q?: string; fincaId?: string }): Observable<AnimalDto[]> {
-    return this.animalService.list({ tipo: 2, q: opts?.q, fincaId: opts?.fincaId });
+    return this.animalService.list({
+      tipo: TipoAnimal.Macho,
+      proposito: PropositoAnimal.Carne,
+      estado: EstadoMacho.Cria,
+      q: opts?.q,
+      fincaId: opts?.fincaId,
+    });
   }
 
   // ---- view adapters ----

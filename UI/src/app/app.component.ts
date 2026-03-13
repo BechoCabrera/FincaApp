@@ -6,6 +6,7 @@ import { ResponsiveHelperComponent } from './shared/components/responsive-helper
 import { LoadingOverlayComponent } from './shared/components/loading-overlay/loading-overlay.component';
 @Component({
   selector: 'app-root',
+  standalone: true,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
   imports: [RouterOutlet, ResponsiveHelperComponent, NgxSonnerToaster, LoadingOverlayComponent],

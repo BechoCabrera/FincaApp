@@ -18,6 +18,8 @@ public class CreatePartoRequestDto
     public string? Procedencia { get; set; }
     public string? Propietario { get; set; }
     public string? Observaciones { get; set; }
+    public int? EstadoHembra { get; set; }
+    public int? EstadoMacho{ get; set; }
 
     // genero de la cria
     public string GeneroCria { get; set; } = "Hembra"; // Hembra | Macho

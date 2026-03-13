@@ -27,6 +27,7 @@ import { FincaDto, FincaService } from 'src/app/core/services/finca.service';
 import { NotificationService } from 'src/app/core/services/notification.service';
 import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
 import { CriaDraftDto, ParidaCriaFormComponent } from 'src/app/modules/ganaderia/hembras/paridas/parida-cria-form/parida-cria-form.component';
+import { EstadoHembra } from 'src/app/core/models/animal.enums';
 type Genero = 'Hembra' | 'Macho';
 type TipoLeche = 'Buena' | 'Regular' | 'Mala';
 interface ParidaForm {
@@ -331,7 +332,7 @@ export class ParidasComponent {
       color: raw.color ?? null,
       tipoLeche: raw.tipoLeche ?? null,
       procedencia: raw.procedencia ?? null,
-
+      estadoHembra: EstadoHembra.Parida,
       propietario: raw.propietario ?? null,
       observaciones: raw.observaciones ?? null,
       // include cria data if available (from nested component)

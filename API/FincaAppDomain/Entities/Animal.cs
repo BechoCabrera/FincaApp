@@ -44,7 +44,9 @@ public class Animal : BaseEntity
         Guid fincaId,
         string nombre = "",
         Guid? madreId = null,
-        Guid? padreId = null)
+        Guid? padreId = null,
+         EstadoHembra? estadoHembra = null,
+    EstadoMacho? estadoMacho = null)
     {
         NumeroArete = numeroArete;
         Tipo = tipo;
@@ -56,9 +58,9 @@ public class Animal : BaseEntity
         Nombre = nombre ?? string.Empty;
 
         if (tipo == TipoAnimal.Hembra)
-            EstadoActualHembra = EstadoHembra.Cria;
+            EstadoActualHembra = estadoHembra ?? EstadoHembra.Cria;
         else
-            EstadoActualMacho = EstadoMacho.Cria;
+            EstadoActualMacho = estadoMacho ?? EstadoMacho.Cria;
     }
 
     public void SetNombre(string nombre)

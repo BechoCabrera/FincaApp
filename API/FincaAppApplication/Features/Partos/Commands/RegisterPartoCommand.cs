@@ -54,7 +54,11 @@ public class RegisterPartoCommandHandler : IRequestHandler<RegisterPartoCommand,
                     PropositoAnimal.Leche,
                     fechaNacMadre,
                     dto.FincaId,
-                    dto.Nombre ?? string.Empty
+                    dto.Nombre ?? string.Empty,
+                    null,
+                    null,
+                    EstadoHembra.Parida,
+                    null
                 );
 
                 // propagate color/tipoLeche to mother
