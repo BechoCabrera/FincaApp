@@ -46,4 +46,7 @@ public class AnimalDto
 
     public string? CreatedAt { get; set; }
     public string? UpdatedAt { get; set; }
+
+    // Id of the latest parto associated with this animal (if any)
+    public Guid? LastPartoId { get; set; }
 }

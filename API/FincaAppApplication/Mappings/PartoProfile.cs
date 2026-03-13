@@ -10,6 +10,6 @@ public class PartoProfile : Profile
     {
         CreateMap<Parto, PartoDto>();
 
-        // If needed, map ParidaView from Parto + Madre (handled elsewhere if required)
+        // map snapshot fields explicitly if naming differs (they match now)
     }
 }

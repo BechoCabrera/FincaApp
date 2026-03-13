@@ -14,6 +14,7 @@ export interface ParidaView {
   createdAt?: string | null;
   updatedAt?: string | null;
   propietario?: string | null;
+  lastPartoId?: string | null; // Add lastPartoId to ParidaView so UI can edit Parto directly
 }
 
 export interface EscoteraView {
@@ -27,7 +28,7 @@ export interface EscoteraView {
   fechaNacida?: string | null;
   tipoLeche?: string | null;
   fPalpacion?: string | null;
-  dPrenez?: number | null;
+  dPrenez?: number | null; // días de preñez
   detalles?: string | null;
   fechaDestete?: string | null;
   vacaId?: string | null;

@@ -5,6 +5,7 @@ using FincaAppApplication.Features.Animals.Queries;
 using FincaAppApplication.DTOs.Animal;
 using FincaAppApplication.Features.Animals.Commands;
 using FincaAppApplication.Features.Salidas.Commands;
+using FincaAppApplication.DTOs; // TimelineEventDto
 
 namespace FincaAppApi.Controllers;
 
@@ -35,6 +36,15 @@ public class AnimalsController : ControllerBase
     {
         var animal = await _mediator.Send(new GetAnimalByIdQuery { Id = id });
         return Ok(animal);
+    }
+
+    [HttpGet("{id:guid}/timeline")]
+    [ProducesResponseType(typeof(PagedResultDto<TimelineEventDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetTimeline(Guid id, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+    {
+        var query = new GetAnimalTimelineQuery { AnimalId = id, Page = page, PageSize = pageSize };
+        var result = await _mediator.Send(query);
+        return Ok(result);
     }
 
     // Replace create with upsert behavior to avoid duplicates from UI flows

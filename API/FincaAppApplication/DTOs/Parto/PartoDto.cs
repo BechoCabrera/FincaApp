@@ -9,4 +9,12 @@ public class PartoDto
     public Guid CriaId { get; set; }
     public DateTime FechaParto { get; set; }
     public string? Observaciones { get; set; }
+
+    // Snapshot of cria at time of parto
+    public string? CriaNumero { get; set; }
+    public string? CriaNombre { get; set; }
+    public string? CriaColor { get; set; }
+    public string? CriaPropietario { get; set; }
+    public decimal? CriaPesoKg { get; set; }
+    public string? CriaDetalles { get; set; }
 }

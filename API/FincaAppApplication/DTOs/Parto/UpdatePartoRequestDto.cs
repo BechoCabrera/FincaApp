@@ -1,13 +1,10 @@
-﻿using FincaAppDomain.Common;
+using System;
 
-namespace FincaAppDomain.Entities;
+namespace FincaAppApplication.DTOs.Parto;
 
-public class Parto : BaseEntity
+public class UpdatePartoRequestDto
 {
-    public Guid AnimalMadreId { get; set; }
-    public Guid CriaId { get; set; }
-
-    public DateTime FechaParto { get; set; }
+    public DateTime FechaParida { get; set; }
     public DateTime? FechaPalpacion { get; set; }
     public DateTime? FechaNacimiento { get; set; }
 
@@ -20,7 +17,7 @@ public class Parto : BaseEntity
 
     public string? Observaciones { get; set; }
 
-    // Snapshot of cria at time of parto
+    // snapshot fields (optional)
     public string? CriaNumero { get; set; }
     public string? CriaNombre { get; set; }
     public string? CriaColor { get; set; }

@@ -9,26 +9,26 @@ using System.Threading.Tasks;
 
 namespace FincaAppInfrastructure.Repositories
 {
-    public class AnimalMovimientoRepository : IAnimalMovimientoRepository
+    public class AnimalPalpacionRepository : IAnimalPalpacionRepository
     {
         private readonly FincaDbContext _context;
 
-        public AnimalMovimientoRepository(FincaDbContext context)
+        public AnimalPalpacionRepository(FincaDbContext context)
         {
             _context = context;
         }
 
-        public async Task AddAsync(AnimalMovimiento movimiento)
+        public async Task AddAsync(AnimalPalpacion palpacion)
         {
-            await _context.AnimalMovimientos.AddAsync(movimiento);
+            await _context.Set<AnimalPalpacion>().AddAsync(palpacion);
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<AnimalMovimiento>> GetByAnimalAsync(Guid animalId)
+        public async Task<List<AnimalPalpacion>> GetByAnimalAsync(Guid animalId)
         {
-            return await _context.AnimalMovimientos
-                .Where(m => m.AnimalId == animalId)
-                .OrderByDescending(m => m.FechaMovimiento)
+            return await _context.AnimalPalpaciones
+                .Where(p => p.AnimalId == animalId)
+                .OrderByDescending(p => p.FechaPalpacion)
                 .ToListAsync();
         }
     }

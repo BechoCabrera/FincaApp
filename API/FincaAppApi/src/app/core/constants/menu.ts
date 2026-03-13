@@ -106,6 +106,11 @@ export class Menu {
             },
             { label: 'Vendida', route: '/ganaderia/vendida', icon: 'assets/icons/heroicons/outline/tag.svg' },
             { label: 'Fallecida', route: '/ganaderia/fallecida', icon: 'assets/icons/heroicons/outline/x-circle.svg' },
+            {
+              label: 'Histórico',
+              route: '/ganaderia/historico',
+              icon: 'assets/icons/heroicons/outline/clock.svg',
+            },
           ],
         },
         {

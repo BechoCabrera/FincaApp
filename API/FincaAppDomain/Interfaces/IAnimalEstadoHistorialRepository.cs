@@ -1,8 +1,6 @@
 ﻿using FincaAppDomain.Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace FincaAppDomain.Interfaces
@@ -10,5 +8,6 @@ namespace FincaAppDomain.Interfaces
     public interface IAnimalEstadoHistorialRepository
     {
         Task AddAsync(AnimalEstadoHistorial historial);
+        Task<List<AnimalEstadoHistorial>> GetByAnimalAsync(Guid animalId);
     }
 }

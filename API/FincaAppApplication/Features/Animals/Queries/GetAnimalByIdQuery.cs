@@ -16,11 +16,13 @@ namespace FincaAppApplication.Features.Animals.Queries
     public class GetAnimalByIdQueryHandler : IRequestHandler<GetAnimalByIdQuery, AnimalDto>
     {
         private readonly IAnimalRepository _repository;
+        private readonly IPartoRepository _partoRepository;
         private readonly IMapper _mapper;
 
-        public GetAnimalByIdQueryHandler(IAnimalRepository repository, IMapper mapper)
+        public GetAnimalByIdQueryHandler(IAnimalRepository repository, IPartoRepository partoRepository, IMapper mapper)
         {
             _repository = repository;
+            _partoRepository = partoRepository;
             _mapper = mapper;
         }
 
@@ -29,7 +31,16 @@ namespace FincaAppApplication.Features.Animals.Queries
             var animal = await _repository.GetByIdAsync(request.Id)
                 ?? throw new InvalidOperationException("Animal no encontrado");
 
-            return _mapper.Map<AnimalDto>(animal);
+            var dto = _mapper.Map<AnimalDto>(animal);
+
+            // attach last parto id if any
+            var lastParto = (await _partoRepository.GetByMadreAsync(animal.Id))?.OrderByDescending(p => p.FechaParto).FirstOrDefault();
+            if (lastParto != null)
+            {
+                dto.LastPartoId = lastParto.Id;
+            }
+
+            return dto;
         }
     }
 }

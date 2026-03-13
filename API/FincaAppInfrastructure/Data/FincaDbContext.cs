@@ -37,6 +37,7 @@ public class FincaDbContext : DbContext
     public DbSet<AnimalDestete> AnimalDestetes => Set<AnimalDestete>();
     public DbSet<ProduccionLeche> ProduccionesLeche => Set<ProduccionLeche>();
     public DbSet<AnimalSalida> AnimalSalidas => Set<AnimalSalida>();
+    public DbSet<AnimalPalpacion> AnimalPalpaciones => Set<AnimalPalpacion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -72,6 +73,29 @@ public class FincaDbContext : DbContext
         modelBuilder.Entity<Animal>()
             .HasIndex(a => new { a.TenantId, a.NumeroArete })
             .IsUnique();
+
+        // Indexes for timeline performance
+        modelBuilder.Entity<AnimalMovimiento>()
+            .HasIndex(m => new { m.TenantId, m.AnimalId });
+
+        modelBuilder.Entity<AnimalPalpacion>()
+            .HasIndex(p => new { p.TenantId, p.AnimalId });
+
+        modelBuilder.Entity<AnimalEstadoHistorial>()
+            .HasIndex(h => new { h.TenantId, h.AnimalId });
+
+        modelBuilder.Entity<Parto>()
+            .HasIndex(p => new { p.TenantId, p.AnimalMadreId });
+
+        // Map AnimalMovimiento property names to existing DB column names when needed
+        // Some databases have column named 'Fecha' instead of 'FechaMovimiento' - map to avoid insert errors
+        modelBuilder.Entity<AnimalMovimiento>(b =>
+        {
+            b.Property(m => m.FechaMovimiento).HasColumnName("Fecha");
+            // Map origen/destino properties to the compatibility alias columns if present
+            b.Property(m => m.FincaOrigenId).HasColumnName("FromFincaId");
+            b.Property(m => m.FincaDestinoId).HasColumnName("ToFincaId");
+        });
     }
 
     public override int SaveChanges()

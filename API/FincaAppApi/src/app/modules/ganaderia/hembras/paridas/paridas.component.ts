@@ -28,6 +28,8 @@ import { NotificationService } from 'src/app/core/services/notification.service'
 import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
 import { CriaDraftDto, ParidaCriaFormComponent } from 'src/app/modules/ganaderia/hembras/paridas/parida-cria-form/parida-cria-form.component';
 import { EstadoHembra } from 'src/app/core/models/animal.enums';
+import { MatDialog } from '@angular/material/dialog';
+import { TimelineDialogComponent } from 'src/app/shared/components/timeline/timeline-dialog.component';
 type Genero = 'Hembra' | 'Macho';
 type TipoLeche = 'Buena' | 'Regular' | 'Mala';
 interface ParidaForm {
@@ -62,7 +64,7 @@ interface ParidaForm {
     MatInputModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatDividerModule,
+    Mat DividerModule,
     MatCardModule,
     MatSelectModule,
 
@@ -81,7 +83,7 @@ interface ParidaForm {
   providers: [DatePipe],
 })
 export class ParidasComponent {
-  constructor(private fincaService: FincaService) {}
+  constructor(private fincaService: FincaService, private dialog: MatDialog) {}
 
   private paridaService = inject(ParidaService);
   private date = inject(DatePipe);
@@ -188,6 +190,8 @@ export class ParidasComponent {
     }
   }
   editingId: string | null = null;
+  // track parto id when editing a parto record instead of mother
+  private editingPartoId: string | null = null;
   lastSavedParida: {
     madreId: string | null;
     madreNumero: string;
@@ -348,6 +352,49 @@ export class ParidasComponent {
     this.showCriaForm = false;
 
     if (this.editingId) {
+      // If editing a Parto record (we have editingPartoId), call updateParto
+      if (this.editingPartoId) {
+        const updateDto: any = {
+          fechaParida: raw.fechaParida!.toISOString(),
+          fechaPalpacion: raw.fechaPalpacion ? raw.fechaPalpacion.toISOString() : null,
+          fechaNacimiento: raw.fechaNacimiento ? raw.fechaNacimiento.toISOString() : null,
+          generoCria: raw.generoCria ?? null,
+          color: raw.color ?? null,
+          tipoLeche: raw.tipoLeche ?? null,
+          procedencia: raw.procedencia ?? null,
+          propietario: raw.propietario ?? null,
+          observaciones: raw.observaciones ?? null,
+          // snapshot fields
+          criaNumero: this.lastSavedCria?.numero ?? null,
+          criaNombre: this.lastSavedCria?.nombre ?? null,
+          criaColor: this.lastSavedCria?.color ?? null,
+          criaPropietario: this.lastSavedCria?.propietario ?? null,
+          criaPesoKg: this.lastSavedCria?.pesoKg ?? null,
+          criaDetalles: this.lastSavedCria?.detalles ?? null,
+        };
+
+        this.paridaService.updateParto(this.editingPartoId, updateDto).subscribe({
+          next: () => {
+            this.lastSavedParida = {
+              madreId: this.editingId,
+              madreNumero: payload.numero,
+              madreNombre: payload.nombre,
+              generoCria: payload.generoCria,
+              fincaId: payload.fincaId,
+            };
+            this.form.reset();
+            this.editingId = null;
+            this.editingPartoId = null;
+            this.loadParidas();
+            this.notify.success('Registro de parto actualizado');
+          },
+          error: (err) => this.notify.error(err.error?.message ?? 'No se pudo actualizar el parto'),
+        });
+
+        return;
+      }
+
+      // Otherwise update the animal (existing behavior)
       this.paridaService.update(this.editingId, payload).subscribe({
         next: () => {
           this.lastSavedParida = {
@@ -434,6 +481,9 @@ export class ParidasComponent {
 
   editar(row: ParidaView) {
     this.editingId = row.id;
+    // prefer editing the parto record if available (provided by API as lastPartoId)
+    this.editingPartoId = (row as any).lastPartoId ?? null;
+
     this.form.patchValue({
       nombre: row.nombre,
       numero: row.numero,
@@ -534,5 +584,9 @@ export class ParidasComponent {
 
     const file = `vacas-ParidaDtos_${this.date.transform(new Date(), 'yyyy-MM-dd')}.pdf`;
     doc.save(file);
+  }
+
+  openTimeline(animalId: string) {
+    this.dialog.open(TimelineDialogComponent, { data: { animalId } });
   }
 }

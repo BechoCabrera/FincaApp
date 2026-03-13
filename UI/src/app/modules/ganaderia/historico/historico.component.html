@@ -1,0 +1,93 @@
+<div class="ui-container ui-scrollable">
+
+  <!-- ===== toolbar de búsqueda ===== -->
+  <section class="ui-card">
+    <h3 class="section-title">Histórico de animales</h3>
+
+    <div class="ui-actions ui-field-full ui-form" style="gap:12px; align-items:center; margin-bottom:.5rem;">
+
+      <!-- Búsqueda -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-4">
+        <mat-label>Buscar animal</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Número o nombre" [(ngModel)]="qSearch" (keyup)="onSearch()" />
+      </mat-form-field>
+
+      <!-- Selector -->
+      <mat-form-field appearance="fill" class="ui-field ui-field-6 animal-select">
+        <mat-label>Seleccionar animal</mat-label>
+        <mat-select [(value)]="selectedId" (selectionChange)="onSelect($event.value)">
+          <mat-option *ngFor="let a of filteredAnimals" [value]="a.id">
+            {{ a.numeroArete }} — {{ a.nombre || '(sin nombre)' }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-flat-button class="ui-btn ui-btn-primary" (click)="refresh()" [disabled]="!selectedId">
+        Consultar
+      </button>
+
+      <mat-progress-spinner *ngIf="loading" diameter="24" mode="indeterminate"></mat-progress-spinner>
+    </div>
+  </section>
+
+  <!-- ===== resultado ===== -->
+  <section class="ui-card brand-surface mt-3" *ngIf="selectedId">
+
+    <!-- info del animal -->
+    <div *ngIf="selected" class="ui-table-wrapper" style="margin-bottom:1rem;">
+      <table mat-table [dataSource]="infoRows" class="mat-elevation-z1 ui-table">
+        <ng-container matColumnDef="label">
+          <th mat-header-cell *matHeaderCellDef>CAMPO</th>
+          <td mat-cell *matCellDef="let row"><strong>{{ row.label }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="value">
+          <th mat-header-cell *matHeaderCellDef>VALOR</th>
+          <td mat-cell *matCellDef="let row">{{ row.value }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="infoDisplayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: infoDisplayedColumns;"></tr>
+      </table>
+    </div>
+
+    <!-- paginación del timeline -->
+    <div class="ui-actions" style="gap:8px; align-items:center; margin-bottom:.75rem; flex-wrap:wrap;">
+      <button mat-icon-button (click)="prevPage()" [disabled]="page <= 1 || loading" aria-label="Anterior">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <span style="font-size:13px;">Página {{ page }} / {{ totalPages }}</span>
+      <button mat-icon-button (click)="nextPage()" [disabled]="page >= totalPages || loading" aria-label="Siguiente">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+
+      <mat-form-field appearance="fill" class="ui-field" style="width:110px;">
+        <mat-label>Filas</mat-label>
+        <mat-select [(value)]="pageSize" (selectionChange)="onPageSizeChange($event.value)">
+          <mat-option *ngFor="let s of pageSizeOptions" [value]="s">{{ s }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="ui-field" style="width:110px;">
+        <mat-label>Ir a página</mat-label>
+        <input matInput type="number" min="1" [(ngModel)]="jumpPage" (keyup.enter)="jumpToPage()" />
+      </mat-form-field>
+      <button mat-icon-button color="primary" (click)="jumpToPage()" [disabled]="loading" aria-label="Ir" matTooltip="Ir a página">
+        <mat-icon>keyboard_return</mat-icon>
+      </button>
+    </div>
+
+    <!-- timeline -->
+    <div *ngIf="events.length">
+      <app-timeline [events]="events"></app-timeline>
+    </div>
+    <div *ngIf="!loading && events.length === 0" style="padding:.5rem 0; color: var(--text-muted, #888);">
+      No hay eventos para el animal seleccionado.
+    </div>
+  </section>
+
+  <!-- placeholder inicial -->
+  <section class="ui-card brand-surface mt-3" *ngIf="!selectedId && !loading">
+    <p style="color: var(--text-muted, #888);">Seleccione un animal para ver su histórico.</p>
+  </section>
+
+</div>

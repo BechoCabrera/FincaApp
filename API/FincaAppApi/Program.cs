@@ -13,6 +13,7 @@ using FincaAppApi.Swagger;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,7 @@ builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IAnimalEstadoHistorialRepository, AnimalEstadoHistorialRepository>();
 builder.Services.AddScoped<IPartoRepository, PartoRepository>();
 builder.Services.AddScoped<IAnimalMovimientoRepository, AnimalMovimientoRepository>();
+builder.Services.AddScoped<FincaAppDomain.Interfaces.IAnimalPalpacionRepository, FincaAppInfrastructure.Repositories.AnimalPalpacionRepository>();
 
 // Unit of work
 builder.Services.AddScoped<FincaAppDomain.Interfaces.IUnitOfWork, FincaAppInfrastructure.UnitOfWork.EfUnitOfWork>();
@@ -103,7 +105,8 @@ builder.Services.AddControllers()
     .AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-    });
+    })
+    .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<FincaAppApplication.Validators.CreatePartoRequestDtoValidator>());
 
 // ===============================
 // Swagger

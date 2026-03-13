@@ -34,14 +34,18 @@ public class RegisterPartoCommandHandler : IRequestHandler<RegisterPartoCommand,
     private readonly IUnitOfWork _uow;
     private readonly ILogger<RegisterPartoCommandHandler> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IAnimalMovimientoRepository _movimientoRepository;
+    private readonly IAnimalPalpacionRepository _palpacionRepository;
 
-    public RegisterPartoCommandHandler(IAnimalRepository animalRepository, IPartoRepository partoRepository, IUnitOfWork uow, ILogger<RegisterPartoCommandHandler> logger, IHttpContextAccessor httpContextAccessor)
+    public RegisterPartoCommandHandler(IAnimalRepository animalRepository, IPartoRepository partoRepository, IUnitOfWork uow, ILogger<RegisterPartoCommandHandler> logger, IHttpContextAccessor httpContextAccessor, IAnimalMovimientoRepository movimientoRepository, IAnimalPalpacionRepository palpacionRepository)
     {
         _animalRepository = animalRepository;
         _partoRepository = partoRepository;
         _uow = uow;
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
+        _movimientoRepository = movimientoRepository;
+        _palpacionRepository = palpacionRepository;
     }
 
     public async Task<RegisterPartoResult> Handle(RegisterPartoCommand request, CancellationToken cancellationToken)
@@ -188,16 +192,17 @@ public class RegisterPartoCommandHandler : IRequestHandler<RegisterPartoCommand,
                 var movimiento = new AnimalMovimiento
                 {
                     AnimalId = cria.Id,
-                    FromFincaId = Guid.Empty,
-                    ToFincaId = dto.FincaId,
-                    Fecha = dto.FechaParida != default ? dto.FechaParida : DateTime.UtcNow,
+                    // Temporarily use finca as origin to avoid FK violations until DB defaults/constraints are cleaned
+                    FincaOrigenId = dto.FincaId,
+                    FincaDestinoId = dto.FincaId,
+                    FechaMovimiento = dto.FechaParida != default ? dto.FechaParida : DateTime.UtcNow,
                     UsuarioId = usuarioId ?? Guid.Empty,
-                    Observacion = "Ingreso por nacimiento",
-                    TipoMovimiento = "Nacimiento",
                 };
 
-                // Use repository if registered
-                var movimientoRepo = request.Request != null ? (IAnimalMovimientoRepository?)null : null; // placeholder to satisfy compile in this edit region
+                if (_movimientoRepository != null)
+                {
+                    await _movimientoRepository.AddAsync(movimiento);
+                }
             }
             catch (Exception ex)
             {
@@ -217,7 +222,15 @@ public class RegisterPartoCommandHandler : IRequestHandler<RegisterPartoCommand,
                 TipoLeche = dto.TipoLeche,
                 Procedencia = dto.Procedencia,
                 Propietario = dto.Propietario,
-                Observaciones = dto.Observaciones
+                Observaciones = dto.Observaciones,
+
+                // snapshot of cria
+                CriaNumero = cria.NumeroArete,
+                CriaNombre = cria.Nombre,
+                CriaColor = cria.Color,
+                CriaPropietario = cria.Propietario,
+                CriaPesoKg = cria.PesoKg,
+                CriaDetalles = cria.Detalles
             };
 
             await _partoRepository.AddAsync(parto);
@@ -235,8 +248,10 @@ public class RegisterPartoCommandHandler : IRequestHandler<RegisterPartoCommand,
                         Notas = dto.Observaciones
                     };
 
-                    // save if repository available
-                    // placeholder
+                    if (_palpacionRepository != null)
+                    {
+                        await _palpacionRepository.AddAsync(palpacion);
+                    }
                 }
             }
             catch (Exception ex)

@@ -131,6 +131,10 @@ export class ParidaService {
     return this.animalService.upsert(payload);
   }
 
+  updateParto(id: string, dto: any): Observable<void> {
+    return this.http.put<void>(`${environment.apiUrl}/api/partos/${id}`, dto);
+  }
+
   delete(id: string): Observable<void> {
     return this.animalService.deactivate(id);
   }
