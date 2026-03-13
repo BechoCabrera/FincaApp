@@ -13,4 +13,8 @@ public class CreateAnimalRequestDto
     public Guid FincaId { get; set; }
     public Guid? MadreId { get; set; }
     public Guid? PadreId { get; set; }
+
+    // Optional: allow client to request a specific initial/target state
+    public EstadoHembra? EstadoActualHembra { get; set; }
+    public EstadoMacho? EstadoActualMacho { get; set; }
 }

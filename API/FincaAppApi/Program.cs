@@ -48,6 +48,7 @@ builder.Services.AddScoped<IFincaRepository, FincaRepository>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IAnimalEstadoHistorialRepository, AnimalEstadoHistorialRepository>();
 builder.Services.AddScoped<IPartoRepository, PartoRepository>();
+builder.Services.AddScoped<IAnimalMovimientoRepository, AnimalMovimientoRepository>();
 
 // Unit of work
 builder.Services.AddScoped<FincaAppDomain.Interfaces.IUnitOfWork, FincaAppInfrastructure.UnitOfWork.EfUnitOfWork>();

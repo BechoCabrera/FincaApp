@@ -4,6 +4,7 @@ import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AnimalService, AnimalDto } from './animal.service';
 import { CriaView } from '../models/animal-view.models';
+import { EstadoHembra, PropositoAnimal, TipoAnimal } from '../models/animal.enums';
 
 export interface CreateRecriaHembraDto {
   numero: string;
@@ -29,8 +30,9 @@ export class RecriaHembrasService {
   create(dto: CreateRecriaHembraDto): Observable<AnimalDto> {
     const payload: any = {
       numeroArete: dto.numero,
-      tipo: 1,
-      proposito: 1,
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estadoActualHembra: EstadoHembra.Recria,
       fechaNacimiento: dto.fechaNac ?? null,
       fincaId: dto.fincaId ?? null,
     };
@@ -40,7 +42,7 @@ export class RecriaHembrasService {
 
   /** LIST */
   getAll(): Observable<AnimalDto[]> {
-    return this.animalService.list({ tipo: 1 });
+    return this.animalService.list({ tipo: TipoAnimal.Hembra, proposito: PropositoAnimal.Carne, estado: EstadoHembra.Recria });
   }
 
   /** GET BY ID */
@@ -53,8 +55,9 @@ export class RecriaHembrasService {
     const payload: any = {
       id,
       numeroArete: dto.numero,
-      tipo: 1,
-      proposito: 1,
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estadoActualHembra: EstadoHembra.Recria,
       fechaNacimiento: dto.fechaNac ?? null,
       fincaId: dto.fincaId ?? null,
     };
@@ -68,7 +71,13 @@ export class RecriaHembrasService {
 
   /** SEARCH (opcional) */
   search(opts?: { q?: string; fincaId?: string }): Observable<AnimalDto[]> {
-    return this.animalService.list({ tipo: 1, q: opts?.q, fincaId: opts?.fincaId });
+    return this.animalService.list({
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estado: EstadoHembra.Recria,
+      q: opts?.q,
+      fincaId: opts?.fincaId,
+    });
   }
 
   // ---- view adapters ----

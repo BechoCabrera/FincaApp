@@ -34,6 +34,13 @@ export interface CreateParidaDto {
   criaDetalles?: string | null;
 }
 
+export interface ParidaCreateResult {
+  partoId: string;
+  madreId: string;
+  criaId: string;
+  warnings?: string[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -62,9 +69,16 @@ export class ParidaService {
     };
   }
 
-  create(dto: CreateParidaDto): Observable<{ partoId: string; madreId: string; criaId: string }> {
+  create(dto: CreateParidaDto): Observable<ParidaCreateResult> {
     // Use backend endpoint that encapsulates parto + cria
-    return this.http.post<{ partoId: string; madreId: string; criaId: string }>(this.apiUrl, dto);
+    return this.http.post<ParidaCreateResult>(this.apiUrl, dto).pipe(
+      map((res: any) => ({
+        partoId: res.partoId,
+        madreId: res.madreId,
+        criaId: res.criaId,
+        warnings: res.warnings ?? undefined,
+      })),
+    );
   }
 
   // Return a lightweight list of madres useful for dropdowns ({id, numero, nombre})

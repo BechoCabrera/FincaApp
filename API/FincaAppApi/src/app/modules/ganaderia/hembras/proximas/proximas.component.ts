@@ -26,9 +26,10 @@ import autoTable from 'jspdf-autotable';
 import { EscoteraService } from 'src/app/core/services/escotera.service';
 import { ProximaService, CreateProximaDto, UpdateProximaDto, ProximaDto } from 'src/app/core/services/proxima.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { NovillasVientreService} from 'src/app/core/services/novillas-vientre.service';
+import { NovillasVientreService } from 'src/app/core/services/novillas-vientre.service';
 import { FincaService, FincaDto } from 'src/app/core/services/finca.service';
 import { TableFiltersComponent } from 'src/app/shared/components/table-filters/table-filters.component';
+import { CriaView, EscoteraView } from 'src/app/core/models/animal-view.models';
 
 // Servicio (te lo paso si lo pides)
 // import { ProximasService } from './proximas.service';
@@ -233,8 +234,8 @@ export class ProximasComponent implements OnInit, AfterViewInit {
     this.opciones = [];
     switch (this.tipo) {
       case 'escotera':
-        this.escoteraService.getAllAsView().subscribe((res) => {
-          this.opciones = res.map((e) => ({
+        this.escoteraService.getAllAsView().subscribe((res: EscoteraView[]) => {
+          this.opciones = res.map((e: EscoteraView) => ({
             id: e.id,
             numero: e.numero,
             nombre: e.nombre,
@@ -253,8 +254,8 @@ export class ProximasComponent implements OnInit, AfterViewInit {
         });
         break;
       case 'novilla':
-        this.novillasService.getAllAsView().subscribe((res: any[]) => {
-          this.opciones = res.map((n) => ({
+        this.novillasService.getAllAsView().subscribe((res: CriaView[]) => {
+          this.opciones = res.map((n: CriaView) => ({
             id: n.id,
             numero: n.numero,
             nombre: n.nombre,

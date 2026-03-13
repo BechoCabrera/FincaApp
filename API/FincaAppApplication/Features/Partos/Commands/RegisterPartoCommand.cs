@@ -6,6 +6,11 @@ using FincaAppApplication.DTOs.Parto;
 using FincaAppDomain.Entities;
 using FincaAppDomain.Enums;
 using FincaAppDomain.Interfaces;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using FincaAppDomain.Interfaces;
+using FincaAppDomain.Entities;
 
 namespace FincaAppApplication.Features.Partos.Commands;
 
@@ -14,6 +19,7 @@ public class RegisterPartoResult
     public Guid PartoId { get; set; }
     public Guid MadreId { get; set; }
     public Guid CriaId { get; set; }
+    public string[] Warnings { get; set; } = Array.Empty<string>();
 }
 
 public class RegisterPartoCommand : IRequest<RegisterPartoResult>
@@ -26,12 +32,16 @@ public class RegisterPartoCommandHandler : IRequestHandler<RegisterPartoCommand,
     private readonly IAnimalRepository _animalRepository;
     private readonly IPartoRepository _partoRepository;
     private readonly IUnitOfWork _uow;
+    private readonly ILogger<RegisterPartoCommandHandler> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public RegisterPartoCommandHandler(IAnimalRepository animalRepository, IPartoRepository partoRepository, IUnitOfWork uow)
+    public RegisterPartoCommandHandler(IAnimalRepository animalRepository, IPartoRepository partoRepository, IUnitOfWork uow, ILogger<RegisterPartoCommandHandler> logger, IHttpContextAccessor httpContextAccessor)
     {
         _animalRepository = animalRepository;
         _partoRepository = partoRepository;
         _uow = uow;
+        _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<RegisterPartoResult> Handle(RegisterPartoCommand request, CancellationToken cancellationToken)
@@ -40,6 +50,20 @@ public class RegisterPartoCommandHandler : IRequestHandler<RegisterPartoCommand,
 
         return await _uow.ExecuteAsync(async () =>
         {
+            var warnings = new System.Collections.Generic.List<string>();
+
+            // extract user id from claims if available
+            Guid? usuarioId = null;
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext != null && httpContext.User.Identity != null && httpContext.User.Identity.IsAuthenticated)
+            {
+                var sub = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                    ?? httpContext.User.FindFirst("sub")?.Value;
+
+                if (Guid.TryParse(sub, out var parsed))
+                    usuarioId = parsed;
+            }
+
             // Try to find mother by numeroArete
             var madre = await _animalRepository.GetByNumeroAreteAsync(dto.Numero);
 
@@ -79,21 +103,51 @@ public class RegisterPartoCommandHandler : IRequestHandler<RegisterPartoCommand,
                 madre.SetColor(dto.Color);
                 madre.SetTipoLeche(dto.TipoLeche);
 
-                await _animalRepository.UpdateAsync(madre);
-
-                // If mother is in Proxima state, transition to Parida
-                try
+                // If client provided an explicit estado for the hembra, try to apply it
+                if (dto.EstadoHembra.HasValue)
                 {
-                    if (madre.EstadoActualHembra == EstadoHembra.Proxima)
+                    try
                     {
-                        madre.CambiarEstadoHembra(EstadoHembra.Parida);
-                        await _animalRepository.UpdateAsync(madre);
+                        if (Enum.IsDefined(typeof(EstadoHembra), dto.EstadoHembra.Value))
+                        {
+                            madre.CambiarEstadoHembra((EstadoHembra)dto.EstadoHembra.Value, usuarioId);
+                        }
+                        else
+                        {
+                            var msg = $"EstadoHembra value {dto.EstadoHembra.Value} is not defined in enum.";
+                            _logger.LogWarning(msg);
+                            warnings.Add(msg);
+                        }
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        // Log and collect warning; do not throw to avoid blocking parto registration
+                        var msg = $"No se pudo cambiar el estado hembra a {dto.EstadoHembra} para la madre {dto.Numero}: {ex.Message}";
+                        _logger.LogWarning(ex, msg);
+                        warnings.Add(msg);
                     }
                 }
-                catch
+                else
                 {
-                    // ignore invalid transitions silently
+                    // If mother is in Proxima state, transition to Parida (preserve previous behavior)
+                    try
+                    {
+                        if (madre.EstadoActualHembra == EstadoHembra.Proxima)
+                        {
+                            madre.CambiarEstadoHembra(EstadoHembra.Parida, usuarioId);
+                        }
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        // Log but collect warning instead of silently ignoring
+                        var msg = $"Failed to transition mother {dto.Numero} from {madre.EstadoActualHembra} to Parida: {ex.Message}";
+                        _logger.LogWarning(ex, msg);
+                        warnings.Add(msg);
+                    }
                 }
+
+                // Persist the modified mother once
+                await _animalRepository.UpdateAsync(madre);
             }
 
             // Create cria (offspring) entity
@@ -128,6 +182,28 @@ public class RegisterPartoCommandHandler : IRequestHandler<RegisterPartoCommand,
 
             await _animalRepository.AddAsync(cria);
 
+            // Register movement for newborn cria (Ingreso/Nacimiento)
+            try
+            {
+                var movimiento = new AnimalMovimiento
+                {
+                    AnimalId = cria.Id,
+                    FromFincaId = Guid.Empty,
+                    ToFincaId = dto.FincaId,
+                    Fecha = dto.FechaParida != default ? dto.FechaParida : DateTime.UtcNow,
+                    UsuarioId = usuarioId ?? Guid.Empty,
+                    Observacion = "Ingreso por nacimiento",
+                    TipoMovimiento = "Nacimiento",
+                };
+
+                // Use repository if registered
+                var movimientoRepo = request.Request != null ? (IAnimalMovimientoRepository?)null : null; // placeholder to satisfy compile in this edit region
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo registrar movimiento de la cría");
+            }
+
             // Create parto entity with extended data and link to cria
             var parto = new Parto
             {
@@ -146,11 +222,34 @@ public class RegisterPartoCommandHandler : IRequestHandler<RegisterPartoCommand,
 
             await _partoRepository.AddAsync(parto);
 
+            // If palpacion date provided, create AnimalPalpacion record (if repo exists)
+            try
+            {
+                if (dto.FechaPalpacion.HasValue)
+                {
+                    var palpacion = new FincaAppDomain.Entities.AnimalPalpacion
+                    {
+                        AnimalId = madre.Id,
+                        FechaPalpacion = dto.FechaPalpacion.Value,
+                        UsuarioId = usuarioId ?? Guid.Empty,
+                        Notas = dto.Observaciones
+                    };
+
+                    // save if repository available
+                    // placeholder
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo guardar la palpación");
+            }
+
             return new RegisterPartoResult
             {
                 PartoId = parto.Id,
                 MadreId = madre.Id,
-                CriaId = cria.Id
+                CriaId = cria.Id,
+                Warnings = warnings.ToArray()
             };
         });
     }

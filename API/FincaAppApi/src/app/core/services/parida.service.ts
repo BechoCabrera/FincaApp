@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 import { AnimalService, AnimalDto } from './animal.service';
 import { ParidaView } from '../models/animal-view.models';
 import { HttpClient } from '@angular/common/http';
+import { EstadoHembra, PropositoAnimal, TipoAnimal } from '../models/animal.enums';
 
 export interface CreateParidaDto {
   nombre: string;
@@ -20,7 +21,7 @@ export interface CreateParidaDto {
   color?: string | null;
   tipoLeche?: string | null;
   procedencia?: string | null;
-
+  estadoHembra: EstadoHembra | null;
   propietario?: string | null;
   observaciones?: string | null;
 
@@ -31,6 +32,13 @@ export interface CreateParidaDto {
   criaPropietario?: string | null;
   criaPesoKg?: number | null;
   criaDetalles?: string | null;
+}
+
+export interface ParidaCreateResult {
+  partoId: string;
+  madreId: string;
+  criaId: string;
+  warnings?: string[];
 }
 
 @Injectable({
@@ -61,14 +69,25 @@ export class ParidaService {
     };
   }
 
-  create(dto: CreateParidaDto): Observable<{ partoId: string; madreId: string; criaId: string }> {
+  create(dto: CreateParidaDto): Observable<ParidaCreateResult> {
     // Use backend endpoint that encapsulates parto + cria
-    return this.http.post<{ partoId: string; madreId: string; criaId: string }>(this.apiUrl, dto);
+    return this.http.post<ParidaCreateResult>(this.apiUrl, dto).pipe(
+      map((res: any) => ({
+        partoId: res.partoId,
+        madreId: res.madreId,
+        criaId: res.criaId,
+        warnings: res.warnings ?? undefined,
+      })),
+    );
   }
 
   // Return a lightweight list of madres useful for dropdowns ({id, numero, nombre})
   getAll(): Observable<Array<{ id: string; numero: string | null; nombre: string | null }>> {
-    const params: any = { tipo: 1, proposito: 1, estado: 'Parida' };
+    const params: any = {
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estado: EstadoHembra.Parida,
+    };
     return this.animalService.list(params).pipe(
       map((items: AnimalDto[]) =>
         (items || []).map((a: AnimalDto) => ({
@@ -81,7 +100,13 @@ export class ParidaService {
   }
 
   getAllAsView(): Observable<ParidaView[]> {
-    return this.animalService.list({ tipo: 1, proposito: 1, estado: 'Parida' }).pipe(map(items => (items || []).map(a => this.mapToParidaView(a))));
+    return this.animalService
+      .list({
+        tipo: TipoAnimal.Hembra,
+        proposito: PropositoAnimal.Carne,
+        estado: EstadoHembra.Parida,
+      })
+      .pipe(map((items) => (items || []).map((a) => this.mapToParidaView(a))));
   }
 
   getById(id: string): Observable<AnimalDto> {
@@ -89,14 +114,15 @@ export class ParidaService {
   }
 
   getByIdAsView(id: string): Observable<ParidaView> {
-    return this.getById(id).pipe(map(a => this.mapToParidaView(a)));
+    return this.getById(id).pipe(map((a) => this.mapToParidaView(a)));
   }
 
   update(id: string, dto: CreateParidaDto): Observable<AnimalDto> {
     const payload: any = {
       numeroArete: dto.numero,
-      tipo: dto.generoCria === 'Hembra' ? 1 : 2,
-      proposito: 1,
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estadoActualHembra: EstadoHembra.Parida,
       fechaNacimiento: dto.fechaNacimiento ?? null,
       fincaId: dto.fincaId,
       id: id,

@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AnimalService, AnimalDto } from './animal.service';
 import { CriaView } from '../models/animal-view.models';
+import { EstadoMacho, PropositoAnimal, TipoAnimal } from '../models/animal.enums';
 
 @Injectable({ providedIn: 'root' })
 export class RecriasMachosService {
@@ -13,7 +14,15 @@ export class RecriasMachosService {
   private apiUrl = `${environment.apiUrl}/api/RecriasMachos`;
 
   listarRecrias(opts?: { q?: string; fincaId?: string; page?: number; pageSize?: number }): Observable<AnimalDto[]> {
-    const params: any = { tipo: 2, q: opts?.q, fincaId: opts?.fincaId, page: opts?.page, pageSize: opts?.pageSize };
+    const params: any = {
+      tipo: TipoAnimal.Macho,
+      proposito: PropositoAnimal.Carne,
+      estado: EstadoMacho.Recria,
+      q: opts?.q,
+      fincaId: opts?.fincaId,
+      page: opts?.page,
+      pageSize: opts?.pageSize,
+    };
     return this.animalService.list(params);
   }
 
@@ -24,8 +33,9 @@ export class RecriasMachosService {
   crearRecria(payload: any): Observable<AnimalDto> {
     const animalPayload: any = {
       numeroArete: String(payload.numero ?? payload.nombre ?? ''),
-      tipo: 2, // Macho
-      proposito: 1,
+      tipo: TipoAnimal.Macho,
+      proposito: PropositoAnimal.Carne,
+      estadoActualMacho: EstadoMacho.Recria,
       fechaNacimiento: payload.fechaNac ?? null,
       fincaId: payload.fincaId ?? null,
     };
@@ -37,8 +47,9 @@ export class RecriasMachosService {
     const animalPayload: any = {
       id,
       numeroArete: String(payload.numero ?? payload.nombre ?? ''),
-      tipo: 2,
-      proposito: 1,
+      tipo: TipoAnimal.Macho,
+      proposito: PropositoAnimal.Carne,
+      estadoActualMacho: EstadoMacho.Recria,
       fechaNacimiento: payload.fechaNac ?? null,
       fincaId: payload.fincaId ?? null,
     };

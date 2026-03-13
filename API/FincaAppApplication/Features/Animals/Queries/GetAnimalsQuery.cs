@@ -6,6 +6,7 @@ using AutoMapper;
 using FincaAppApplication.DTOs.Animal;
 using FincaAppDomain.Enums;
 using FincaAppDomain.Interfaces;
+using System.Linq;
 
 namespace FincaAppApplication.Features.Animals.Queries
 {
@@ -22,11 +23,13 @@ namespace FincaAppApplication.Features.Animals.Queries
     public class GetAnimalsQueryHandler : IRequestHandler<GetAnimalsQuery, List<AnimalDto>>
     {
         private readonly IAnimalRepository _repository;
+        private readonly IPartoRepository _partoRepository;
         private readonly IMapper _mapper;
 
-        public GetAnimalsQueryHandler(IAnimalRepository repository, IMapper mapper)
+        public GetAnimalsQueryHandler(IAnimalRepository repository, IPartoRepository partoRepository, IMapper mapper)
         {
             _repository = repository;
+            _partoRepository = partoRepository;
             _mapper = mapper;
         }
 
@@ -39,7 +42,38 @@ namespace FincaAppApplication.Features.Animals.Queries
                 request.Page,
                 request.PageSize);
 
-            return _mapper.Map<List<AnimalDto>>(animals);
+            var dtos = _mapper.Map<List<AnimalDto>>(animals);
+
+            // Enrich hembra records with latest parto info when available
+            for (int i = 0; i < animals.Count; i++)
+            {
+                var a = animals[i];
+                var dto = dtos[i];
+
+                // map basic tenant/created fields
+                dto.CreatedAt = a.CreatedAt.ToString("o");
+                dto.UpdatedAt = a.UpdatedAt?.ToString("o");
+
+                // If this is a female and we want parto-related fields, try to get the latest parto
+                if (a.Tipo == TipoAnimal.Hembra)
+                {
+                    var partos = await _partoRepository.GetByMadreAsync(a.Id);
+                    var lastParto = partos?.OrderByDescending(p => p.FechaParto).FirstOrDefault();
+                    if (lastParto != null)
+                    {
+                        dto.FechaParida = lastParto.FechaParto;
+                        dto.FechaPalpacion = lastParto.FechaPalpacion;
+                        dto.FechaNacimientoCria = lastParto.FechaNacimiento;
+                        dto.Color = lastParto.Color;
+                        dto.TipoLeche = lastParto.TipoLeche;
+                        dto.Procedencia = lastParto.Procedencia;
+                        dto.Propietario = lastParto.Propietario;
+                        dto.Observaciones = lastParto.Observaciones;
+                    }
+                }
+            }
+
+            return dtos;
         }
     }
 }

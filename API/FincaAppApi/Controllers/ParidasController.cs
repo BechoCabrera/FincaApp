@@ -31,6 +31,10 @@ public class ParidasController : ControllerBase
     {
         var command = new RegisterPartoCommand { Request = request };
         var result = await _mediator.Send(command);
+        if (result.Warnings != null && result.Warnings.Length > 0)
+        {
+            return BadRequest(new { message = "Advertencias aplicando estado", warnings = result.Warnings });
+        }
         return CreatedAtAction(nameof(GetById), new { id = result.PartoId }, result);
     }
 

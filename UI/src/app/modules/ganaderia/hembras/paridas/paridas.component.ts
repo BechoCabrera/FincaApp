@@ -366,7 +366,8 @@ export class ParidasComponent {
       });
     } else {
       this.paridaService.create(payload).subscribe({
-        next: (res) => {
+        next: (res: any) => {
+          // If API returns successful creation (no warnings)
           this.lastSavedParida = {
             madreId: res?.madreId ?? null,
             madreNumero: payload.numero,
@@ -380,7 +381,32 @@ export class ParidasComponent {
           this.loadParidas();
           this.notify.success('Registro guardado');
         },
-        error: (err) => this.notify.error(err.error?.message ?? 'No se pudo guardar'),
+        error: (err) => {
+          // If controller returned 400 with warnings, treat as partial success: show warnings but still update UI
+          const warnings: string[] | undefined = err?.error?.warnings;
+          if (err?.status === 400 && Array.isArray(warnings) && warnings.length > 0) {
+            // Show main message if provided
+            const msg = err.error?.message ?? 'Advertencias al guardar';
+            this.notify.error(msg);
+            // show each warning
+            warnings.forEach(w => this.notify.info(w, 6000));
+
+            // Update UI as if saved (the handler already created entities)
+            this.lastSavedParida = {
+              madreId: err.error?.madreId ?? null,
+              madreNumero: payload.numero,
+              madreNombre: payload.nombre,
+              generoCria: payload.generoCria,
+              fincaId: payload.fincaId,
+            };
+            this.lastSavedCria = null;
+            this.form.reset();
+            this.loadParidas();
+            return;
+          }
+
+          this.notify.error(err.error?.message ?? 'No se pudo guardar');
+        },
       });
     }
   }

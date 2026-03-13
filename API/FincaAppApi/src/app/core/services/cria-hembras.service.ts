@@ -4,6 +4,7 @@ import { environment } from 'src/environments/environment';
 import { AnimalService, AnimalDto } from './animal.service';
 import { CriaView } from '../models/animal-view.models';
 import { Observable } from 'rxjs';
+import { EstadoHembra, PropositoAnimal, TipoAnimal } from '../models/animal.enums';
 
 export interface CreateCriaHembraDto {
   numero: string;
@@ -28,8 +29,9 @@ export class CriaHembrasService {
   create(dto: CreateCriaHembraDto): Observable<AnimalDto> {
     const animalPayload: any = {
       numeroArete: dto.numero,
-      tipo: 1, // Hembra
-      proposito: 1, // Carne (default)
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estadoActualHembra: EstadoHembra.Cria,
       fechaNacimiento: dto.fechaNac ?? null,
       fincaId: dto.fincaId ?? null,
     };
@@ -39,7 +41,7 @@ export class CriaHembrasService {
 
   /** LIST */
   getAll(): Observable<AnimalDto[]> {
-    const params: any = { tipo: 1 };
+    const params: any = { tipo: TipoAnimal.Hembra, proposito: PropositoAnimal.Carne, estado: EstadoHembra.Cria };
     return this.animalService.list(params);
   }
 
@@ -53,8 +55,9 @@ export class CriaHembrasService {
     const payload: any = {
       id,
       numeroArete: dto.numero,
-      tipo: 1,
-      proposito: 1,
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estadoActualHembra: EstadoHembra.Cria,
       fechaNacimiento: dto.fechaNac ?? null,
       fincaId: dto.fincaId ?? null,
     };
@@ -68,7 +71,13 @@ export class CriaHembrasService {
 
   /** SEARCH (opcional) */
   search(opts?: { q?: string; fincaId?: string }): Observable<AnimalDto[]> {
-    return this.animalService.list({ tipo: 1, q: opts?.q, fincaId: opts?.fincaId });
+    return this.animalService.list({
+      tipo: TipoAnimal.Hembra,
+      proposito: PropositoAnimal.Carne,
+      estado: EstadoHembra.Cria,
+      q: opts?.q,
+      fincaId: opts?.fincaId,
+    });
   }
 
   // ---- view adapters ----
