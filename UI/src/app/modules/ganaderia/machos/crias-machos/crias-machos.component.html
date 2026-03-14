@@ -13,12 +13,18 @@
 
       <!-- fila 1 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
+        <mat-label>Número</mat-label>
+        <input matInput formControlName="numero" placeholder="Número de arete" />
+        <mat-error *ngIf="has('numero','required')">Requerido</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Nombre</mat-label>
         <input matInput formControlName="nombre" placeholder="Nombre de la cría" />
         <mat-error *ngIf="has('nombre','required')">Requerido</mat-error>
       </mat-form-field>
 
-      <mat-form-field appearance="fill" class="ui-field ui-field-6">
+      <mat-form-field appearance="fill" class="ui-field ui-field-12">
         <mat-label>Fecha Nacimiento</mat-label>
         <input matInput [matDatepicker]="nacPicker" formControlName="fechaNac" />
         <mat-datepicker-toggle matSuffix [for]="nacPicker"></mat-datepicker-toggle>
@@ -100,6 +106,11 @@
           <td mat-cell *matCellDef="let r; let i = index" class="col-sticky">
             {{ paginator.pageIndex * paginator.pageSize + i + 1 }}
           </td>
+        </ng-container>
+
+        <ng-container matColumnDef="numero">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>N°</th>
+          <td mat-cell *matCellDef="let r">{{ r.numero }}</td>
         </ng-container>
 
         <ng-container matColumnDef="nombre">

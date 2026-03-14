@@ -1,8 +1,8 @@
 export interface ParidaView {
   id: string;
   nombre: string | null;
-  numero: string | null;
-  fincaId: string | null;
+  numeroArete: string | null;
+  fincaActualId: string | null;
   generoCria: 'Hembra' | 'Macho' | null;
   fechaParida: string | null;
   fechaPalpacion?: string | null;
@@ -19,7 +19,7 @@ export interface ParidaView {
 
 export interface EscoteraView {
   id: string;
-  numero: string | null;
+  numeroArete: string | null;
   nombre: string | null;
   color?: string | null;
   procedencia?: string | null;
@@ -28,22 +28,22 @@ export interface EscoteraView {
   fechaNacida?: string | null;
   tipoLeche?: string | null;
   fPalpacion?: string | null;
-  dPrenez?: number | null; // días de preñez
+  dPrenez?: number | null; // dï¿½as de preï¿½ez
   detalles?: string | null;
   fechaDestete?: string | null;
   vacaId?: string | null;
-  fincaId?: string | null;
+  fincaActualId?: string | null;
 }
 
 export interface CriaView {
   id: string;
-  numero: string | null;
+  numeroArete: string | null;
   nombre: string | null;
-  fechaNac?: string | null;
+  fechaNacimiento?: string | null;
   pesoKg?: number | null;
   color?: string | null;
   propietario?: string | null;
-  fincaId?: string | null;
+  fincaActualId?: string | null;
   madreId?: string | null;
   madreNumero?: string | null;
   madreNombre?: string | null;

@@ -97,8 +97,8 @@ export class ParidasComponent {
   // ------ Formulario ------
   form = new FormGroup({
     nombre: new FormControl<string | null>(null, { nonNullable: false, validators: Validators.required }),
-    numero: new FormControl<string | null>(null, { nonNullable: false, validators: Validators.required }),
-    fincaId: new FormControl<string | null>(null, { nonNullable: false, validators: Validators.required }),
+    numeroArete: new FormControl<string | null>(null, { nonNullable: false, validators: Validators.required }),
+    fincaActualId: new FormControl<string | null>(null, { nonNullable: false, validators: Validators.required }),
 
     generoCria: new FormControl<'Hembra' | 'Macho' | null>('Hembra', Validators.required),
 
@@ -197,16 +197,16 @@ export class ParidasComponent {
     madreNumero: string;
     madreNombre: string;
     generoCria: Genero;
-    fincaId: string | null;
+    fincaActualId: string | null;
   } | null = null;
   lastSavedCria: {
-    numero: string | null;
+    numeroArete: string | null;
     nombre: string | null;
-    fechaNac: string | null;
+    fechaNacimiento: string | null;
     color: string | null;
     propietario: string | null;
     pesoKg: number | null;
-    fincaId: string | null;
+    fincaActualId: string | null;
     madreNumero: string | null;
     madreNombre: string | null;
     detalles: string | null;
@@ -280,15 +280,15 @@ export class ParidasComponent {
 
     // Predicado de filtro compuesto (texto + finca + genero)
     this.dataSource.filterPredicate = (data: ParidaView, raw: string) => {
-      const f = JSON.parse(raw || '{}') as { q: string; fincaId: string; genero: string };
+      const f = JSON.parse(raw || '{}') as { q: string; fincaActualId: string; genero: string };
       const q = (f.q || '').trim().toLowerCase();
       const byText =
         !q ||
-        (data.numero || '').toLowerCase().includes(q) ||
+        (data.numeroArete || '').toLowerCase().includes(q) ||
         (data.nombre || '').toLowerCase().includes(q) ||
         (data.propietario || '').toLowerCase().includes(q);
 
-      const byFinca = !f.fincaId || f.fincaId === (data.fincaId || '');
+      const byFinca = !f.fincaActualId || f.fincaActualId === (data.fincaActualId || '');
       const byGenero = !f.genero || f.genero === (data.generoCria || '');
 
       return byText && byFinca && byGenero;
@@ -296,7 +296,7 @@ export class ParidasComponent {
 
     // Reaplicar filtro cuando cambie algo
     const pushFilter = () => {
-      const payload = { q: this.qCtrl.value, fincaId: this.fincaCtrl.value, genero: this.generoCtrl.value };
+      const payload = { q: this.qCtrl.value, fincaActualId: this.fincaCtrl.value, genero: this.generoCtrl.value };
       this.dataSource.filter = JSON.stringify(payload);
       // importante: forzar recalcular paginator index
       if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
@@ -324,8 +324,8 @@ export class ParidasComponent {
 
     const payload: CreateParidaDto = {
       nombre: raw.nombre!,
-      numero: raw.numero!,
-      fincaId: raw.fincaId!,
+      numeroArete: raw.numeroArete!,
+      fincaActualId: raw.fincaActualId!,
 
       generoCria: raw.generoCria!,
 
@@ -340,7 +340,7 @@ export class ParidasComponent {
       propietario: raw.propietario ?? null,
       observaciones: raw.observaciones ?? null,
       // include cria data if available (from nested component)
-      numeroCria: this.lastSavedCria?.numero ?? null,
+      numeroCria: this.lastSavedCria?.numeroArete ?? null,
       criaNombre: this.lastSavedCria?.nombre ?? null,
       criaColor: this.lastSavedCria?.color ?? null,
       criaPropietario: this.lastSavedCria?.propietario ?? null,
@@ -365,7 +365,7 @@ export class ParidasComponent {
           propietario: raw.propietario ?? null,
           observaciones: raw.observaciones ?? null,
           // snapshot fields
-          criaNumero: this.lastSavedCria?.numero ?? null,
+          criaNumeroArete: this.lastSavedCria?.numeroArete ?? null,
           criaNombre: this.lastSavedCria?.nombre ?? null,
           criaColor: this.lastSavedCria?.color ?? null,
           criaPropietario: this.lastSavedCria?.propietario ?? null,
@@ -377,10 +377,10 @@ export class ParidasComponent {
           next: () => {
             this.lastSavedParida = {
               madreId: this.editingId,
-              madreNumero: payload.numero,
+              madreNumero: payload.numeroArete,
               madreNombre: payload.nombre,
               generoCria: payload.generoCria,
-              fincaId: payload.fincaId,
+              fincaActualId: payload.fincaActualId ?? null,
             };
             this.form.reset();
             this.editingId = null;
@@ -399,10 +399,10 @@ export class ParidasComponent {
         next: () => {
           this.lastSavedParida = {
             madreId: this.editingId,
-            madreNumero: payload.numero,
+            madreNumero: payload.numeroArete,
             madreNombre: payload.nombre,
             generoCria: payload.generoCria,
-            fincaId: payload.fincaId,
+            fincaActualId: payload.fincaActualId,
           };
           this.form.reset();
           this.editingId = null;
@@ -417,10 +417,10 @@ export class ParidasComponent {
           // If API returns successful creation (no warnings)
           this.lastSavedParida = {
             madreId: res?.madreId ?? null,
-            madreNumero: payload.numero,
+            madreNumero: payload.numeroArete,
             madreNombre: payload.nombre,
             generoCria: payload.generoCria,
-            fincaId: payload.fincaId,
+            fincaActualId: payload.fincaActualId ?? null,
           };
           // clear temporary cria after successful save
           this.lastSavedCria = null;
@@ -441,10 +441,10 @@ export class ParidasComponent {
             // Update UI as if saved (the handler already created entities)
             this.lastSavedParida = {
               madreId: err.error?.madreId ?? null,
-              madreNumero: payload.numero,
+              madreNumero: payload.numeroArete,
               madreNombre: payload.nombre,
               generoCria: payload.generoCria,
-              fincaId: payload.fincaId,
+              fincaActualId: payload.fincaActualId ?? null,
             };
             this.lastSavedCria = null;
             this.form.reset();
@@ -458,7 +458,7 @@ export class ParidasComponent {
     }
   }
 
-  onCriaGuardada(cria: CriaDraftDto) {
+  onCriaGuardada(cria: any) {
     // child emits saved with cria data
     this.lastSavedCria = cria;
     this.showCriaForm = false;
@@ -486,8 +486,8 @@ export class ParidasComponent {
 
     this.form.patchValue({
       nombre: row.nombre,
-      numero: row.numero,
-      fincaId: row.fincaId,
+      numeroArete: row.numeroArete,
+      fincaActualId: row.fincaActualId,
 
       generoCria: row.generoCria,
 
@@ -505,14 +505,14 @@ export class ParidasComponent {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-  trackById = (_: number, item: ParidaView) => item.id ?? `${item.numero}-${item.nombre}`;
+  trackById = (_: number, item: ParidaView) => item.id ?? `${item.numeroArete}-${item.nombre}`;
 
   private colLabel(key: string) {
     return this.allColumns.find((c) => c.key === key)?.label ?? key;
   }
 
   eliminar(row: ParidaView) {
-    const ok = confirm(`¿Eliminar la parida Nº ${row.numero}?`);
+    const ok = confirm(`¿Eliminar la parida Nº ${row.numeroArete}?`);
     if (!ok) return;
 
     this.paridaService.delete(row.id).subscribe({
@@ -539,7 +539,7 @@ export class ParidasComponent {
         let v: any = (row as any)[key];
 
         // Formatea fechas
-        if (key === 'fechaNac' || key === 'fechaParto' || key === 'fPalpacion') {
+        if (key === 'fechaNacimiento' || key === 'fechaParida' || key === 'fechaPalpacion') {
           return v ? this.date.transform(v, 'yyyy-MM-dd') : '';
         }
         return v ?? '';

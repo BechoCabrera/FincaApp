@@ -34,18 +34,18 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 /** Tipos locales (ajústalos si ya los exportas desde el servicio) */
 interface RecriaResumen {
   id: string;
-  numero: number;
+  numeroArete: number;
   nombre: string;
 }
 interface RecriaDetalle {
   id: string;
-  numero: number;
+  numeroArete: number;
   nombre: string;
-  fechaNac?: string | Date | null;
+  fechaNacimiento?: string | Date | null;
   pesoKg?: number | null;
   color?: string | null;
   propietario?: string | null;
-  fincaId?: string | null;
+  fincaActualId?: string | null;
   madreNumero?: number | string | null;
   madreNombre?: string | null;
   detalles?: string | null;
@@ -114,9 +114,9 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
   dataSource = new MatTableDataSource<RecriaDetalle>([]);
   displayedColumns: string[] = [
     'idx',
-    'numero',
+    'numeroArete',
     'nombre',
-    'fechaNac',
+    'fechaNacimiento',
     'color',
     'pesoKg',
     'propietario',
@@ -127,9 +127,9 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
   ];
   allColumns = [
     { key: 'idx', label: '#' },
-    { key: 'numero', label: 'Nº' },
+    { key: 'numeroArete', label: 'Nº' },
     { key: 'nombre', label: 'NOMBRE' },
-    { key: 'fechaNac', label: 'F. NACIMIENTO' },
+    { key: 'fechaNacimiento', label: 'F. NACIMIENTO' },
     { key: 'color', label: 'COLOR' },
     { key: 'pesoKg', label: 'PESO' },
     { key: 'propietario', label: 'PROPIETARIO' },
@@ -151,13 +151,13 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
   /** ===== Ciclo de vida ===== */
   ngOnInit(): void {
     this.form = this.fb.group({
-      numero: [null, Validators.required],
+      numeroArete: [null, Validators.required],
       nombre: [null, Validators.required],
-      fechaNac: [null],
+      fechaNacimiento: [null],
       pesoKg: [null],
       color: [null],
       propietario: [null],
-      fincaId: [null, Validators.required],
+      fincaActualId: [null, Validators.required],
       madreNumero: [null],
       detalles: [null],
       fechaDestete: [null, Validators.required],
@@ -178,8 +178,8 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
       const f = JSON.parse(filterJson) as { q: string; fincaId: string };
       const q = (f.q || '').toLowerCase();
       const finca = f.fincaId || '';
-      const matchTexto = String(row.numero || '').includes(q) || (row.nombre || '').toLowerCase().includes(q);
-      const matchFinca = !finca || row.fincaId === finca;
+      const matchTexto = String(row.numeroArete || '').includes(q) || (row.nombre || '').toLowerCase().includes(q);
+      const matchFinca = !finca || row.fincaActualId === finca;
       return matchTexto && matchFinca;
     };
 
@@ -213,7 +213,7 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
       next: (res) => {
         this.recrias = res.map((item: any) => ({
           id: item.id,
-          numero: item.numero,
+          numeroArete: item.numeroArete,
           nombre: item.nombre,
         }));
         this.totalRecrias = res.length;
@@ -240,7 +240,7 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
       next: (res) => {
         this.selectCriaHembra = res.map((item: any) => ({
           id: item.id,
-          numero: item.numero,
+          numeroArete: item.numeroArete,
           nombre: item.nombre,
         }));
       },
@@ -253,7 +253,7 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
   private cargarMadres() {
     this.paridaService.getAll().subscribe({
       next: (res) => {
-        this.madres = res.map((p: any) => ({ numero: p.numero, nombre: p.nombre }));
+        this.madres = res.map((p: any) => ({ numeroArete: p.numeroArete, nombre: p.nombre }));
       },
       error: () => {
         // Mantiene las madres por defecto si falla
@@ -273,13 +273,13 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
       //this.editingId = id;
 
       this.form.patchValue({
-        numero: det.numero,
+        numeroArete: det.numeroArete,
         nombre: det.nombre,
-        fechaNac: det.fechaNac ? new Date(det.fechaNac) : null,
+        fechaNacimiento: det.fechaNacimiento ? new Date(det.fechaNacimiento) : null,
         pesoKg: det.pesoKg ?? null,
         color: det.color ?? null,
         propietario: det.propietario ?? null,
-        fincaId: det.fincaId ?? null,
+        fincaActualId: det.fincaActualId ?? null,
         madreNumero: det.madreNumero ?? null,
         detalles: det.detalles ?? null,
         fechaDestete: det.fechaDestete ? new Date(det.fechaDestete) : null,
@@ -298,20 +298,20 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
       const res: any = await firstValueFrom(this.recriasService.getAll());
       this.recrias = (res || []).map((item: any) => ({
         id: item.id,
-        numero: item.numero,
+        numeroArete: item.numeroArete,
         nombre: item.nombre,
       }));
       this.totalRecrias = this.recrias.length;
 
       const rows: RecriaDetalle[] = (res || []).map((it: any) => ({
         id: it.id,
-        numero: it.numero,
+        numeroArete: it.numeroArete,
         nombre: it.nombre,
-        fechaNac: it.fechaNac || null,
+        fechaNacimiento: it.fechaNacimiento ? new Date(it.fechaNacimiento) : null,
         pesoKg: it.pesoKg || null,
         color: it.color || null,
         propietario: it.propietario || null,
-        fincaId: it.fincaId || null,
+        fincaActualId: it.fincaActualId || null,
         madreNumero: it.madreNumero || null,
         madreNombre: it.madreNombre || null,
         detalles: it.detalles || null,
@@ -332,13 +332,13 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
       if (!det) return;
 
       this.form.patchValue({
-        numero: det.numero,
+        numeroArete: det.numeroArete,
         nombre: det.nombre,
-        fechaNac: det.fechaNac ? new Date(det.fechaNac) : null,
+        fechaNacimiento: det.fechaNacimiento ? new Date(det.fechaNacimiento) : null,
         pesoKg: det.pesoKg ?? null,
         color: det.color ?? null,
         propietario: det.propietario ?? null,
-        fincaId: det.fincaId ?? null,
+        fincaActualId: det.fincaActualId ?? null,
         madreNumero: det.madreNumero ?? null,
         detalles: det.detalles ?? null,
         fechaDestete: det.fechaDestete ? new Date(det.fechaDestete) : null,
@@ -423,13 +423,13 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
     this.consultMode = false;
     this.form.enable({ emitEvent: false });
     this.form.patchValue({
-      numero: row.numero,
+      numeroArete: row.numeroArete,
       nombre: row.nombre,
-      fechaNac: row.fechaNac ? new Date(row.fechaNac) : null,
+      fechaNacimiento : row.fechaNacimiento ? new Date(row.fechaNacimiento) : null,
       pesoKg: row.pesoKg ?? null,
       color: row.color ?? null,
       propietario: row.propietario ?? null,
-      fincaId: row.fincaId ?? null,
+      fincaActualId: row.fincaActualId ?? null,
       madreNumero: row.madreNumero ?? null,
       detalles: row.detalles ?? null,
       fechaDestete: row.fechaDestete ? new Date(row.fechaDestete) : null,
@@ -469,8 +469,8 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
         switch (k) {
           case 'idx':
             return String(idx + 1);
-          case 'fechaNac':
-            return r.fechaNac ? this.formatDate(r.fechaNac) : '';
+          case 'fechaNacimiento':
+            return r.fechaNacimiento ? this.formatDate(r.fechaNacimiento) : '';
           default:
             return (r as any)[k] ?? '';
         }
@@ -531,7 +531,7 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
   }
 
   /** trackBy para mat-table */
-  trackById = (_: number, r: RecriaDetalle) => r?.id ?? r?.numero ?? _;
+  trackById = (_: number, r: RecriaDetalle) => r?.id ?? r?.numeroArete ?? _;
 
   submit() {
     // En modo consulta no se guarda (el guardado ahí es guardarDestete)
@@ -542,14 +542,14 @@ export class RecriasHembrasComponent implements OnInit, AfterViewInit {
     const v = this.form.getRawValue();
     const toYMD = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : d || null);
 
-    const payload = {
-      numero: v.numero,
+    const payload: any = {
+      numeroArete: v.numeroArete,
       nombre: v.nombre,
-      fechaNac: toYMD(v.fechaNac),
+      fechaNacimiento: toYMD(v.fechaNacimiento),
       pesoKg: v.pesoKg ?? null,
       color: v.color ?? null,
       propietario: v.propietario ?? null,
-      fincaId: v.fincaId,
+      fincaActualId: v.fincaActualId,
       madreNumero: v.madreNumero ?? null,
       detalles: v.detalles ?? null,
       fechaDestete: toYMD(v.fechaDestete),

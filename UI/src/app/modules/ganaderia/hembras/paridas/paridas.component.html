@@ -7,8 +7,8 @@
       <!-- ===== Identificación ===== -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Número</mat-label>
-        <input matInput formControlName="numero" />
-        <mat-error *ngIf="form.controls.numero.invalid && form.controls.numero.touched"> Requerido </mat-error>
+        <input matInput formControlName="numeroArete" />
+        <mat-error *ngIf="form.controls.numeroArete.invalid && form.controls.numeroArete.touched"> Requerido </mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
@@ -65,7 +65,7 @@
             {{ f.nombre }}
           </mat-option>
         </mat-select>
-        <mat-error *ngIf="form.controls.fincaId.invalid && form.controls.fincaId.touched"> Requerido </mat-error>
+        <mat-error *ngIf="form.controls.fincaActualId.invalid && form.controls.fincaActualId.touched"> Requerido </mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
@@ -104,9 +104,9 @@
     *ngIf="showCriaForm"
     [generoCria]="form.controls.generoCria.value ?? 'Hembra'"
     [madreId]="null"
-    [madreNumero]="form.controls.numero.value ?? ''"
+    [madreNumero]="form.controls.numeroArete.value ?? ''"
     [madreNombre]="form.controls.nombre.value ?? ''"
-    [fincaId]="form.controls.fincaId.value ?? null"
+    [fincaId]="form.controls.fincaActualId.value ?? null"
     [fincas]="fincas"
     (saved)="onCriaGuardada($event)">
   </app-parida-cria-form>

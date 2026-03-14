@@ -14,7 +14,7 @@ type Genero = 'Hembra' | 'Macho';
 export interface CriaDraftDto {
   numero: string | null;
   nombre: string | null;
-  fechaNac: string | null;
+  fechaNacimiento: string | null;
   color: string | null;
   propietario: string | null;
   pesoKg: number | null;
@@ -57,7 +57,7 @@ export class ParidaCriaFormComponent implements OnChanges {
   form = this.fb.group({
     numero: [''],
     nombre: ['', [Validators.required]],
-    fechaNac: [null as Date | null],
+    fechaNacimiento: [null as Date | null],
     color: [''],
     propietario: [''],
     pesoKg: [null as number | null],
@@ -105,7 +105,7 @@ export class ParidaCriaFormComponent implements OnChanges {
     const criaData: CriaDraftDto = {
       numero: values.numero ?? null,
       nombre: values.nombre ?? null,
-      fechaNac: this.toYmd(values.fechaNac),
+      fechaNacimiento: this.toYmd(values.fechaNacimiento),
       color: values.color ?? null,
       propietario: values.propietario ?? null,
       pesoKg: values.pesoKg ?? null,
@@ -116,7 +116,7 @@ export class ParidaCriaFormComponent implements OnChanges {
     };
 
     this.isSaving = false;
-    this.form.reset({ fincaId: this.fincaId ?? null, numero: '', nombre: '', pesoKg: null, fechaNac: null, color: '', propietario: '', detalles: '' });
+    this.form.reset({ fincaId: this.fincaId ?? null, numero: '', nombre: '', pesoKg: null, fechaNacimiento: null, color: '', propietario: '', detalles: '' });
     this.saved.emit(criaData);
   }
 }

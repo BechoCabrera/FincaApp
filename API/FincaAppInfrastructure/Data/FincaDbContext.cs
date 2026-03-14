@@ -74,6 +74,13 @@ public class FincaDbContext : DbContext
             .HasIndex(a => new { a.TenantId, a.NumeroArete })
             .IsUnique();
 
+        modelBuilder.Entity<Animal>()
+        .HasOne(a => a.Madre)
+        .WithMany() // o .WithMany(a => a.Crias) si tienes la colección de crías
+        .HasForeignKey(a => a.MadreId);
+        //.OnDelete(DeleteBehavior.Restrict); // O el comportamiento que prefieras
+
+
         // Indexes for timeline performance
         modelBuilder.Entity<AnimalMovimiento>()
             .HasIndex(m => new { m.TenantId, m.AnimalId });

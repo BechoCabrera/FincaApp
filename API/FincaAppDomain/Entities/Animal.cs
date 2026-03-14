@@ -18,6 +18,7 @@ public class Animal : BaseEntity
     public DateTime FechaNacimiento { get; private set; }
 
     public Guid? MadreId { get; private set; }
+    public Animal? Madre { get; private set; }
     public Guid? PadreId { get; private set; }
 
     public bool Activo { get; private set; } = true;

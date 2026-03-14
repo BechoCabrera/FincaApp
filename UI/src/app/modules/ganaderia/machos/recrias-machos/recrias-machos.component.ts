@@ -33,7 +33,7 @@ import autoTable from 'jspdf-autotable';
 
 type AnimalTableRow = Partial<AnimalDto> & {
   id: string;
-  fechaNac?: string | Date | null;
+  fechaNacimiento?: string | Date | null;
   fechaDestete?: string | Date | null;
 };
 
@@ -103,7 +103,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   displayedColumns: string[] = [
     'idx',
     'nombre',
-    'fechaNac',
+    'fechaNacimiento',
     'color',
     'pesoKg',
     'propietario',
@@ -116,7 +116,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     { key: 'idx', label: '#' },
 
     { key: 'nombre', label: 'NOMBRE' },
-    { key: 'fechaNac', label: 'F. NACIMIENTO' },
+    { key: 'fechaNacimiento', label: 'F. NACIMIENTO' },
     { key: 'color', label: 'COLOR' },
     { key: 'pesoKg', label: 'PESO' },
     { key: 'propietario', label: 'PROPIETARIO' },
@@ -136,11 +136,11 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.form = this.fb.group({
       nombre: [null, Validators.required],
-      fechaNac: [null as Date | null],
+      fechaNacimiento: [null as Date | null],
       pesoKg: [null],
       color: [null],
       propietario: [null],
-      fincaId: [null, Validators.required],
+      fincaActualId: [null, Validators.required],
       madreId: [null],
       detalles: [null],
       fechaDestete: [null as Date | null],
@@ -163,11 +163,11 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     this.dataSource.sort = this.sort;
 
     this.dataSource.filterPredicate = (row: AnimalTableRow, filterJson: string) => {
-      const f = JSON.parse(filterJson) as { q: string; fincaId: string };
+      const f = JSON.parse(filterJson) as { q: string; fincaActualId: string };
       const q = (f.q || '').toLowerCase();
-      const finca = f.fincaId || '';
+      const finca = f.fincaActualId || '';
       const matchTexto = (row.nombre || '').toLowerCase().includes(q) || (row.propietario || '').toLowerCase().includes(q) || String(row.madreNumero || '').includes(q);
-      const matchFinca = !finca || (row.fincaId ?? row.fincaActualId) === finca;
+      const matchFinca = !finca || (row.fincaActualId ?? row.fincaActualId) === finca;
       return matchTexto && matchFinca;
     };
 
@@ -189,7 +189,7 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
   private applyFilter() {
     this.dataSource.filter = JSON.stringify({
       q: this.qCtrl.value || '',
-      fincaId: this.fincaCtrl.value || '',
+      fincaActualId: this.fincaCtrl.value || '',
     });
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   }
@@ -228,11 +228,11 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
         const rows: AnimalTableRow[] = items.map((it: AnimalDto) => ({
           id: it.id,
           nombre: it.nombre,
-          fechaNac: it.fechaNac ?? it.fechaNacimiento ?? null,
+          fechaNacimiento: it.fechaNacimiento ?? it.fechaNacimiento ?? null,
           pesoKg: it.pesoKg ?? null,
           color: it.color ?? null,
           propietario: it.propietario ?? null,
-          fincaId: it.fincaId ?? it.fincaActualId ?? null,
+          fincaActualId: it.fincaActualId ?? it.fincaActualId ?? null,
           madreNumero: it.madreNumero ?? null,
           madreNombre: it.madreNombre ?? null,
           detalles: it.detalles ?? null,
@@ -255,18 +255,18 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
 
   private cargarFincas() {
     this.isLoadingFincas = true;
-    this.form.get('fincaId')?.disable({ emitEvent: false });
+    this.form.get('fincaActualId')?.disable({ emitEvent: false });
     this.fincaCtrl.disable({ emitEvent: false });
     this.fincaService.listar().subscribe({
       next: (res) => {
         this.fincas = res.filter((f) => f.isActive).map((f) => ({ id: f.id, nombre: f.nombre }));
         this.isLoadingFincas = false;
-        if (this.form.enabled) this.form.get('fincaId')?.enable({ emitEvent: false });
+        if (this.form.enabled) this.form.get('fincaActualId')?.enable({ emitEvent: false });
         this.fincaCtrl.enable({ emitEvent: false });
       },
       error: () => {
         this.isLoadingFincas = false;
-        if (this.form.enabled) this.form.get('fincaId')?.enable({ emitEvent: false });
+        if (this.form.enabled) this.form.get('fincaActualId')?.enable({ emitEvent: false });
         this.fincaCtrl.enable({ emitEvent: false });
         this.notify.error('No se pudo cargar las fincas', 3000);
       },
@@ -300,11 +300,11 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
 
         this.form.patchValue({
           nombre: det.nombre ?? null,
-          fechaNac: det.fechaNac ?? null,
+          fechaNacimiento: det.fechaNacimiento ?? null,
           pesoKg: det.pesoKg ?? null,
           color: det.color ?? null,
           propietario: det.propietario ?? null,
-          fincaId: det.fincaId ?? null,
+          fincaActualId: det.fincaActualId ?? null,
           madreId: det.madreId ?? null,
           detalles: det.detalles ?? null,
           fechaDestete: null,
@@ -384,11 +384,11 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
         this.form.enable({ emitEvent: false });
         this.form.patchValue({
           nombre: det.nombre,
-          fechaNac: det.fechaNac ?? null,
+          fechaNacimiento: det.fechaNacimiento ?? null,
           pesoKg: det.pesoKg ?? null,
           color: det.color ?? null,
           propietario: det.propietario ?? null,
-          fincaId: det.fincaId ?? null,
+          fincaActualId: det.fincaActualId ?? null,
           madreId: det.madreId ?? null,
           detalles: det.detalles ?? null,
           fechaDestete: det.fechaDestete ?? null,
@@ -430,8 +430,8 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
         switch (k) {
           case 'idx':
             return String(idx + 1);
-          case 'fechaNac':
-            return r.fechaNac ? this.formatDate(r.fechaNac) : '';
+          case 'fechaNacimiento':
+            return r.fechaNacimiento ? this.formatDate(r.fechaNacimiento) : '';
           default:
             return (r as any)[k] ?? '';
         }
@@ -503,13 +503,13 @@ export class RecriasMachosComponent implements OnInit, AfterViewInit {
     const toYMD = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : d || null);
     const m = this.madres.find((x) => x.id === v.madreId);
 
-    const payload: Partial<AnimalDto> & { fechaNac?: string | null; fechaDestete?: string | null } = {
+    const payload: Partial<AnimalDto> & { fechaNacimiento?: string | null; fechaDestete?: string | null } = {
       nombre: v.nombre,
-      fechaNac: toYMD(v.fechaNac),
+      fechaNacimiento: toYMD(v.fechaNacimiento),
       pesoKg: v.pesoKg ?? null,
       color: v.color ?? null,
       propietario: v.propietario ?? null,
-      fincaId: v.fincaId,
+      fincaActualId: v.fincaActualId,
       madreId: m?.id ?? v.madreId ?? null,
       madreNumero: m?.numero ?? null,
       madreNombre: m?.nombre ?? null,

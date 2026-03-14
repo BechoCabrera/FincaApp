@@ -31,12 +31,13 @@ import { CriaView } from 'src/app/core/models/animal-view.models';
 
 export interface CriaMacho {
   id?: string;
+  numeroArete: string;
   nombre: string;
-  fechaNac?: Date | null;
+  fechaNacimiento?: Date | null;
   color?: string | null;
   propietario?: string | null;
   pesoKg?: number | null;
-  fincaId: string | null;
+  fincaActualId: string | null;
   madreId?: string | null;
   madreNumero?: string | null;
   madreNombre?: string | null;
@@ -74,12 +75,13 @@ export class CriasMachosComponent {
 
   // ===== Form =====
   form = this.fb.group({
+    numeroArete: ['', [Validators.required]],
     nombre: ['', [Validators.required]],
-    fechaNac: [null as Date | null],
+    fechaNacimiento: [null as Date | null],
     color: [''],
     propietario: [''],
     pesoKg: [null as number | null],
-    fincaId: [null as string | null, [Validators.required]],
+    fincaActualId: [null as string | null, [Validators.required]],
     madreId: [null as string | null],
     detalles: [''],
   });
@@ -100,13 +102,14 @@ export class CriasMachosComponent {
 
   // ===== Tabla =====
   displayedColumns: string[] = [
-    'nombre', 'fechaNac', 'color', 'pesoKg', 'propietario',
+    'numero', 'nombre', 'fechaNac', 'color', 'pesoKg', 'propietario',
     'madreNumero', 'madreNombre', 'detalles', 'acciones',
   ];
   dataSource = new MatTableDataSource<CriaMacho>([]);
 
   allColumns = [
     { key: 'idx',          label: 'N°' },
+    { key: 'numero',       label: 'N°' },
     { key: 'nombre',       label: 'Nombre' },
     { key: 'fechaNac',     label: 'F. Nacimiento' },
     { key: 'color',        label: 'Color' },
@@ -166,11 +169,12 @@ export class CriasMachosComponent {
       const q = (f.q || '').trim().toLowerCase();
       const byText =
         !q ||
+        (row.numeroArete || '').toLowerCase().includes(q) ||
         (row.nombre || '').toLowerCase().includes(q) ||
         (row.propietario || '').toLowerCase().includes(q) ||
         (row.madreNumero || '').toLowerCase().includes(q) ||
         (row.madreNombre || '').toLowerCase().includes(q);
-      const byFinca = !f.fincaId || f.fincaId === (row.fincaId || '');
+      const byFinca = !f.fincaId || f.fincaId === (row.fincaActualId || '');
       return byText && byFinca;
     };
 
@@ -211,12 +215,13 @@ export class CriasMachosComponent {
   private mapDtoToModel(dto: AnimalDto): CriaMacho {
     return {
       id: dto.id,
+      numeroArete: (dto as any).numeroArete ?? (dto as any).numero ?? '',
       nombre: (dto as any).nombre ?? '',
-      fechaNac: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
+      fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
       color: (dto as any).color ?? null,
       propietario: (dto as any).propietario ?? null,
       pesoKg: (dto as any).pesoKg ?? null,
-      fincaId: dto.fincaActualId ?? null,
+      fincaActualId: dto.fincaActualId ?? null,
       madreId: (dto as any).madreId ?? null,
       madreNumero: (dto as any).madreNumero ?? null,
       madreNombre: (dto as any).madreNombre ?? null,
@@ -236,12 +241,13 @@ export class CriasMachosComponent {
       next: (res: CriaView[]) => {
         const rows = (res || []).map((v: CriaView) => ({
           id: v.id,
+          numeroArete: v.numeroArete ?? '',
           nombre: v.nombre ?? '',
-          fechaNac: v.fechaNac ? new Date(v.fechaNac) : null,
+          fechaNacimiento: v.fechaNacimiento ? new Date(v.fechaNacimiento) : null,
           color: v.color ?? null,
           propietario: v.propietario ?? null,
           pesoKg: v.pesoKg ?? null,
-          fincaId: v.fincaId ?? null,
+          fincaActualId: v.fincaActualId ?? null,
           madreId: v.madreId ?? null,
           madreNumero: v.madreNumero ?? v.madreNumero ?? null,
           madreNombre: v.madreNombre ?? null,
@@ -325,12 +331,13 @@ export class CriasMachosComponent {
     const m = this.madres.find(x => x.id === v.madreId);
 
     const payload: CreateCriaMachoDto = {
+      numeroArete: String(v.numeroArete ?? ''),
       nombre: String(v.nombre ?? ''),
-      fechaNac: this.toYmd(v.fechaNac),
+      fechaNacimiento: this.toYmd(v.fechaNacimiento),
       color: v.color ?? null,
       propietario: v.propietario ?? null,
       pesoKg: v.pesoKg ?? null,
-      fincaId: v.fincaId ?? null,
+      fincaActualId: v.fincaActualId ?? null,
       madreId: m?.id ?? v.madreId ?? null,
       madreNumero: m?.numero ?? null,
       madreNombre: m?.nombre ?? null,
@@ -357,7 +364,7 @@ export class CriasMachosComponent {
       next: () => {
         this.isSaving.set(false);
         this.editingId.set(null);
-        this.form.reset({ fincaId: null, madreId: null, pesoKg: null });
+        this.form.reset({ fincaActualId: null, madreId: null, pesoKg: null });
         this.cargarCrias();
         this.snack.open(editId ? 'Cria actualizada' : 'Cria guardada', 'OK', { duration: 2500 });
       },
@@ -375,12 +382,13 @@ export class CriasMachosComponent {
     }
     this.editingId.set(r.id);
     this.form.patchValue({
+      numeroArete: r.numeroArete,
       nombre: r.nombre,
-      fechaNac: r.fechaNac,
+      fechaNacimiento: r.fechaNacimiento ? new Date(r.fechaNacimiento) : null,
       color: r.color,
       propietario: r.propietario,
       pesoKg: r.pesoKg ?? null,
-      fincaId: r.fincaId,
+      fincaActualId: r.fincaActualId,
       madreId: r.madreId ?? null,
       detalles: r.detalles,
     });
@@ -389,7 +397,7 @@ export class CriasMachosComponent {
 
   cancelarEdicion() {
     this.editingId.set(null);
-    this.form.reset({ fincaId: null, madreId: null, pesoKg: null });
+    this.form.reset({ fincaActualId: null, madreId: null, pesoKg: null });
   }
 
   eliminar(r: CriaMacho) {
@@ -398,7 +406,7 @@ export class CriasMachosComponent {
     this.snack.open('Cria eliminada', 'OK', { duration: 2500 });
   }
 
-  trackById = (_: number, it: CriaMacho) => it.id ?? `${it.nombre}-${it.fechaNac ?? ''}`;
+  trackById = (_: number, it: CriaMacho) => it.id ?? `${it.nombre}-${it.fechaNacimiento ?? ''}`;
 
   // ===== Exportar PDF =====
   exportPdf() {

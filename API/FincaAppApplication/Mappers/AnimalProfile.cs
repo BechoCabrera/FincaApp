@@ -19,6 +19,8 @@ public class AnimalProfile : Profile
             .ForMember(dest => dest.TipoLeche, opt => opt.MapFrom(src => src.TipoLeche))
             .ForMember(dest => dest.Propietario, opt => opt.MapFrom(src => src.Propietario))
             .ForMember(dest => dest.PesoKg, opt => opt.MapFrom(src => src.PesoKg))
+            .ForMember(dest => dest.MadreNombre, opt => opt.MapFrom(src => src.Madre.Nombre))
+            .ForMember(dest => dest.MadreNumero, opt => opt.MapFrom(src => src.Madre.NumeroArete))
             .ForMember(dest => dest.Detalles, opt => opt.MapFrom(src => src.Detalles));
     }
 }

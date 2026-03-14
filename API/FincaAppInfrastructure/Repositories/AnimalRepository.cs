@@ -16,7 +16,7 @@ public class AnimalRepository : IAnimalRepository
     }
 
     public async Task<Animal?> GetByIdAsync(Guid id)
-        => await _context.Animales.FirstOrDefaultAsync(x => x.Id == id);
+        => await _context.Animales.Include(x=> x.Madre).FirstOrDefaultAsync(x => x.Id == id);
 
     public async Task<Animal?> GetByNumeroAreteAsync(string numeroArete)
         => await _context.Animales
@@ -55,19 +55,19 @@ public class AnimalRepository : IAnimalRepository
         if (tipo.HasValue)
             query = query.Where(x => x.Tipo == tipo.Value);
 
-        if (proposito.HasValue)
-            query = query.Where(x => x.Proposito == proposito.Value);
+        //if (proposito.HasValue)
+        //    query = query.Where(x => x.Proposito == proposito.Value);
 
         if (!string.IsNullOrWhiteSpace(estado))
         {
             bool filtroAplicado = false;
 
-            if (Enum.TryParse<EstadoHembra>(estado, out var estadoHembra))
+            if (Enum.TryParse<EstadoHembra>(estado, out var estadoHembra) && tipo.Value == TipoAnimal.Hembra)
             {
                 query = query.Where(x => x.EstadoActualHembra == estadoHembra);
                 filtroAplicado = true;
             }
-            if (Enum.TryParse<EstadoMacho>(estado, out var estadoMacho))
+            if (Enum.TryParse<EstadoMacho>(estado, out var estadoMacho) && tipo.Value == TipoAnimal.Macho)
             {
                 // Si ya se aplicó filtro por hembra, agregamos el de macho con OR
                 if (filtroAplicado)
@@ -82,7 +82,9 @@ public class AnimalRepository : IAnimalRepository
             .Skip((page - 1) * pageSize)
             .Take(pageSize);
 
-        return await query.ToListAsync();
+        List<Animal> result = await query.ToListAsync();
+
+        return result;
     }
 
 }

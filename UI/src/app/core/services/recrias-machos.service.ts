@@ -13,13 +13,13 @@ export class RecriasMachosService {
   private animalService = inject(AnimalService);
   private apiUrl = `${environment.apiUrl}/api/RecriasMachos`;
 
-  listarRecrias(opts?: { q?: string; fincaId?: string; page?: number; pageSize?: number }): Observable<AnimalDto[]> {
+  listarRecrias(opts?: { q?: string; fincaActualId?: string; page?: number; pageSize?: number }): Observable<AnimalDto[]> {
     const params: any = {
       tipo: TipoAnimal.Macho,
       proposito: PropositoAnimal.Carne,
       estado: EstadoMacho.Recria,
       q: opts?.q,
-      fincaId: opts?.fincaId,
+      fincaActualId: opts?.fincaActualId,
       page: opts?.page,
       pageSize: opts?.pageSize,
     };
@@ -36,8 +36,8 @@ export class RecriasMachosService {
       tipo: TipoAnimal.Macho,
       proposito: PropositoAnimal.Carne,
       estadoActualMacho: EstadoMacho.Recria,
-      fechaNacimiento: payload.fechaNac ?? null,
-      fincaId: payload.fincaId ?? null,
+      fechaNacimiento: payload.fechaNacimiento ?? null,
+      fincaActualId: payload.fincaActualId ?? null,
     };
 
     return this.animalService.upsert(animalPayload);
@@ -50,8 +50,8 @@ export class RecriasMachosService {
       tipo: TipoAnimal.Macho,
       proposito: PropositoAnimal.Carne,
       estadoActualMacho: EstadoMacho.Recria,
-      fechaNacimiento: payload.fechaNac ?? null,
-      fincaId: payload.fincaId ?? null,
+      fechaNacimiento: payload.fechaNacimiento ?? null,
+      fincaActualId: payload.fincaActualId ?? null,
     };
     return this.animalService.upsert(animalPayload);
   }
@@ -68,13 +68,13 @@ export class RecriasMachosService {
   private mapAnimalToView(a: AnimalDto): CriaView {
     return {
       id: a.id,
-      numero: a.numeroArete ?? null,
+      numeroArete: a.numeroArete ?? null,
       nombre: a.nombre ?? null,
-      fechaNac: a.fechaNacimiento ?? null,
+      fechaNacimiento: a.fechaNacimiento ?? null,
       color: a.color ?? null,
       propietario: a.propietario ?? null,
       pesoKg: a.pesoKg ?? null,
-      fincaId: a.fincaActualId ?? null,
+      fincaActualId: a.fincaActualId ?? null,
       madreId: a.madreId ?? null,
       madreNumero: a.madreNumero ?? null,
       madreNombre: a.madreNombre ?? null,
@@ -83,7 +83,7 @@ export class RecriasMachosService {
     };
   }
 
-  getAllAsView(opts?: { q?: string; fincaId?: string; page?: number; pageSize?: number }): Observable<CriaView[]> {
+  getAllAsView(opts?: { q?: string; fincaActualId?: string; page?: number; pageSize?: number }): Observable<CriaView[]> {
     return this.listarRecrias(opts).pipe(map((items: AnimalDto[]) => (items || []).map((a) => this.mapAnimalToView(a))));
   }
 

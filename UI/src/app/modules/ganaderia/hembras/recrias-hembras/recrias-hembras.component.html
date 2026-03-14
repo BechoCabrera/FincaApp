@@ -29,7 +29,7 @@
       <!-- fila 1 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>Número</mat-label>
-        <input matInput formControlName="numero" placeholder="Nro" />
+        <input matInput formControlName="numeroArete" placeholder="Nro" />
         <mat-error *ngIf="has('numero', 'required')">Requerido</mat-error>
       </mat-form-field>
 
@@ -42,7 +42,7 @@
       <!-- fila 2 -->
       <mat-form-field appearance="fill" class="ui-field ui-field-6">
         <mat-label>F. Nacimiento</mat-label>
-        <input matInput [matDatepicker]="nacPicker" formControlName="fechaNac" />
+        <input matInput [matDatepicker]="nacPicker" formControlName="fechaNacimiento" />
         <mat-datepicker-toggle matSuffix [for]="nacPicker"></mat-datepicker-toggle>
         <mat-datepicker #nacPicker></mat-datepicker>
       </mat-form-field>
@@ -149,7 +149,7 @@
         <ng-container matColumnDef="numero">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Nº</th>
           <td mat-cell *matCellDef="let r">
-            <strong>{{ r.numero }}</strong>
+            <strong>{{ r.numeroArete }}</strong>
           </td>
         </ng-container>
 
@@ -158,9 +158,9 @@
           <td mat-cell *matCellDef="let r">{{ r.nombre }}</td>
         </ng-container>
 
-        <ng-container matColumnDef="fechaNac">
+        <ng-container matColumnDef="fechaNacimiento">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>F. NACIMIENTO</th>
-          <td mat-cell *matCellDef="let r">{{ r.fechaNac | date : 'yyyy-MM-dd' }}</td>
+          <td mat-cell *matCellDef="let r">{{ r.fechaNacimiento | date : 'yyyy-MM-dd' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="color">

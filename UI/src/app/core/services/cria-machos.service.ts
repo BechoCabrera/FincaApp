@@ -7,12 +7,13 @@ import { CriaView } from '../models/animal-view.models';
 import { EstadoMacho, PropositoAnimal, TipoAnimal } from '../models/animal.enums';
 
 export interface CreateCriaMachoDto {
+  numeroArete: string;
   nombre: string;
-  fechaNac?: string | null;
+  fechaNacimiento?: string | null;
   color?: string | null;
   propietario?: string | null;
   pesoKg?: number | null;
-  fincaId: string | null;
+  fincaActualId: string | null;
   madreId?: string | null;
   madreNumero?: string | null;
   madreNombre?: string | null;
@@ -27,12 +28,12 @@ export class CriaMachosService {
 
   create(dto: CreateCriaMachoDto): Observable<AnimalDto> {
     const payload: any = {
-      numeroArete: dto.madreNumero ?? dto.nombre,
+      numeroArete: dto.numeroArete,
       tipo: TipoAnimal.Macho,
       proposito: PropositoAnimal.Carne,
       estadoActualMacho: EstadoMacho.Cria,
-      fechaNacimiento: dto.fechaNac ?? null,
-      fincaId: dto.fincaId ?? null,
+      fechaNacimiento: dto.fechaNacimiento ?? null,
+      fincaActualId: dto.fincaActualId ?? null,
       madreId: dto.madreId ?? null,
     };
 
@@ -50,12 +51,12 @@ export class CriaMachosService {
   update(id: string, dto: CreateCriaMachoDto): Observable<AnimalDto> {
     const payload: any = {
       id,
-      numeroArete: dto.madreNumero ?? dto.nombre,
+      numeroArete: dto.numeroArete,
       tipo: TipoAnimal.Macho,
       proposito: PropositoAnimal.Carne,
       estadoActualMacho: EstadoMacho.Cria,
-      fechaNacimiento: dto.fechaNac ?? null,
-      fincaId: dto.fincaId ?? null,
+      fechaNacimiento: dto.fechaNacimiento ?? null,
+      fincaActualId: dto.fincaActualId ?? null,
       madreId: dto.madreId ?? null,
     };
 
@@ -81,13 +82,13 @@ export class CriaMachosService {
     const asAny = a as any;
     return {
       id: a.id,
-      numero: asAny.numeroArete ?? null,
+      numeroArete: asAny.numeroArete ?? null,
       nombre: asAny.nombre ?? null,
-      fechaNac: asAny.fechaNacimiento ?? null,
+      fechaNacimiento: asAny.fechaNacimiento ?? null,
       color: asAny.color ?? null,
       propietario: asAny.propietario ?? null,
       pesoKg: asAny.pesoKg ?? null,
-      fincaId: a.fincaActualId ?? null,
+      fincaActualId: a.fincaActualId ?? null,
       madreId: asAny.madreId ?? null,
       madreNumero: asAny.madreNumero ?? null,
       madreNombre: asAny.madreNombre ?? null,

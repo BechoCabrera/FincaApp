@@ -9,8 +9,8 @@ import { EstadoHembra, PropositoAnimal, TipoAnimal } from '../models/animal.enum
 
 export interface CreateParidaDto {
   nombre: string;
-  numero: string;
-  fincaId: string;
+  numeroArete: string;
+  fincaActualId: string;
 
   generoCria: 'Hembra' | 'Macho';
 
@@ -53,8 +53,8 @@ export class ParidaService {
     return {
       id: a.id,
       nombre: a.nombre ?? null,
-      numero: a.numeroArete ?? a.numero ?? null,
-      fincaId: a.fincaActualId ?? null,
+      numeroArete: a.numeroArete ?? a.numero ?? null,
+      fincaActualId: a.fincaActualId ?? null,
       generoCria: a.tipo === 1 ? 'Hembra' : 'Macho',
       fechaParida: a.fechaParida ?? null,
       fechaPalpacion: a.fechaPalpacion ?? null,
@@ -119,12 +119,12 @@ export class ParidaService {
 
   update(id: string, dto: CreateParidaDto): Observable<AnimalDto> {
     const payload: any = {
-      numeroArete: dto.numero,
+      numeroArete: dto.numeroArete,
       tipo: TipoAnimal.Hembra,
       proposito: PropositoAnimal.Carne,
       estadoActualHembra: EstadoHembra.Parida,
       fechaNacimiento: dto.fechaNacimiento ?? null,
-      fincaId: dto.fincaId,
+      fincaActualId: dto.fincaActualId,
       id: id,
     };
 
