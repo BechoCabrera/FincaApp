@@ -7,20 +7,20 @@ import { EscoteraView } from '../models/animal-view.models';
 import { EstadoHembra, PropositoAnimal, TipoAnimal } from '../models/animal.enums';
 
 export interface CreateEscoteraDto {
-  numero: number;
+  numeroArete: number;
   nombre: string;
   color?: string | null;
   procedencia?: string | null;
   propietario?: string | null;
   nroMama?: number | null;
-  fechaNacida?: string | null;
+  fechaNacimiento?: string | null;
   tipoLeche?: string | null;
   fPalpacion?: string | null;
   dPrenez?: number | null;
   detalles?: string | null;
   fechaDestete?: string | null;
   vacaId?: string | null;
-  fincaId?: string | null;
+  fincaActualId?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -32,12 +32,12 @@ export class EscoteraService {
   /** CREATE */
   create(dto: CreateEscoteraDto): Observable<AnimalDto> {
     const payload: any = {
-      numeroArete: String(dto.numero),
+      numeroArete: String(dto.numeroArete),
       tipo: TipoAnimal.Hembra,
       proposito: PropositoAnimal.Carne,
       estadoActualHembra: EstadoHembra.Escotera,
-      fechaNacimiento: dto.fechaNacida ?? null,
-      fincaId: dto.fincaId ?? null,
+      fechaNacimiento: dto.fechaNacimiento ?? null,
+      fincaActualId: dto.fincaActualId ?? null,
     };
 
     return this.animalService.upsert(payload);
@@ -58,12 +58,12 @@ export class EscoteraService {
   update(id: string, dto: CreateEscoteraDto): Observable<AnimalDto> {
     const payload: any = {
       id: id,
-      numeroArete: String(dto.numero),
+      numeroArete: String(dto.numeroArete),
       tipo: TipoAnimal.Hembra,
       proposito: PropositoAnimal.Carne,
       estadoActualHembra: EstadoHembra.Escotera,
-      fechaNacimiento: dto.fechaNacida ?? null,
-      fincaId: dto.fincaId ?? null,
+      fechaNacimiento: dto.fechaNacimiento ?? null,
+      fincaActualId: dto.fincaActualId ?? null,
     };
     return this.animalService.upsert(payload);
   }
@@ -78,19 +78,19 @@ export class EscoteraService {
     const asAny = a as any;
     return {
       id: a.id,
-      numero: asAny.numeroArete ?? null,
+      numeroArete: asAny.numeroArete ?? null,
       nombre: asAny.nombre ?? null,
       color: asAny.color ?? null,
       procedencia: asAny.procedencia ?? null,
       propietario: asAny.propietario ?? null,
       nroMama: asAny.nroMama ?? null,
-      fechaNacida: asAny.fechaNacimiento ?? null,
+      fechaNacimiento: asAny.fechaNacimiento ?? null,
       tipoLeche: asAny.tipoLeche ?? null,
       fPalpacion: asAny.fechaPalpacion ?? null,
       dPrenez: asAny.dPrenez ?? null,
       detalles: asAny.observaciones ?? null,
       fechaDestete: asAny.fechaDestete ?? null,
-      fincaId: a.fincaActualId ?? null,
+      fincaActualId: a.fincaActualId ?? null,
     };
   }
 

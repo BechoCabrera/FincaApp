@@ -85,13 +85,13 @@ export class RecriaHembrasService {
     const asAny = a as any;
     return {
       id: a.id,
-      numero: asAny.numeroArete ?? null,
+      numeroArete: asAny.numeroArete ?? null,
       nombre: asAny.nombre ?? null,
-      fechaNac: asAny.fechaNacimiento ?? null,
+      fechaNacimiento: asAny.fechaNacimiento ?? null,
       color: asAny.color ?? null,
       propietario: asAny.propietario ?? null,
       pesoKg: asAny.pesoKg ?? null,
-      fincaId: a.fincaActualId ?? null,
+      fincaActualId: a.fincaActualId ?? null,
       madreId: asAny.madreId ?? null,
       madreNumero: asAny.madreNumero ?? null,
       madreNombre: asAny.madreNombre ?? null,

@@ -18,7 +18,7 @@
           #auto="matAutocomplete"
           (optionSelected)="onVacaSelected($event.option.value)"
           [displayWith]="displayVaca">
-          <mat-option *ngFor="let v of vacasFiltradas" [value]="v"> {{ v.numero }} — {{ v.nombre }} </mat-option>
+          <mat-option *ngFor="let v of vacasFiltradas" [value]="v"> {{ v.numeroArete }} — {{ v.nombre }} </mat-option>
         </mat-autocomplete>
       </mat-form-field>
 

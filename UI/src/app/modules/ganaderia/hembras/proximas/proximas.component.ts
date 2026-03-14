@@ -237,14 +237,14 @@ export class ProximasComponent implements OnInit, AfterViewInit {
         this.escoteraService.getAllAsView().subscribe((res: EscoteraView[]) => {
           this.opciones = res.map((e: EscoteraView) => ({
             id: e.id,
-            numero: e.numero,
+            numeroArete: e.numeroArete,
             nombre: e.nombre,
-            fincaId: e.fincaId,
+            fincaActualId: e.fincaActualId,
             color: e.color,
             propietario: e.propietario,
             procedencia: e.procedencia,
             nroMama: e.nroMama,
-            fechaNacida: e.fechaNacida,
+            fechaNacimiento: e.fechaNacimiento ?? null,
             fechaDestete: e.fechaDestete,
             detalles: e.detalles,
             tipoLeche: e.tipoLeche,
@@ -257,13 +257,13 @@ export class ProximasComponent implements OnInit, AfterViewInit {
         this.novillasService.getAllAsView().subscribe((res: CriaView[]) => {
           this.opciones = res.map((n: CriaView) => ({
             id: n.id,
-            numero: n.numero,
+            numeroArete: n.numeroArete,
             nombre: n.nombre,
-            fincaId: n.fincaId,
+            fincaActualId: n.fincaActualId,
             color: n.color,
             procedencia: n.procedencia,
             nroMama: n.madreNumero,
-            fechaNacida: n.fechaNac ?? null,
+            fechaNacimiento: n.fechaNacimiento ?? null,
             fechaDestete: n.fechaDestete ?? null,
             propietario: n.propietario ?? null,
             detalles: n.detalles ?? null,
@@ -308,9 +308,9 @@ export class ProximasComponent implements OnInit, AfterViewInit {
           return;
         } else {
           this.form = this.fb.group({
-            numero: nov.numero,
+            numeroArete: nov.numeroArete,
             nombre: nov.nombre,
-            fechaNacida: nov.fechaNacida || null,
+            fechaNacimiento: nov.fechaNacimiento || null,
             color: nov.color,
             nroMama: nov.nroMama,
             procedencia: nov.procedencia || null,
@@ -319,7 +319,7 @@ export class ProximasComponent implements OnInit, AfterViewInit {
             fPalpacion: null,
             dPrenez: null,
             detalles: nov.detalles || null,
-            fincaId: nov.fincaId,
+            fincaActualId: nov.fincaActualId,
           });
         }
         break;

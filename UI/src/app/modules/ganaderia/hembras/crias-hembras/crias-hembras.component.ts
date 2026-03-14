@@ -77,7 +77,7 @@ export class CriasHembrasComponent {
   fincas: Array<{ id: string; nombre: string }> = [];
 
   // catálogo de madres (solo de ejemplo)
-  madres: CriaView[] = [];
+  madres: Array<{ id: string; numero: string | null; nombre: string | null }> = [];
 
   // ===== formulario =====
   form = this.fb.group({
@@ -251,13 +251,13 @@ export class CriasHembrasComponent {
   private mapDtoToModel(dto: CriaView): CriaHembra {
     return {
       id: dto.id,
-      numero: dto.numero ?? '',
+      numero: dto.numeroArete ?? '',
       nombre: dto.nombre ?? '',
-      fechaNac: dto.fechaNac ? new Date(dto.fechaNac) : null,
+      fechaNac: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : null,
       color: dto.color ?? null,
       propietario: dto.propietario ?? null,
       pesoKg: dto.pesoKg ?? null,
-      fincaId: dto.fincaId ?? null,
+      fincaId: dto.fincaActualId ?? null,
       madreNumero: dto.madreNumero ?? null,
       madreNombre: dto.madreNombre ?? null,
       detalles: dto.detalles ?? null,

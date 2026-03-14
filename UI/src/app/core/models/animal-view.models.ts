@@ -25,7 +25,7 @@ export interface EscoteraView {
   procedencia?: string | null;
   propietario?: string | null;
   nroMama?: string | null;
-  fechaNacida?: string | null;
+  fechaNacimiento?: string | null;
   tipoLeche?: string | null;
   fPalpacion?: string | null;
   dPrenez?: number | null; // d�as de pre�ez

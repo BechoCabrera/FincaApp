@@ -34,19 +34,19 @@ import { ParidaView, EscoteraView } from 'src/app/core/models/animal-view.models
 
 interface EscoteraDetalle {
   id: string;
-  numero: number;
+  numeroArete: string | null;
   nombre: string;
   color?: string | null;
   procedencia?: string | null;
   propietario?: string | null;
   nroMama?: number | string | null;
-  fechaNacida?: string | Date | null;
+  fechaNacimiento?: string | Date | null;
   tipoLeche?: string | null;
   fPalpacion?: string | Date | null;
   dPrenez?: number | null; // días de preñez
   detalles?: string | null;
   fechaDestete?: string | Date | null;
-  fincaId?: string | null; // opcional, por si filtras por finca
+  fincaActualId?: string | null; // opcional, por si filtras por finca
   madreNombre?: string | null; // opcional (tabla)
 }
 
@@ -119,7 +119,7 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
     'procedencia',
     'propietario',
     'nroMama',
-    'fechaNacida',
+    'fechaNacimiento',
     'fechaDestete',
     'tipoLeche',
     'fPalpacion',
@@ -129,7 +129,7 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
   ];
   allColumns = [
     { key: 'idx', label: '#' },
-    { key: 'numero', label: 'Nº ESCOTERA' },
+    { key: 'numeroArete', label: 'Nº ESCOTERA' },
     { key: 'nombre', label: 'NOMBRE' },
     { key: 'color', label: 'COLOR' },
     { key: 'procedencia', label: 'PROCEDENCIA' },
@@ -163,7 +163,7 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
       return v;
     }
 
-    return `${v.numero} — ${v.nombre}`;
+    return `${v.numeroArete} — ${v.nombre}`;
   };
 
   // ========= lifecycle =========
@@ -171,14 +171,14 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
     // 1️⃣ PRIMERO crear el form
     this.form = this.fb.group({
       vacaId: [null],
-      fincaId: [null, Validators.required],
-      numero: [null, Validators.required],
+      fincaActualId: [null, Validators.required],
+      numeroArete: [null, Validators.required],
       nombre: [null, Validators.required],
       color: [null],
       procedencia: [null],
       propietario: [null],
       nroMama: [null],
-      fechaNacida: [null],
+      fechaNacimiento: [null],
       tipoLeche: [null],
       fPalpacion: [null],
       dPrenez: [null],
@@ -208,7 +208,7 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
 
       this.vacasFiltradas = !texto
         ? this.vacas.slice() // 👈 TODAS al inicio
-        : this.vacas.filter((v) => v.numero?.toLowerCase().includes(texto) || v.nombre?.toLowerCase().includes(texto));
+        : this.vacas.filter((v) => v.numeroArete?.toLowerCase().includes(texto) || v.nombre?.toLowerCase().includes(texto));
     });
 
     this.dataSource.paginator = this.paginator;
@@ -219,8 +219,8 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
       const q = (f.q || '').toLowerCase();
       const finca = f.fincaId || '';
 
-      const matchTexto = String(row.numero || '').includes(q) || (row.nombre || '').toLowerCase().includes(q);
-      const matchFinca = !finca || row.fincaId === finca;
+      const matchTexto = String(row.numeroArete || '').includes(q) || (row.nombre || '').toLowerCase().includes(q);
+      const matchFinca = !finca || row.fincaActualId === finca;
       return matchTexto && matchFinca;
     };
 
@@ -232,18 +232,18 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
     this.escoteraService.getByIdAsView(id).subscribe((e: EscoteraView) => {
       this.form.patchValue({
         vacaId: e.vacaId ?? e.id ?? null,
-        numero: e.numero ?? null,
+        numeroArete: e.numeroArete ?? null,
         nombre: e.nombre ?? null,
         color: e.color ?? null,
         procedencia: e.procedencia ?? null,
         propietario: e.propietario ?? null,
-        fechaNacida: e.fechaNacida ?? null,
+        fechaNacimiento: e.fechaNacimiento ?? null,
         tipoLeche: e.tipoLeche ?? null,
         fPalpacion: e.fPalpacion ?? null,
         dPrenez: e.dPrenez ?? null,
         detalles: e.detalles ?? null,
         fechaDestete: e.fechaDestete ?? null,
-        fincaId: e.fincaId ?? null,
+        fincaActualId: e.fincaActualId ?? null,
       });
     });
   }
@@ -295,18 +295,18 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
     }
 
     this.form.patchValue({
-      numero: vaca.numero,
+      numeroArete: vaca.numeroArete,
       vacaId: vaca.id,
       nombre: vaca.nombre ?? null,
       color: vaca.color ?? null,
       procedencia: vaca.procedencia ?? null,
       propietario: vaca.propietario ?? null,
-      fechaNacida: vaca.fechaNacimiento ? new Date(vaca.fechaNacimiento) : null,
+      fechaNacimiento: vaca.fechaNacimiento ? new Date(vaca.fechaNacimiento) : null,
       tipoLeche: vaca.tipoLeche ?? null,
       fPalpacion: vaca.fechaPalpacion ? new Date(vaca.fechaPalpacion) : null,
       dPrenez: dPrenez,
       detalles: vaca.observaciones ?? null,
-      fincaId: vaca.fincaId,
+      fincaActualId: vaca.fincaActualId ?? null,
     });
   }
 
@@ -321,20 +321,20 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
     const toYMD = (d: any) => (d instanceof Date ? d.toISOString().slice(0, 10) : d || null);
 
     const payload: CreateEscoteraDto = {
-      numero: Number(v.numero),
+      numeroArete: Number(v.numeroArete),
       nombre: v.nombre,
       color: v.color ?? null,
       procedencia: v.procedencia ?? null,
       propietario: v.propietario ?? null,
       nroMama: v.nroMama ?? null,
-      fechaNacida: toYMD(v.fechaNacida),
+      fechaNacimiento: toYMD(v.fechaNacimiento),
       tipoLeche: v.tipoLeche ?? null,
       fPalpacion: toYMD(v.fPalpacion),
       dPrenez: v.dPrenez ?? null,
       detalles: v.detalles ?? null,
       fechaDestete: toYMD(v.fechaDestete),
       vacaId: v.vacaId ?? null,
-      fincaId: v.fincaId ?? null,
+      fincaActualId: v.fincaActualId ?? null,
     };
 
     const request$ = this.isEdit
@@ -361,19 +361,19 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
       const rows = (data || []).map((e) => {
         return {
           id: e.id,
-          numero: Number(e.numero ?? 0),
+          numeroArete: e.numeroArete ?? null,
           nombre: e.nombre ?? null,
           color: e.color ?? null,
           procedencia: e.procedencia ?? null,
           propietario: e.propietario ?? null,
           nroMama: e.nroMama ?? null,
-          fechaNacida: e.fechaNacida ?? null,
+          fechaNacimiento: e.fechaNacimiento ?? null,
           tipoLeche: e.tipoLeche ?? null,
           fPalpacion: e.fPalpacion ?? null,
           dPrenez: e.dPrenez ?? null,
           detalles: e.detalles ?? null,
           fechaDestete: e.fechaDestete ?? null,
-          fincaId: e.fincaId ?? null,
+          fincaActualId: e.fincaActualId ?? null,
         } as EscoteraDetalle;
       });
       this.dataSource.data = rows;
@@ -412,15 +412,15 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
   editar(esc: EscoteraDetalle) {
     this.isEdit = true;
     this.form.patchValue({
-      numero: esc.numero,
+      numeroArete: esc.numeroArete,
       vacaId: esc.id,
       nombre: esc.nombre ?? null,
       color: esc.color ?? null,
       procedencia: esc.procedencia ?? null,
       propietario: esc.propietario ?? null,
-      fechaNacida: esc.fechaNacida ? new Date(esc.fechaNacida as any) : null,
+      fechaNacimiento: esc.fechaNacimiento ? new Date(esc.fechaNacimiento as any) : null,
       tipoLeche: esc.tipoLeche ?? null,
-      fincaId: esc.fincaId,
+      fincaActualId: esc.fincaActualId ?? null,
       dPrenez: esc.dPrenez ?? null,
       detalles: esc.detalles ?? null,
       fPalpacion: esc.fPalpacion ? new Date(esc.fPalpacion as any) : null,
@@ -434,7 +434,7 @@ export class EscoteraComponent implements OnInit, AfterViewInit {
   }
 
   eliminar(row: EscoteraDetalle) {
-    const confirmacion = confirm(`¿Deseas eliminar la escotera Nº ${row.numero}?`);
+    const confirmacion = confirm(`¿Deseas eliminar la escotera Nº ${row.numeroArete}?`);
 
     if (!confirmacion) return;
 
